@@ -11,6 +11,47 @@ import {
 
 import { apiFetch } from "../lib/api"
 
+function MetricIcon({ name }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-5 w-5"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {name === "users" && (
+        <>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+        </>
+      )}
+      {name === "agent" && (
+        <>
+          <rect x="3" y="8" width="18" height="12" rx="2" />
+          <path d="M12 8V4M9 4h6M8 13h.01M16 13h.01M9 17h6" />
+        </>
+      )}
+      {name === "check" && (
+        <>
+          <circle cx="12" cy="12" r="9" />
+          <path d="m8.5 12 2.3 2.3 4.7-4.8" />
+        </>
+      )}
+      {name === "trend" && (
+        <>
+          <path d="M3 3v18h18" />
+          <path d="m7 14 4-4 3 3 5-7" />
+        </>
+      )}
+    </svg>
+  )
+}
+
 const normalizeStatus = (status) => {
   const value = String(status || "").toLowerCase()
 
@@ -444,8 +485,7 @@ function Dashboard() {
 
         <div
           className="
-            group
-            cursor-pointer
+            dashboard-stat-card
             rounded-xl
             border
             border-slate-200
@@ -512,7 +552,7 @@ function Dashboard() {
                 dark:group-hover:text-slate-900
               "
             >
-              U
+              <MetricIcon name="users" />
             </div>
           </div>
 
@@ -533,8 +573,7 @@ function Dashboard() {
 
         <div
           className="
-            group
-            cursor-pointer
+            dashboard-stat-card
             rounded-xl
             border
             border-slate-200
@@ -601,7 +640,7 @@ function Dashboard() {
                 dark:group-hover:text-slate-900
               "
             >
-              A
+              <MetricIcon name="agent" />
             </div>
           </div>
 
@@ -624,8 +663,7 @@ function Dashboard() {
 
         <div
           className="
-            group
-            cursor-pointer
+            dashboard-stat-card
             rounded-xl
             border
             border-slate-200
@@ -692,7 +730,7 @@ function Dashboard() {
                 dark:group-hover:text-slate-900
               "
             >
-              T
+              <MetricIcon name="check" />
             </div>
           </div>
 
@@ -713,8 +751,7 @@ function Dashboard() {
 
         <div
           className="
-            group
-            cursor-pointer
+            dashboard-stat-card
             rounded-xl
             border
             border-slate-200
@@ -781,7 +818,7 @@ function Dashboard() {
                 dark:group-hover:text-slate-900
               "
             >
-              %
+              <MetricIcon name="trend" />
             </div>
           </div>
 
@@ -817,16 +854,17 @@ function Dashboard() {
             dark:bg-slate-900
           "
         >
-          <div className="mb-5">
-            <h2
-              className="
-                text-lg
-                font-semibold
-                text-slate-900
-                dark:text-white
-              "
-            >
-              Task Activity
+          <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2
+                className="
+                  text-lg
+                  font-semibold
+                  text-slate-900
+                  dark:text-white
+                "
+              >
+                Task Activity
             </h2>
 
             <p
@@ -836,16 +874,22 @@ function Dashboard() {
                 dark:text-slate-400
               "
             >
-              Completed tasks over the last 7 days
-            </p>
+                Completed tasks over the last 7 days
+              </p>
+            </div>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+              {loading
+                ? "Loading..."
+                : `${activityData.reduce((sum, day) => sum + day.tasks, 0)} completed this week`}
+            </span>
           </div>
 
-          <div className="h-[320px] w-full">
+          <div className="h-[260px] w-full">
             <ResponsiveContainer
               width="100%"
               height="100%"
             >
-              <BarChart data={activityData}>
+              <BarChart data={activityData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
                 <CartesianGrid
                   strokeDasharray="3 3"
                   vertical={false}
@@ -880,8 +924,10 @@ function Dashboard() {
 
                 <Bar
                   dataKey="tasks"
-                  fill="#2563eb"
-                  radius={[6, 6, 0, 0]}
+                  fill="#5262cf"
+                  radius={[5, 5, 0, 0]}
+                  barSize={30}
+                  minPointSize={3}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -1007,7 +1053,7 @@ function Dashboard() {
                     dark:text-slate-400
                   "
                 >
-                  PostgreSQL data available
+                  MySQL queries through the admin API
                 </p>
               </div>
 

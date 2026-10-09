@@ -1,3 +1,4 @@
+
 const API_URL = "http://localhost:8081"
 
 let refreshPromise = null
@@ -48,29 +49,63 @@ export function isTokenExpired(token) {
 }
 
 export async function refreshAccessToken() {
-  // Jangan jalankan refresh kedua kalau refresh pertama
-  // masih sedang berjalan.
+  // Gunakan satu request jika beberapa komponen
+  // meminta refresh token secara bersamaan.
   if (refreshPromise) {
     return refreshPromise
   }
 
   refreshPromise = (async () => {
     try {
+      const refreshToken = localStorage.getItem(
+        "admin_refresh_token"
+      )
+
+      if (!refreshToken) {
+        localStorage.removeItem("admin_access_token")
+        return null
+      }
+
       const response = await fetch(
-        `${API_URL}/api/auth/refresh`,
+        `${API_URL}/api/admin/refresh`,
         {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
           credentials: "include",
+          body: JSON.stringify({
+            refresh_token: refreshToken,
+          }),
         }
       )
 
       if (!response.ok) {
+        const errorText = await response.text()
+
+        console.error(
+          "Refresh token gagal:",
+          response.status,
+          errorText
+        )
+
+        // Token tidak valid atau admin sudah tidak aktif.
+        if (
+          response.status === 401 ||
+          response.status === 403
+        ) {
+          clearAdminSession()
+        }
+
         return null
       }
 
       const data = await response.json()
 
       if (!data?.access_token) {
+        console.error(
+          "Access token tidak ditemukan pada respons refresh."
+        )
         return null
       }
 
@@ -81,6 +116,8 @@ export async function refreshAccessToken() {
 
       return data.access_token
     } catch (error) {
+      // Jangan menghapus sesi hanya karena server
+      // sedang tidak bisa dijangkau.
       console.error(
         "Refresh access token gagal:",
         error

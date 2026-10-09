@@ -5,107 +5,53 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom"
-
 import { useEffect, useState } from "react"
 
-import Sidebar from "./components/Sidebar"
-import Header from "./components/Header"
+// Keep the existing page modules and business logic; only the app shell changes.
+import Sidebar from "./components/sidebar.jsx"
+import Header from "./components/Header.jsx"
+import Dashboard from "./Pages/dashboard.jsx"
+import Users from "./Pages/users.jsx"
+import Agents from "./Pages/Agents.jsx"
+import Tasks from "./Pages/Tasks.jsx"
+import Analytics from "./Pages/Analytics.jsx"
+import Logs from "./Pages/Logs.jsx"
+import Settings from "./Pages/Settings.jsx"
+import Login from "./Pages/Login/Login.jsx"
+import { getAccessToken } from "./lib/auth.js"
 
-import Dashboard from "./pages/Dashboard"
-import Users from "./pages/Users"
-import Agents from "./pages/Agents"
-import Tasks from "./pages/Tasks"
-import Analytics from "./pages/Analytics"
-import Logs from "./pages/Logs"
-import Settings from "./pages/Settings"
-import Login from "./pages/Login/Login"
-
-import {
-  getAccessToken,
-} from "./lib/auth"
-
-function ProtectedRoute({
-  authenticated,
-  children,
-}) {
+function ProtectedRoute({ authenticated, children }) {
   if (!authenticated) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-      />
-    )
+    return <Navigate to="/login" replace />
   }
 
   return children
 }
 
 function AdminLayout() {
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+
   return (
     <div className="app">
-      <Sidebar />
+      <Sidebar
+        open={mobileNavOpen}
+        onNavigate={() => setMobileNavOpen(false)}
+      />
 
-      <main className="main-content ml-60 w-[calc(100%-15rem)]">
-        <Header />
+      <main className="main-content">
+        <Header onMenuClick={() => setMobileNavOpen(true)} />
 
         <div className="page-content">
           <Routes>
-
-            <Route
-              path="/dashboard"
-              element={<Dashboard />}
-            />
-
-            <Route
-              path="/users"
-              element={<Users />}
-            />
-
-            <Route
-              path="/agents"
-              element={<Agents />}
-            />
-
-            <Route
-              path="/tasks"
-              element={<Tasks />}
-            />
-
-            <Route
-              path="/analytics"
-              element={<Analytics />}
-            />
-
-            <Route
-              path="/logs"
-              element={<Logs />}
-            />
-
-            <Route
-              path="/settings"
-              element={<Settings />}
-            />
-
-            <Route
-              path="/"
-              element={
-                <Navigate
-                  to="/dashboard"
-                  replace
-                />
-              }
-            />
-
-            <Route
-              path="*"
-              element={
-                <Navigate
-                  to="/dashboard"
-                  replace
-                />
-              }
-            />
-
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/agents" element={<Agents />} />
+            <Route path="/tasks" element={<Tasks />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/logs" element={<Logs />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>
       </main>
@@ -115,36 +61,18 @@ function AdminLayout() {
 
 function AppContent() {
   const location = useLocation()
-
-  const [
-    checkingSession,
-    setCheckingSession,
-  ] = useState(true)
-
-  const [
-    authenticated,
-    setAuthenticated,
-  ] = useState(false)
+  const [checkingSession, setCheckingSession] = useState(true)
+  const [authenticated, setAuthenticated] = useState(false)
 
   useEffect(() => {
     let cancelled = false
 
     const checkSession = async () => {
       setCheckingSession(true)
+      const accessToken = await getAccessToken()
 
-      const accessToken =
-        await getAccessToken()
-
-      if (cancelled) {
-        return
-      }
-
-      if (!accessToken) {
-        setAuthenticated(false)
-      } else {
-        setAuthenticated(true)
-      }
-
+      if (cancelled) return
+      setAuthenticated(Boolean(accessToken))
       setCheckingSession(false)
     }
 
@@ -155,57 +83,35 @@ function AppContent() {
     }
   }, [location.pathname])
 
-  /*
-   * Cek session secara berkala.
-   * Jadi kalau token expired ketika
-   * user sedang diam di halaman,
-   * session tetap akan diperiksa.
-   */
+  // Keep the existing periodic session check so expired sessions still redirect.
   useEffect(() => {
-    if (
-      location.pathname === "/login"
-    ) {
-      return
-    }
+    if (location.pathname === "/login") return
 
-    const interval = window.setInterval(
-      async () => {
-        const accessToken =
-          await getAccessToken()
+    const interval = window.setInterval(async () => {
+      const accessToken = await getAccessToken()
 
-        if (!accessToken) {
-          setAuthenticated(false)
-          window.location.replace(
-            "/login"
-          )
-        }
-      },
-      15000
-    )
+      if (!accessToken) {
+        setAuthenticated(false)
+        window.location.replace("/login")
+      }
+    }, 15000)
 
-    return () => {
-      window.clearInterval(interval)
-    }
+    return () => window.clearInterval(interval)
   }, [location.pathname])
 
-  if (location.pathname === "/login") {
-    return <Login />
-  }
+  if (location.pathname === "/login") return <Login />
 
   if (checkingSession) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="text-sm text-slate-500">
-          Checking session...
-        </div>
+      <div className="session-screen">
+        <span className="session-spinner" aria-hidden="true" />
+        <p>Checking session...</p>
       </div>
     )
   }
 
   return (
-    <ProtectedRoute
-      authenticated={authenticated}
-    >
+    <ProtectedRoute authenticated={authenticated}>
       <AdminLayout />
     </ProtectedRoute>
   )
