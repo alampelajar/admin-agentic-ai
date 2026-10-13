@@ -1,10 +1,11 @@
+import { API_BASE_URL } from "./config.js"
 import {
   getAccessToken,
   refreshAccessToken,
   clearAdminSession,
 } from "./auth"
 
-const API_URL = "http://localhost:8081"
+
 
 export async function apiFetch(
   endpoint,
@@ -42,7 +43,7 @@ export async function apiFetch(
     }
 
     return fetch(
-      `${API_URL}${endpoint}`,
+      `${API_BASE_URL}${endpoint}`,
       {
         ...options,
         headers,
