@@ -23,6 +23,8 @@ function Models() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [updatingId, setUpdatingId] = useState(null)
+  const [editingModel, setEditingModel] = useState(null)
+  const [editForm, setEditForm] = useState({ name: "", model_id: "", description: "" })
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
 
@@ -105,6 +107,67 @@ function Models() {
       await loadModels()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal mengubah status model.")
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const startEditing = (model) => {
+    setEditingModel(model)
+    setEditForm({ name: model.name || "", model_id: model.model_id || "", description: model.description || "" })
+    setError("")
+    setSuccess("")
+  }
+
+  const handleEditChange = (event) => {
+    const { name, value } = event.target
+    setEditForm((current) => ({ ...current, [name]: value }))
+  }
+
+  const handleUpdate = async (event) => {
+    event.preventDefault()
+    if (!editingModel) return
+
+    setUpdatingId(editingModel.id)
+    setError("")
+    setSuccess("")
+    try {
+      const response = await apiFetch(`/api/admin/ai/models/${editingModel.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editForm.name.trim(),
+          model_id: editForm.model_id.trim(),
+          description: editForm.description.trim(),
+        }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data?.ok) throw new Error(data?.error || data?.message || "Gagal menyimpan perubahan model.")
+      setEditingModel(null)
+      setSuccess(`Model ${editForm.name.trim()} berhasil diperbarui.`)
+      await loadModels()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal menyimpan perubahan model.")
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const deleteModel = async (model) => {
+    const confirmed = window.confirm(`Hapus model "${model.name}"? Model akan dihapus dari katalog global dan tidak lagi tersedia bagi pengguna.`)
+    if (!confirmed) return
+
+    setUpdatingId(model.id)
+    setError("")
+    setSuccess("")
+    try {
+      const response = await apiFetch(`/api/admin/ai/models/${model.id}`, { method: "DELETE" })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data?.ok) throw new Error(data?.error || data?.message || "Gagal menghapus model.")
+      setSuccess(`Model ${model.name} berhasil dihapus.`)
+      await loadModels()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal menghapus model.")
     } finally {
       setUpdatingId(null)
     }
@@ -200,7 +263,13 @@ function Models() {
                     <td className="px-5 py-4 font-mono text-xs">{model.model_id}</td>
                     <td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${model.is_active ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>{model.is_active ? "Aktif" : "Nonaktif"}</span></td>
                     <td className="px-5 py-4 text-xs text-slate-500">{formatDate(model.created_at)}</td>
-                    <td className="px-5 py-4"><button type="button" onClick={() => void toggleActive(model)} disabled={updatingId === model.id} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800">{updatingId === model.id ? "Menyimpan..." : model.is_active ? "Nonaktifkan" : "Aktifkan"}</button></td>
+                    <td className="px-5 py-4">
+                      <div className="flex flex-wrap gap-2">
+                        <button type="button" onClick={() => startEditing(model)} disabled={updatingId === model.id} className="rounded-lg border border-indigo-300 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-950">Edit</button>
+                        <button type="button" onClick={() => void toggleActive(model)} disabled={updatingId === model.id} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800">{updatingId === model.id ? "Menyimpan..." : model.is_active ? "Nonaktifkan" : "Aktifkan"}</button>
+                        <button type="button" onClick={() => void deleteModel(model)} disabled={updatingId === model.id} className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950">Hapus</button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -208,6 +277,35 @@ function Models() {
           </div>
         )}
       </section>
+
+      {editingModel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="presentation">
+          <section role="dialog" aria-modal="true" aria-labelledby="edit-model-title" className="w-full max-w-xl rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div className="border-b border-slate-200 p-5 dark:border-slate-800">
+              <h2 id="edit-model-title" className="font-semibold">Edit model AI</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Perubahan akan berlaku bagi semua pengguna yang menggunakan model global ini.</p>
+            </div>
+            <form onSubmit={handleUpdate} className="space-y-4 p-5">
+              <div>
+                <label htmlFor="edit-model-name" className="mb-1.5 block text-sm font-medium">Nama model</label>
+                <input id="edit-model-name" name="name" value={editForm.name} onChange={handleEditChange} required maxLength={150} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950" />
+              </div>
+              <div>
+                <label htmlFor="edit-model-id" className="mb-1.5 block text-sm font-medium">Model ID provider</label>
+                <input id="edit-model-id" name="model_id" value={editForm.model_id} onChange={handleEditChange} required maxLength={200} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 font-mono text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950" />
+              </div>
+              <div>
+                <label htmlFor="edit-model-description" className="mb-1.5 block text-sm font-medium">Deskripsi</label>
+                <textarea id="edit-model-description" name="description" value={editForm.description} onChange={handleEditChange} rows={3} className="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950" />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setEditingModel(null)} disabled={updatingId === editingModel.id} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800">Batal</button>
+                <button type="submit" disabled={updatingId === editingModel.id} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50">{updatingId === editingModel.id ? "Menyimpan..." : "Simpan perubahan"}</button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
     </div>
   )
 }
