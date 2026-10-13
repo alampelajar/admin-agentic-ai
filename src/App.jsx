@@ -13,6 +13,7 @@ import Header from "./components/Header.jsx"
 import Dashboard from "./Pages/dashboard.jsx"
 import Users from "./Pages/users.jsx"
 import Agents from "./Pages/Agents.jsx"
+import Models from "./Pages/Models.jsx"
 import Tasks from "./Pages/Tasks.jsx"
 import Analytics from "./Pages/Analytics.jsx"
 import Logs from "./Pages/Logs.jsx"
@@ -46,6 +47,7 @@ function AdminLayout() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/users" element={<Users />} />
             <Route path="/agents" element={<Agents />} />
+            <Route path="/models" element={<Models />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/logs" element={<Logs />} />

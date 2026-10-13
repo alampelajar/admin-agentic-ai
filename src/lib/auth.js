@@ -1,5 +1,4 @@
-
-const API_URL = "http://localhost:8081"
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080"
 
 let refreshPromise = null
 
@@ -12,20 +11,9 @@ export function clearAdminSession() {
 function decodeJwtPayload(token) {
   try {
     const parts = token.split(".")
-
-    if (parts.length !== 3) {
-      return null
-    }
-
-    const base64 = parts[1]
-      .replace(/-/g, "+")
-      .replace(/_/g, "/")
-
-    const padded = base64.padEnd(
-      base64.length + ((4 - (base64.length % 4)) % 4),
-      "="
-    )
-
+    if (parts.length !== 3) return null
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/")
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=")
     return JSON.parse(atob(padded))
   } catch {
     return null
@@ -33,96 +21,38 @@ function decodeJwtPayload(token) {
 }
 
 export function isTokenExpired(token) {
-  if (!token) {
-    return true
-  }
-
+  if (!token) return true
   const payload = decodeJwtPayload(token)
-
-  if (!payload?.exp) {
-    return true
-  }
-
-  const now = Math.floor(Date.now() / 1000)
-
-  return payload.exp <= now
+  if (!payload?.exp) return true
+  return payload.exp <= Math.floor(Date.now() / 1000)
 }
 
+// The main Agentic AI backend issues the refresh token as an HTTP-only cookie.
+// Never read or store the refresh token in localStorage.
 export async function refreshAccessToken() {
-  // Gunakan satu request jika beberapa komponen
-  // meminta refresh token secara bersamaan.
-  if (refreshPromise) {
-    return refreshPromise
-  }
+  if (refreshPromise) return refreshPromise
 
   refreshPromise = (async () => {
     try {
-      const refreshToken = localStorage.getItem(
-        "admin_refresh_token"
-      )
+      const response = await fetch(`${API_URL}/api/auth/refresh`, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        credentials: "include",
+      })
 
-      if (!refreshToken) {
-        localStorage.removeItem("admin_access_token")
-        return null
-      }
-
-      const response = await fetch(
-        `${API_URL}/api/admin/refresh`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            refresh_token: refreshToken,
-          }),
-        }
-      )
-
-      if (!response.ok) {
-        const errorText = await response.text()
-
-        console.error(
-          "Refresh token gagal:",
-          response.status,
-          errorText
-        )
-
-        // Token tidak valid atau admin sudah tidak aktif.
-        if (
-          response.status === 401 ||
-          response.status === 403
-        ) {
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data?.access_token) {
+        if (response.status === 401 || response.status === 403) {
           clearAdminSession()
         }
-
         return null
       }
 
-      const data = await response.json()
-
-      if (!data?.access_token) {
-        console.error(
-          "Access token tidak ditemukan pada respons refresh."
-        )
-        return null
-      }
-
-      localStorage.setItem(
-        "admin_access_token",
-        data.access_token
-      )
-
+      localStorage.setItem("admin_access_token", data.access_token)
       return data.access_token
     } catch (error) {
-      // Jangan menghapus sesi hanya karena server
-      // sedang tidak bisa dijangkau.
-      console.error(
-        "Refresh access token gagal:",
-        error
-      )
-
+      // Preserve local session data during temporary network failures.
+      console.error("Refresh access token gagal:", error)
       return null
     } finally {
       refreshPromise = null
@@ -133,13 +63,7 @@ export async function refreshAccessToken() {
 }
 
 export async function getAccessToken() {
-  const accessToken = localStorage.getItem(
-    "admin_access_token"
-  )
-
-  if (accessToken && !isTokenExpired(accessToken)) {
-    return accessToken
-  }
-
+  const token = localStorage.getItem("admin_access_token")
+  if (token && !isTokenExpired(token)) return token
   return await refreshAccessToken()
 }

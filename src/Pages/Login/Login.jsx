@@ -1,6 +1,7 @@
 
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { API_BASE_URL } from "../../lib/config.js"
 
 function Login() {
   const navigate = useNavigate()
@@ -20,7 +21,7 @@ function Login() {
 
     try {
       const response = await fetch(
-        "http://localhost:8081/api/admin/login",
+        `${API_BASE_URL}/api/admin/login`,
         {
           method: "POST",
           headers: {

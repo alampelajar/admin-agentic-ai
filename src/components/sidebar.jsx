@@ -18,6 +18,11 @@ const menuItems = [
     icon: "agents",
   },
   {
+    name: "Models",
+    path: "/models",
+    icon: "models",
+  },
+  {
     name: "Tasks",
     path: "/tasks",
     icon: "tasks",
@@ -150,7 +155,12 @@ function MenuIcon({ name, active }) {
         <path d="M12 5.5v3.7M10 14.2l-4 2M14 14.2l4 2" />
       </>
     ),
-    tasks: (
+    models: (
+      <>
+        <rect x="4" y="4" width="16" height="16" rx="3" />
+        <path d="M9 9h6M9 12h6M9 15h4" />
+      </>
+    ),    tasks: (
       <>
         <rect x="4" y="4" width="16" height="17" rx="2" />
         <path d="M9 4V2.5h6V4M8 11l2.5 2.5L16 8.8M8 17h8" />
