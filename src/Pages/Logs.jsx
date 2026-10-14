@@ -238,7 +238,7 @@ const mapAuditLog = (entry) => {
     time: entry.created_at,
     level: warningActions.has(action) ? "WARNING" : "INFO",
     source: entry.actor_name || entry.actor_email || "System",
-    action: actionLabels[action] || action.replace(/[._]/g, " ").replace(/\\b\\w/g, (char) => char.toUpperCase()),
+    action: actionLabels[action] || action.replace(/[._]/g, " "),
     message: entry.message || `${entry.entity_type || "System"}: ${entry.entity_name || "-"}`,
     type: "audit",
     actionCode: action,
