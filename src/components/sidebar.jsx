@@ -196,18 +196,23 @@ function MenuIcon({ name, active }) {
   )
 }
 
-function Sidebar() {
+function Sidebar({ open = false, onNavigate = () => {} }) {
   return (
-    <aside
-      className="
-        fixed left-0 top-0 z-40
-        flex h-screen w-60 flex-col
-        border-r border-slate-200
-        bg-white
-        transition-colors duration-200
-        dark:border-slate-800
-        dark:bg-slate-950
-      "
+    <>
+      <button
+        type="button"
+        className={`sidebar-backdrop ${open ? "is-visible" : ""}`}
+        aria-label="Close navigation menu"
+        onClick={onNavigate}
+        tabIndex={open ? 0 : -1}
+      />
+      <aside
+      className={`
+        sidebar ${open ? "sidebar-open" : ""}
+        fixed left-0 top-0 z-40 flex h-screen w-60 flex-col
+        border-r border-slate-200 bg-white transition-colors duration-200
+        dark:border-slate-800 dark:bg-slate-950
+      `}
     >
       {/* BRAND */}
 
@@ -244,6 +249,14 @@ function Sidebar() {
             </p>
           </div>
         </div>
+        <button
+          type="button"
+          className="sidebar-close-button"
+          aria-label="Close navigation menu"
+          onClick={onNavigate}
+        >
+          ×
+        </button>
       </div>
 
       {/* NAVIGATION */}
@@ -269,13 +282,15 @@ function Sidebar() {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={onNavigate}
               end={item.path === "/"}
               className={({ isActive }) =>
                 [
-                  "group relative flex h-10 items-center gap-3 rounded-lg px-3",
+                  "sidebar-link group relative flex h-10 items-center gap-3 rounded-lg px-3",
                   "text-[13px] font-medium transition-colors duration-150",
                   "focus-visible:outline-none focus-visible:ring-2",
                   "focus-visible:ring-blue-500 focus-visible:ring-offset-2",
+                  isActive ? "active" : "",
                   isActive
                     ? [
                         "bg-indigo-50 text-indigo-700",
@@ -295,7 +310,7 @@ function Sidebar() {
                 <>
                   <span
                     className={[
-                      "flex shrink-0 items-center justify-center",
+                      "sidebar-link-icon flex shrink-0 items-center justify-center",
                       "transition-colors",
                       isActive
                         ? "text-indigo-600 dark:text-indigo-300"
@@ -367,6 +382,7 @@ function Sidebar() {
         </div>
       </div>
     </aside>
+    </>
   )
 }
 
