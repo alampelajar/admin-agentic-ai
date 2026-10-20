@@ -27,25 +27,21 @@ html.dark {
 }
 
 body {
-  background:
-    radial-gradient(ellipse at 80% -25%, rgb(102 116 245 / 7%), transparent 40%),
-    var(--app-bg);
+  background: var(--app-bg);
 }
 
 html.dark body {
-  background:
-    radial-gradient(ellipse at 80% -25%, rgb(101 116 245 / 9%), transparent 42%),
-    var(--app-bg);
+  background: var(--app-bg);
 }
 
 .sidebar {
   width: var(--sidebar-width);
-  background: color-mix(in srgb, var(--surface) 97%, #7484ff 3%);
+  background: var(--surface);
   box-shadow: 1px 0 0 rgb(17 24 39 / 2%);
 }
 
 html.dark .sidebar {
-  background: color-mix(in srgb, var(--surface) 92%, #101827 8%);
+  background: var(--surface);
 }
 
 .sidebar > div:first-of-type {
@@ -80,8 +76,8 @@ html.dark .sidebar {
 }
 
 html.dark .sidebar-link.active {
-  background: rgb(112 128 255 / 13%);
-  color: #b7c0ff;
+  background: #27272a;
+  color: #fafafa;
 }
 
 .sidebar-link.active::before {
