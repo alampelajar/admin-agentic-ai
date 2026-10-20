@@ -173,42 +173,28 @@ html.dark .page-content > div.min-h-screen {
 .page-content [class~="dashboard-stat-card"] {
   position: relative;
   overflow: hidden;
-  min-height: 150px;
-  padding: 23px !important;
+  min-height: 142px;
+  padding: 22px !important;
   border-color: var(--border) !important;
-  border-radius: 17px !important;
-  background:
-    linear-gradient(145deg, color-mix(in srgb, var(--surface) 96%, #6574f5 4%), var(--surface)) !important;
-  box-shadow: 0 4px 18px rgb(26 35 68 / 3%) !important;
-  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease !important;
-}
-
-.page-content [class~="dashboard-stat-card"]::before {
-  position: absolute;
-  top: 0;
-  left: 22px;
-  width: 35px;
-  height: 3px;
-  border-radius: 0 0 4px 4px;
-  background: var(--accent);
-  content: "";
-  opacity: .82;
+  border-radius: var(--radius) !important;
+  background: var(--surface) !important;
+  box-shadow: 0 1px 2px rgb(24 24 27 / 3%) !important;
+  transition: border-color 160ms ease, box-shadow 160ms ease !important;
 }
 
 .page-content [class~="dashboard-stat-card"]:hover {
-  transform: translateY(-2px) !important;
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--border)) !important;
-  box-shadow: 0 12px 28px rgb(26 35 68 / 8%) !important;
+  transform: none !important;
+  border-color: var(--border-strong) !important;
+  box-shadow: 0 4px 14px rgb(24 24 27 / 5%) !important;
 }
 
 html.dark .page-content [class~="dashboard-stat-card"] {
-  background:
-    linear-gradient(145deg, color-mix(in srgb, var(--surface) 94%, #6574f5 6%), var(--surface)) !important;
-  box-shadow: 0 8px 26px rgb(0 0 0 / 12%) !important;
+  background: var(--surface) !important;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 12%) !important;
 }
 
 html.dark .page-content [class~="dashboard-stat-card"]:hover {
-  box-shadow: 0 14px 32px rgb(0 0 0 / 20%) !important;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 14%) !important;
 }
 
 .page-content [class~="dashboard-stat-card"] h2 {
