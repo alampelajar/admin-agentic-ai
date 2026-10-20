@@ -9,6 +9,7 @@ const initialForm = {
   name: "",
   model_id: "",
   description: "",
+  agent_id: "",
 }
 
 function formatDate(value) {
@@ -19,12 +20,15 @@ function formatDate(value) {
 
 function Models() {
   const [models, setModels] = useState([])
+  const [agents, setAgents] = useState([])
+  const [agentsLoading, setAgentsLoading] = useState(true)
+  const [agentLoadError, setAgentLoadError] = useState("")
   const [form, setForm] = useState(initialForm)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [updatingId, setUpdatingId] = useState(null)
   const [editingModel, setEditingModel] = useState(null)
-  const [editForm, setEditForm] = useState({ name: "", model_id: "", description: "" })
+  const [editForm, setEditForm] = useState({ name: "", model_id: "", description: "", agent_id: "" })
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
 
@@ -49,6 +53,28 @@ function Models() {
     void loadModels()
   }, [loadModels])
 
+  const loadAgents = useCallback(async () => {
+    setAgentsLoading(true)
+    setAgentLoadError("")
+    try {
+      const response = await apiFetch("/api/admin/agents")
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || data?.message || "Gagal mengambil daftar agent.")
+      }
+      setAgents(Array.isArray(data.agents) ? data.agents : [])
+    } catch (err) {
+      setAgents([])
+      setAgentLoadError(err instanceof Error ? err.message : "Gagal mengambil daftar agent.")
+    } finally {
+      setAgentsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void loadAgents()
+  }, [loadAgents])
+
   const handleChange = (event) => {
     const { name, value } = event.target
     setForm((current) => ({ ...current, [name]: value }))
@@ -58,9 +84,13 @@ function Models() {
 
   const handleCreate = async (event) => {
     event.preventDefault()
-    setSaving(true)
     setError("")
     setSuccess("")
+    if (!form.agent_id) {
+      setError("Pilih Agent tujuan model terlebih dahulu.")
+      return
+    }
+    setSaving(true)
     try {
       const response = await apiFetch("/api/admin/ai/models", {
         method: "POST",
@@ -73,6 +103,7 @@ function Models() {
           name: form.name.trim(),
           model_id: form.model_id.trim(),
           description: form.description.trim(),
+          agent_id: Number(form.agent_id),
         }),
       })
       const data = await response.json().catch(() => ({}))
@@ -80,7 +111,7 @@ function Models() {
         throw new Error(data?.error || data?.message || "Gagal menambahkan model global.")
       }
       setForm((current) => ({ ...initialForm, provider_name: current.provider_name, provider_type: current.provider_type, base_url: current.base_url, api_key: "" }))
-      setSuccess("Model berhasil ditambahkan ke katalog global dan dihubungkan ke agent aktif.")
+      setSuccess("Model global berhasil ditambahkan dan dihubungkan hanya ke agent yang dipilih. Model tersedia untuk semua akun pada agent tersebut.")
       await loadModels()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal menambahkan model global.")
@@ -114,7 +145,14 @@ function Models() {
 
   const startEditing = (model) => {
     setEditingModel(model)
-    setEditForm({ name: model.name || "", model_id: model.model_id || "", description: model.description || "" })
+    setEditForm({
+      name: model.name || "",
+      model_id: model.model_id || "",
+      description: model.description || "",
+      agent_id: Array.isArray(model.agents) && model.agents.length === 1
+        ? String(model.agents[0].id)
+        : "",
+    })
     setError("")
     setSuccess("")
   }
@@ -127,6 +165,10 @@ function Models() {
   const handleUpdate = async (event) => {
     event.preventDefault()
     if (!editingModel) return
+    if (!editForm.agent_id) {
+      setError("Pilih tepat satu Agent tujuan untuk model ini.")
+      return
+    }
 
     setUpdatingId(editingModel.id)
     setError("")
@@ -139,6 +181,7 @@ function Models() {
           name: editForm.name.trim(),
           model_id: editForm.model_id.trim(),
           description: editForm.description.trim(),
+          agent_id: Number(editForm.agent_id),
         }),
       })
       const data = await response.json().catch(() => ({}))
@@ -178,7 +221,7 @@ function Models() {
       <header>
         <h1 className="text-2xl font-bold">Global AI Models</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Kelola model bawaan sistem yang tersedia bagi semua akun user.
+          Kelola model bawaan sistem yang tersedia bagi semua akun. Setiap model ditautkan hanya ke agent yang dipilih.
         </p>
       </header>
 
@@ -225,13 +268,34 @@ function Models() {
             <label htmlFor="model_id" className="mb-1.5 block text-sm font-medium">Model ID dari provider</label>
             <input id="model_id" name="model_id" value={form.model_id} onChange={handleChange} required placeholder="Contoh: provider/model-id" className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950" />
           </div>
+          <div>
+            <label htmlFor="agent_id" className="mb-1.5 block text-sm font-medium">Agent tujuan</label>
+            <select
+              id="agent_id"
+              name="agent_id"
+              value={form.agent_id}
+              onChange={handleChange}
+              required
+              disabled={agentsLoading || saving}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950"
+            >
+              <option value="">{agentsLoading ? "Memuat agent..." : "Pilih satu agent"}</option>
+              {agents.map((agent) => (
+                <option key={agent.id} value={String(agent.id)}>
+                  {agent.name}
+                </option>
+              ))}
+            </select>
+            {agentLoadError && <p role="alert" className="mt-1.5 text-xs text-red-600 dark:text-red-300">{agentLoadError}</p>}
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Model hanya dihubungkan ke agent ini, tetapi katalog model tetap dikelola secara global.</p>
+          </div>
           <div className="md:col-span-2">
             <label htmlFor="description" className="mb-1.5 block text-sm font-medium">Deskripsi (opsional)</label>
             <textarea id="description" name="description" value={form.description} onChange={handleChange} rows={2} placeholder="Kegunaan atau catatan model" className="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950" />
           </div>
           <div className="md:col-span-2 flex justify-end">
             <button type="submit" disabled={saving} className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-900">
-              {saving ? "Menyimpan..." : "Tambah ke semua akun"}
+              {saving ? "Menyimpan..." : "Tambah model ke agent"}
             </button>
           </div>
         </form>
@@ -251,9 +315,9 @@ function Models() {
           <p className="p-6 text-sm text-slate-500">Belum ada model global.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
+            <table className="w-full min-w-[900px] text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-950 dark:text-slate-400">
-                <tr><th className="px-5 py-3 font-semibold">Model</th><th className="px-5 py-3 font-semibold">Provider</th><th className="px-5 py-3 font-semibold">Model ID</th><th className="px-5 py-3 font-semibold">Status</th><th className="px-5 py-3 font-semibold">Dibuat</th><th className="px-5 py-3 font-semibold">Aksi</th></tr>
+                <tr><th className="px-5 py-3 font-semibold">Model</th><th className="px-5 py-3 font-semibold">Provider</th><th className="px-5 py-3 font-semibold">Model ID</th><th className="px-5 py-3 font-semibold">Agent</th><th className="px-5 py-3 font-semibold">Status</th><th className="px-5 py-3 font-semibold">Dibuat</th><th className="px-5 py-3 font-semibold">Aksi</th></tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {models.map((model) => (
@@ -261,6 +325,11 @@ function Models() {
                     <td className="px-5 py-4"><p className="font-medium">{model.name}</p><p className="mt-1 max-w-sm text-xs text-slate-500">{model.description || "Tanpa deskripsi"}</p></td>
                     <td className="px-5 py-4">{model.provider?.name || "-"}</td>
                     <td className="px-5 py-4 font-mono text-xs">{model.model_id}</td>
+                    <td className="px-5 py-4 text-xs">
+                      {Array.isArray(model.agents) && model.agents.length > 0
+                        ? model.agents.map((agent) => agent.name).join(", ")
+                        : "Belum ditetapkan"}
+                    </td>
                     <td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${model.is_active ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>{model.is_active ? "Aktif" : "Nonaktif"}</span></td>
                     <td className="px-5 py-4 text-xs text-slate-500">{formatDate(model.created_at)}</td>
                     <td className="px-5 py-4">
@@ -293,6 +362,28 @@ function Models() {
               <div>
                 <label htmlFor="edit-model-id" className="mb-1.5 block text-sm font-medium">Model ID provider</label>
                 <input id="edit-model-id" name="model_id" value={editForm.model_id} onChange={handleEditChange} required maxLength={200} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 font-mono text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950" />
+              </div>
+              <div>
+                <label htmlFor="edit-model-agent" className="mb-1.5 block text-sm font-medium">Agent tujuan</label>
+                <select
+                  id="edit-model-agent"
+                  name="agent_id"
+                  value={editForm.agent_id}
+                  onChange={handleEditChange}
+                  required
+                  disabled={updatingId === editingModel.id || agentsLoading}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950"
+                >
+                  <option value="">{agentsLoading ? "Memuat agent..." : "Pilih satu agent"}</option>
+                  {agents.map((agent) => (
+                    <option key={agent.id} value={String(agent.id)}>{agent.name}</option>
+                  ))}
+                </select>
+                {Array.isArray(editingModel.agents) && editingModel.agents.length > 1 && (
+                  <p className="mt-1.5 text-xs text-amber-700 dark:text-amber-400">
+                    Model ini saat ini terhubung ke {editingModel.agents.length} agent. Pilih satu agent untuk membetulkan relasinya.
+                  </p>
+                )}
               </div>
               <div>
                 <label htmlFor="edit-model-description" className="mb-1.5 block text-sm font-medium">Deskripsi</label>
