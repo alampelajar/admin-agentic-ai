@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { apiFetch } from "../lib/api"
+import { Badge } from "../components/ui/badge.jsx"
+import { Button } from "../components/ui/button.jsx"
 
 const initialForm = {
   provider_name: "",
@@ -294,9 +296,7 @@ function Models() {
             <textarea id="description" name="description" value={form.description} onChange={handleChange} rows={2} placeholder="Kegunaan atau catatan model" className="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950" />
           </div>
           <div className="md:col-span-2 flex justify-end">
-            <button type="submit" disabled={saving} className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-900">
-              {saving ? "Menyimpan..." : "Tambah model ke agent"}
-            </button>
+            <Button type="submit" disabled={saving}>{saving ? "Menyimpan..." : "Tambah model ke agent"}</Button>
           </div>
         </form>
       </section>
@@ -307,7 +307,7 @@ function Models() {
             <h2 className="font-semibold">Katalog model sistem</h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Model di sini dapat dilihat semua user; model pribadi user tidak ditampilkan.</p>
           </div>
-          <button type="button" onClick={() => void loadModels()} disabled={loading} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800">Muat ulang</button>
+          <Button type="button" variant="outline" size="sm" onClick={() => void loadModels()} disabled={loading}>Muat ulang</Button>
         </div>
         {loading ? (
           <p className="p-6 text-sm text-slate-500">Memuat model...</p>
@@ -330,13 +330,13 @@ function Models() {
                         ? model.agents.map((agent) => agent.name).join(", ")
                         : "Belum ditetapkan"}
                     </td>
-                    <td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${model.is_active ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>{model.is_active ? "Aktif" : "Nonaktif"}</span></td>
+                    <td className="px-5 py-4"><Badge variant={model.is_active ? "success" : "secondary"}>{model.is_active ? "Aktif" : "Nonaktif"}</Badge></td>
                     <td className="px-5 py-4 text-xs text-slate-500">{formatDate(model.created_at)}</td>
                     <td className="px-5 py-4">
                       <div className="flex flex-wrap gap-2">
-                        <button type="button" onClick={() => startEditing(model)} disabled={updatingId === model.id} className="rounded-lg border border-indigo-300 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-950">Edit</button>
-                        <button type="button" onClick={() => void toggleActive(model)} disabled={updatingId === model.id} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800">{updatingId === model.id ? "Menyimpan..." : model.is_active ? "Nonaktifkan" : "Aktifkan"}</button>
-                        <button type="button" onClick={() => void deleteModel(model)} disabled={updatingId === model.id} className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950">Hapus</button>
+                        <Button type="button" variant="outline" size="sm" onClick={() => startEditing(model)} disabled={updatingId === model.id}>Edit</Button>
+                        <Button type="button" variant="secondary" size="sm" onClick={() => void toggleActive(model)} disabled={updatingId === model.id}>{updatingId === model.id ? "Menyimpan..." : model.is_active ? "Nonaktifkan" : "Aktifkan"}</Button>
+                        <Button type="button" variant="destructive" size="sm" onClick={() => void deleteModel(model)} disabled={updatingId === model.id}>Hapus</Button>
                       </div>
                     </td>
                   </tr>

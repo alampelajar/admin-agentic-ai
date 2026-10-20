@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { Button } from "./ui/button.jsx"
 
 function Header({ onMenuClick = () => {} }) {
   const navigate = useNavigate()
@@ -44,14 +45,9 @@ function Header({ onMenuClick = () => {} }) {
   return (
     <header className="app-header">
       <div className="app-header-left">
-        <button
-          type="button"
-          className="mobile-menu-button"
-          aria-label="Open navigation menu"
-          onClick={onMenuClick}
-        >
+        <Button type="button" variant="outline" size="icon" className="mobile-menu-button" aria-label="Open navigation menu" onClick={onMenuClick}>
           <span aria-hidden="true">☰</span>
-        </button>
+        </Button>
         <div>
           <h1 className="header-heading">Admin workspace</h1>
           <p className="header-subheading">Manage your Agentic AI platform</p>
@@ -59,15 +55,9 @@ function Header({ onMenuClick = () => {} }) {
       </div>
 
       <div className="app-header-actions">
-        <button
-          type="button"
-          onClick={toggleDarkMode}
-          aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-          title={darkMode ? "Light mode" : "Dark mode"}
-          className="header-icon-button"
-        >
+        <Button type="button" variant="outline" size="icon" onClick={toggleDarkMode} aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} title={darkMode ? "Light mode" : "Dark mode"} className="header-icon-button">
           <span aria-hidden="true">{darkMode ? "☀" : "◐"}</span>
-        </button>
+        </Button>
 
         <div className="header-profile-wrap">
           <button
