@@ -1,29 +1,29 @@
 /* Admin console visual refresh — shared across all React pages. */
 :root {
-  --sidebar-width: 258px;
-  --accent: #6574f5;
-  --accent-soft: #eef0ff;
-  --app-bg: #f5f7fc;
+  --sidebar-width: 256px;
+  --accent: #18181b;
+  --accent-soft: #f4f4f5;
+  --app-bg: #fafafa;
   --surface: #ffffff;
-  --surface-subtle: #f8f9fd;
-  --border: #e6e9f1;
-  --border-strong: #d5dbea;
-  --text: #171b2c;
-  --text-muted: #68718a;
-  --text-soft: #939bb0;
+  --surface-subtle: #f4f4f5;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --text: #18181b;
+  --text-muted: #71717a;
+  --text-soft: #a1a1aa;
 }
 
 html.dark {
-  --app-bg: #0b0e14;
-  --surface: #111620;
-  --surface-subtle: #171d29;
-  --border: #242c3b;
-  --border-strong: #343e51;
-  --text: #edf1fb;
-  --text-muted: #9ca8be;
-  --text-soft: #748198;
-  --accent: #a6b2ff;
-  --accent-soft: #202744;
+  --app-bg: #09090b;
+  --surface: #111113;
+  --surface-subtle: #18181b;
+  --border: #27272a;
+  --border-strong: #3f3f46;
+  --text: #fafafa;
+  --text-muted: #a1a1aa;
+  --text-soft: #71717a;
+  --accent: #fafafa;
+  --accent-soft: #27272a;
 }
 
 body {
@@ -392,3 +392,15 @@ html.dark .page-content > div.min-h-screen > [class~="mt-6"][class~="rounded-xl"
     animation-iteration-count: 1 !important;
   }
 }
+
+
+/* shadcn/ui-inspired shared surfaces */
+.page-content > div.min-h-screen { border-radius: 0; }
+.page-content input:not([type="checkbox"]):not([type="radio"]),
+.page-content select,
+.page-content textarea { border-radius: var(--radius); }
+.page-content table thead th { background: var(--surface-subtle); border-color: var(--border); }
+.page-content tbody tr { border-color: var(--border); }
+.page-content .rounded-2xl,
+.page-content .rounded-xl { border-radius: var(--radius) !important; }
+.page-content [class*="shadow-"] { box-shadow: 0 1px 2px rgb(24 24 27 / 3%) !important; }
