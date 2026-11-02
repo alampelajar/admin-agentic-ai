@@ -47,7 +47,8 @@ function AdminLayout() {
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/users" element={<Users />} />
-            <Route path="/feedback" element={<Feedback />} />
+            <Route path="/ticket" element={<Feedback />} />
+            <Route path="/feedback" element={<Navigate to="/ticket" replace />} />
             <Route path="/agents" element={<Agents />} />
             <Route path="/models" element={<Models />} />
             <Route path="/tasks" element={<Tasks />} />
