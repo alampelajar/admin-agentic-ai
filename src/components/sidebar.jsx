@@ -13,6 +13,11 @@ const menuItems = [
     icon: "users",
   },
   {
+    name: "Feedback",
+    path: "/feedback",
+    icon: "feedback",
+  },
+  {
     name: "Agents",
     path: "/agents",
     icon: "agents",
@@ -144,6 +149,11 @@ function MenuIcon({ name, active }) {
         <circle cx="10" cy="7" r="4" />
         <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </>
+    ),
+    feedback: (
+      <>
+        <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 8.7 3.9a8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z" />
       </>
     ),
     agents: (
