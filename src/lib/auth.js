@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080"
+import { API_BASE_URL } from "./config.js"
 
 let refreshPromise = null
 
@@ -34,7 +34,7 @@ export async function refreshAccessToken() {
 
   refreshPromise = (async () => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/refresh`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
         method: "POST",
         headers: { Accept: "application/json" },
         credentials: "include",
