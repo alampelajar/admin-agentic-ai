@@ -127,4 +127,4 @@ function Ticket() {
   )
 }
 
-export default Feedback
+export default Ticket
