@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { apiFetch } from "../lib/api"
+import { API_BASE_URL } from "../lib/config.js"
 
 const statusOptions = [
   { value: "new", label: "New" },
@@ -135,7 +136,13 @@ function Ticket() {
                 {(!selected.rating_reasons?.length && !selected.rating_comment) && <p className="mt-2 text-xs text-slate-500">User hanya memberikan rating tanpa alasan tambahan.</p>}
               </> : <p className="mt-2 text-xs text-slate-500">Rating dan alasan akan muncul di sini setelah user menilai ticket yang sudah selesai.</p>}
             </div>
-            {selected.attachment && <p className="text-xs text-slate-500">Attachment filename: {selected.attachment}</p>}
+            {selected.attachment && <div className="space-y-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">User attachment</p>
+              {selected.attachment.startsWith("/uploads/feedback/") ? <a href={`${API_BASE_URL}${selected.attachment}`} target="_blank" rel="noreferrer" className="inline-flex flex-col gap-2 text-sm text-indigo-600 hover:underline dark:text-indigo-400">
+                <img src={`${API_BASE_URL}${selected.attachment}`} alt="Feedback attachment" className="max-h-72 max-w-full rounded-lg border border-slate-200 object-contain dark:border-slate-700" />
+                Open image in new tab
+              </a> : <p className="text-xs text-slate-500">Attachment filename only (legacy report): {selected.attachment}</p>}
+            </div>}
             <div className="border-t border-slate-100 pt-4 dark:border-slate-800"><h3 className="text-sm font-semibold">Conversation</h3><div className="mt-3 space-y-3">{(selected.replies || []).length === 0 ? <p className="text-xs text-slate-500">No replies yet.</p> : selected.replies.map((entry) => <div key={entry.id} className="rounded-lg bg-indigo-50 p-3 text-sm dark:bg-indigo-950/30"><p className="whitespace-pre-wrap">{entry.message}</p><p className="mt-2 text-[11px] text-slate-500">{formatDate(entry.created_at)}</p></div>)}</div></div>
             <form onSubmit={sendReply} className="space-y-3 border-t border-slate-100 pt-4 dark:border-slate-800"><label className="block text-sm font-semibold" htmlFor="feedback-reply">Write a reply</label><textarea id="feedback-reply" value={reply} onChange={(e) => setReply(e.target.value)} maxLength={5000} rows={5} placeholder="Type your response to the user..." className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950" /><button disabled={saving || !reply.trim()} className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50">{saving ? "Sending..." : "Send reply"}</button></form>
           </div>}
