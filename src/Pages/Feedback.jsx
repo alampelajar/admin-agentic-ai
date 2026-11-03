@@ -8,6 +8,15 @@ const statusOptions = [
   { value: "rejected", label: "Rejected" },
 ]
 
+const ratingReasonLabels = {
+  admin_ramah: "Admin ramah",
+  pengerjaan_cepat: "Pengerjaan cepat",
+  solusi_tepat: "Solusi tepat",
+  komunikasi_jelas: "Komunikasi jelas",
+  responsif: "Responsif",
+  masalah_terselesaikan: "Masalah terselesaikan",
+}
+
 const statusClass = {
   new: "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
   processing: "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
@@ -106,7 +115,7 @@ function Ticket() {
               {filtered.map((item) => <button key={item.id} type="button" onClick={() => { setSelected(item); setNotice(""); }} className={`block w-full p-4 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/60 ${selected?.id === item.id ? "bg-indigo-50/70 dark:bg-indigo-950/20" : ""}`}>
                 <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{item.subject || "(No subject)"}</p><p className="mt-1 truncate text-xs text-slate-500">{item.user_name} · {item.user_email}</p></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${statusClass[item.status] || statusClass.new}`}>{item.status}</span></div>
                 <p className="mt-2 line-clamp-2 text-sm text-slate-600 dark:text-slate-300">{item.description}</p>
-                <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500"><span>{item.category}</span><span>·</span><span>{formatDate(item.created_at)}</span><span>·</span><span>{(item.replies || []).length} replies</span></div>
+                <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500"><span>{item.category}</span><span>·</span><span>{formatDate(item.created_at)}</span><span>·</span><span>{(item.replies || []).length} replies</span>{item.rating > 0 && <span className="font-semibold text-amber-600 dark:text-amber-400">★ {item.rating}/5</span>}</div>
               </button>)}
             </div>}
           </div>
@@ -117,6 +126,15 @@ function Ticket() {
             <div className="flex items-start justify-between gap-3"><div><p className="text-xs text-slate-500">Ticket #{selected.id}</p><h2 className="mt-1 text-lg font-semibold">{selected.subject || "(No subject)"}</h2></div><select disabled={saving} value={selected.status} onChange={(e) => updateStatus(selected,e.target.value)} className="rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs dark:border-slate-700 dark:bg-slate-950">{statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>
             <div className="grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3 text-xs dark:bg-slate-800/60"><div><p className="text-slate-500">From</p><p className="mt-1 font-medium">{selected.user_name}</p><p className="text-slate-500">{selected.user_email}</p></div><div><p className="text-slate-500">Related page</p><p className="mt-1 font-medium">{selected.related_page}</p><p className="mt-1 text-slate-500">{formatDate(selected.created_at)}</p></div></div>
             <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Description</p><p className="mt-2 whitespace-pre-wrap text-sm leading-6">{selected.description}</p></div>
+            <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
+              <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold text-slate-900 dark:text-white">User rating</h3>{selected.rating > 0 ? <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">★ {selected.rating}/5</span> : <span className="text-xs text-slate-500">Belum ada rating</span>}</div>
+              {selected.rating > 0 ? <>
+                <div className="mt-3 flex items-center gap-1" aria-label={`${selected.rating} out of 5 stars`}>{[1,2,3,4,5].map((n) => <span key={n} className={n <= selected.rating ? "text-lg text-amber-500" : "text-lg text-slate-300 dark:text-slate-600"}>★</span>)}</div>
+                {Array.isArray(selected.rating_reasons) && selected.rating_reasons.length > 0 && <div className="mt-3"><p className="text-xs font-medium text-slate-600 dark:text-slate-300">Alasan yang dipilih</p><div className="mt-2 flex flex-wrap gap-2">{selected.rating_reasons.map((reason) => <span key={reason} className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-amber-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-amber-900">{ratingReasonLabels[reason] || reason}</span>)}</div></div>}
+                {selected.rating_comment && <div className="mt-3"><p className="text-xs font-medium text-slate-600 dark:text-slate-300">Komentar tambahan</p><p className="mt-1 whitespace-pre-wrap text-sm text-slate-800 dark:text-slate-200">{selected.rating_comment}</p></div>}
+                {(!selected.rating_reasons?.length && !selected.rating_comment) && <p className="mt-2 text-xs text-slate-500">User hanya memberikan rating tanpa alasan tambahan.</p>}
+              </> : <p className="mt-2 text-xs text-slate-500">Rating dan alasan akan muncul di sini setelah user menilai ticket yang sudah selesai.</p>}
+            </div>
             {selected.attachment && <p className="text-xs text-slate-500">Attachment filename: {selected.attachment}</p>}
             <div className="border-t border-slate-100 pt-4 dark:border-slate-800"><h3 className="text-sm font-semibold">Conversation</h3><div className="mt-3 space-y-3">{(selected.replies || []).length === 0 ? <p className="text-xs text-slate-500">No replies yet.</p> : selected.replies.map((entry) => <div key={entry.id} className="rounded-lg bg-indigo-50 p-3 text-sm dark:bg-indigo-950/30"><p className="whitespace-pre-wrap">{entry.message}</p><p className="mt-2 text-[11px] text-slate-500">{formatDate(entry.created_at)}</p></div>)}</div></div>
             <form onSubmit={sendReply} className="space-y-3 border-t border-slate-100 pt-4 dark:border-slate-800"><label className="block text-sm font-semibold" htmlFor="feedback-reply">Write a reply</label><textarea id="feedback-reply" value={reply} onChange={(e) => setReply(e.target.value)} maxLength={5000} rows={5} placeholder="Type your response to the user..." className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950" /><button disabled={saving || !reply.trim()} className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50">{saving ? "Sending..." : "Send reply"}</button></form>
