@@ -35,6 +35,7 @@ function Ticket() {
   const [reply, setReply] = useState("")
   const [saving, setSaving] = useState(false)
   const [notice, setNotice] = useState("")
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const loadFeedback = async () => {
     setLoading(true)
@@ -91,6 +92,22 @@ function Ticket() {
     } finally { setSaving(false) }
   }
 
+  const deleteTicket = async (item) => {
+    setSaving(true)
+    setNotice("")
+    try {
+      const response = await apiFetch(`/api/admin/feedback/${item.id}`, { method: "DELETE" })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data.ok) throw new Error(data.message || "Failed to delete ticket.")
+      setConfirmDelete(false)
+      setSelected(null)
+      setItems((current) => current.filter((entry) => entry.id !== item.id))
+      setNotice(`Ticket #${item.id} deleted.`)
+    } catch (err) {
+      setNotice(err.message || "Failed to delete ticket.")
+    } finally { setSaving(false) }
+  }
+
   const formatDate = (value) => value ? new Date(value).toLocaleString("id-ID") : "-"
 
   return (
@@ -113,7 +130,7 @@ function Ticket() {
           </div>
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             {loading ? <p className="p-8 text-center text-sm text-slate-500">Loading tickets...</p> : filtered.length === 0 ? <p className="p-8 text-center text-sm text-slate-500">No tickets found.</p> : <div className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filtered.map((item) => <button key={item.id} type="button" onClick={() => { setSelected(item); setNotice(""); }} className={`block w-full p-4 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/60 ${selected?.id === item.id ? "bg-indigo-50/70 dark:bg-indigo-950/20" : ""}`}>
+              {filtered.map((item) => <button key={item.id} type="button" onClick={() => { setSelected(item); setNotice(""); setConfirmDelete(false); }} className={`block w-full p-4 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/60 ${selected?.id === item.id ? "bg-indigo-50/70 dark:bg-indigo-950/20" : ""}`}>
                 <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{item.subject || "(No subject)"}</p><p className="mt-1 truncate text-xs text-slate-500">{item.user_name} · {item.user_email}</p></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${statusClass[item.status] || statusClass.new}`}>{item.status}</span></div>
                 <p className="mt-2 line-clamp-2 text-sm text-slate-600 dark:text-slate-300">{item.description}</p>
                 <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500"><span>{item.category}</span><span>·</span><span>{formatDate(item.created_at)}</span><span>·</span><span>{(item.replies || []).length} replies</span>{item.rating > 0 && <span className="font-semibold text-amber-600 dark:text-amber-400">★ {item.rating}/5</span>}</div>
@@ -144,6 +161,12 @@ function Ticket() {
               </a> : <p className="text-xs text-slate-500">Attachment filename only (legacy report): {selected.attachment}</p>}
             </div>}
             <div className="border-t border-slate-100 pt-4 dark:border-slate-800"><h3 className="text-sm font-semibold">Conversation</h3><div className="mt-3 space-y-3">{(selected.replies || []).length === 0 ? <p className="text-xs text-slate-500">No replies yet.</p> : selected.replies.map((entry) => <div key={entry.id} className="rounded-lg bg-indigo-50 p-3 text-sm dark:bg-indigo-950/30"><p className="whitespace-pre-wrap">{entry.message}</p><p className="mt-2 text-[11px] text-slate-500">{formatDate(entry.created_at)}</p></div>)}</div></div>
+            <div className="border-t border-slate-100 pt-4 dark:border-slate-800">
+              {selected.status === "completed" || selected.status === "rejected" ? (confirmDelete ? <div role="alertdialog" aria-label="Confirm delete" className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200">
+                <p>Delete ticket #{selected.id} permanently? Its replies and attached image are deleted too, and the user no longer sees it.</p>
+                <div className="flex gap-2"><button type="button" disabled={saving} onClick={() => deleteTicket(selected)} className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50">{saving ? "Deleting..." : "Yes, delete"}</button><button type="button" disabled={saving} onClick={() => setConfirmDelete(false)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Cancel</button></div>
+              </div> : <button type="button" disabled={saving} onClick={() => setConfirmDelete(true)} className="w-full rounded-lg border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50 dark:border-red-900/60 dark:text-red-400 dark:hover:bg-red-950/30">Delete ticket</button>) : <p className="text-xs text-slate-500">Tickets can be deleted once they are completed or rejected.</p>}
+            </div>
             <form onSubmit={sendReply} className="space-y-3 border-t border-slate-100 pt-4 dark:border-slate-800"><label className="block text-sm font-semibold" htmlFor="feedback-reply">Write a reply</label><textarea id="feedback-reply" value={reply} onChange={(e) => setReply(e.target.value)} maxLength={5000} rows={5} placeholder="Type your response to the user..." className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950" /><button disabled={saving || !reply.trim()} className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50">{saving ? "Sending..." : "Send reply"}</button></form>
           </div>}
         </div>
