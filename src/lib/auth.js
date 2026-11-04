@@ -8,6 +8,18 @@ export function clearAdminSession() {
   localStorage.removeItem("admin_user")
 }
 
+// Ends the session on the server too. Clearing local storage alone is not enough:
+// the HTTP-only cookie would sign the admin straight back in on the next load.
+export async function logoutAdminSession() {
+  try {
+    await fetch(`${API_BASE_URL}/api/admin/logout`, { method: "POST", credentials: "include" })
+  } catch (error) {
+    console.error("Logout admin gagal:", error)
+  } finally {
+    clearAdminSession()
+  }
+}
+
 function decodeJwtPayload(token) {
   try {
     const parts = token.split(".")
@@ -34,7 +46,8 @@ export async function refreshAccessToken() {
 
   refreshPromise = (async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+      // Its own endpoint and cookie: the user app shares this host, and its session must never be taken for the admin's.
+      const response = await fetch(`${API_BASE_URL}/api/admin/refresh`, {
         method: "POST",
         headers: { Accept: "application/json" },
         credentials: "include",

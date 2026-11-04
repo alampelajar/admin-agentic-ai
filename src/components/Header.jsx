@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "./ui/button.jsx"
+import { logoutAdminSession } from "../lib/auth"
 
 function Header({ onMenuClick = () => {} }) {
   const navigate = useNavigate()
@@ -34,10 +35,8 @@ function Header({ onMenuClick = () => {} }) {
     localStorage.setItem("admin_theme", nextMode ? "dark" : "light")
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_access_token")
-    localStorage.removeItem("admin_refresh_token")
-    localStorage.removeItem("admin_user")
+  const handleLogout = async () => {
+    await logoutAdminSession()
     setProfileOpen(false)
     navigate("/login")
   }
