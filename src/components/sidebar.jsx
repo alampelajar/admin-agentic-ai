@@ -13,6 +13,11 @@ const menuItems = [
     icon: "users",
   },
   {
+    name: "Ticket",
+    path: "/ticket",
+    icon: "ticket",
+  },
+  {
     name: "Agents",
     path: "/agents",
     icon: "agents",
@@ -144,6 +149,12 @@ function MenuIcon({ name, active }) {
         <circle cx="10" cy="7" r="4" />
         <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </>
+    ),
+    ticket: (
+      <>
+        <path d="M3 8a2 2 0 0 0 0 4v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 1 0-4V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z" />
+        <path d="M13 4v2M13 10v2M13 16v2" />
       </>
     ),
     agents: (
