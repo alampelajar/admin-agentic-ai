@@ -92,5 +92,15 @@ export async function apiFetch(
       await makeRequest(accessToken)
   }
 
+  // The server says this session is not an admin's: it can never work, so end it and sign in again.
+  if (response.status === 403) {
+    const body = await response.clone().json().catch(() => ({}))
+    if (/hanya untuk admin|bukan akun admin/i.test(body?.message || body?.error || "")) {
+      clearAdminSession()
+      window.location.replace("/login")
+      throw new Error("Akun ini bukan akun admin")
+    }
+  }
+
   return response
 }
