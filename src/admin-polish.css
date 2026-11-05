@@ -3,9 +3,10 @@
   --sidebar-width: 256px;
   --accent: #18181b;
   --accent-soft: #f4f4f5;
-  --app-bg: #fafafa;
+  --app-bg: #f1f1f0;
   --surface: #ffffff;
-  --surface-subtle: #f4f4f5;
+  --surface-subtle: #e9e9e7;
+  --card: #ffffff;
   --border: #e4e4e7;
   --border-strong: #d4d4d8;
   --text: #18181b;
@@ -14,9 +15,10 @@
 }
 
 html.dark {
-  --app-bg: #09090b;
-  --surface: #111113;
-  --surface-subtle: #18181b;
+  --app-bg: #0b0b0c;
+  --surface: #161618;
+  --surface-subtle: #202023;
+  --card: #161618;
   --border: #27272a;
   --border-strong: #3f3f46;
   --text: #fafafa;
@@ -36,12 +38,13 @@ html.dark body {
 
 .sidebar {
   width: var(--sidebar-width);
-  background: var(--surface);
-  box-shadow: 1px 0 0 rgb(17 24 39 / 2%);
+  background: var(--app-bg);
+  border-right: 0 !important;
+  box-shadow: none;
 }
 
 html.dark .sidebar {
-  background: var(--surface);
+  background: var(--app-bg);
 }
 
 .sidebar > div:first-of-type {
@@ -49,8 +52,8 @@ html.dark .sidebar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 18px 20px 22px;
-  border-color: var(--border) !important;
+  padding: 24px 18px 12px 22px;
+  border: 0 !important;
 }
 
 .sidebar nav {
@@ -64,20 +67,20 @@ html.dark .sidebar {
 }
 
 .sidebar-link {
-  min-height: 43px;
-  border-radius: 11px;
+  min-height: 40px;
+  border-radius: 8px;
   padding-inline: 13px;
   font-size: 13px;
 }
 
 .sidebar-link.active {
-  background: color-mix(in srgb, var(--accent) 11%, var(--surface));
-  color: var(--accent);
+  background: var(--surface-subtle);
+  color: var(--text);
 }
 
 html.dark .sidebar-link.active {
-  background: #27272a;
-  color: #fafafa;
+  background: var(--surface-subtle);
+  color: var(--text);
 }
 
 .sidebar-link.active::before {
@@ -92,16 +95,16 @@ html.dark .sidebar-link.active {
 }
 
 .sidebar > div:last-child {
-  border-color: var(--border) !important;
-  padding: 17px 18px 18px !important;
+  border: 0 !important;
+  padding: 12px 18px 20px !important;
 }
 
 .app-header {
   min-height: 76px;
   padding-inline: clamp(20px, 2.6vw, 42px);
   border-color: var(--border);
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
-  backdrop-filter: blur(18px);
+  background: var(--app-bg);
+  border-bottom: 0;
 }
 
 .header-heading {
@@ -131,15 +134,7 @@ html.dark .sidebar-link.active {
   position: relative;
   min-height: calc(100vh - 76px) !important;
   padding: clamp(24px, 2.7vw, 42px) clamp(20px, 2.6vw, 42px) 46px !important;
-  background:
-    radial-gradient(ellipse at 12% 0%, rgb(99 102 241 / 5%), transparent 36%),
-    transparent !important;
-}
-
-html.dark .page-content > div.min-h-screen {
-  background:
-    radial-gradient(ellipse at 12% 0%, rgb(99 102 241 / 9%), transparent 38%),
-    transparent !important;
+  background: transparent !important;
 }
 
 .page-content h1 {
@@ -259,17 +254,10 @@ html.dark .page-content > div.min-h-screen > [class~="mt-6"][class~="rounded-xl"
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
-.primary-action,
-.page-content button[class*="bg-indigo-600"],
-.page-content button[class*="bg-blue-600"] {
-  transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+.primary-action {
+  transition: background-color 140ms ease;
 }
 
-.page-content button[class*="bg-indigo-600"]:hover,
-.page-content button[class*="bg-blue-600"]:hover {
-  box-shadow: 0 7px 18px color-mix(in srgb, var(--accent) 24%, transparent);
-  transform: translateY(-1px);
-}
 
 .sidebar-close-button {
   display: none;
@@ -290,9 +278,7 @@ html.dark .page-content > div.min-h-screen > [class~="mt-6"][class~="rounded-xl"
 }
 
 .session-screen {
-  background:
-    radial-gradient(ellipse at 50% 35%, rgb(99 102 241 / 8%), transparent 38%),
-    var(--app-bg);
+  background: var(--app-bg);
 }
 
 @media (max-width: 1024px) {
@@ -329,7 +315,6 @@ html.dark .page-content > div.min-h-screen > [class~="mt-6"][class~="rounded-xl"
     display: block;
     border: 0;
     background: rgb(5 10 20 / 55%);
-    backdrop-filter: blur(2px);
   }
 
   .sidebar-close-button {
@@ -386,3 +371,25 @@ html.dark .page-content > div.min-h-screen > [class~="mt-6"][class~="rounded-xl"
 .page-content .rounded-2xl,
 .page-content .rounded-xl { border-radius: var(--radius) !important; }
 .page-content [class*="shadow-"] { box-shadow: 0 1px 2px rgb(24 24 27 / 3%) !important; }
+
+/* Flat surfaces: a tone step separates a card from the ground, never a shadow or a band.
+   Only things that float (dialogs, menus) keep a shadow. */
+.page-content [class*="shadow-"]:not([role="dialog"]),
+.page-content [class~="dashboard-stat-card"],
+.page-content [class~="dashboard-stat-card"]:hover,
+.page-content [class~="mt-6"][class~="grid"][class~="xl:grid-cols-3"] > div,
+.page-content > div.min-h-screen > [class~="mt-6"][class~="rounded-xl"],
+html.dark .page-content [class~="dashboard-stat-card"],
+html.dark .page-content [class~="dashboard-stat-card"]:hover,
+html.dark .page-content [class~="mt-6"][class~="grid"][class~="xl:grid-cols-3"] > div,
+html.dark .page-content > div.min-h-screen > [class~="mt-6"][class~="rounded-xl"] {
+  box-shadow: none !important;
+}
+
+.page-content table thead th {
+  background: transparent;
+}
+
+.sidebar-link.active::before {
+  display: none;
+}
