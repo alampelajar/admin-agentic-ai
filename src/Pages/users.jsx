@@ -151,59 +151,6 @@ function Users() {
   }, [users, search, roleFilter])
 
   // ============================================================
-  // STATUS / ROLE / AVATAR
-  // ============================================================
-
-  const getStatusClass = (status) => {
-    if (status === "Active") {
-      return `
-        bg-green-100 text-green-700
-        dark:bg-green-950/50 dark:text-green-400
-      `
-    }
-
-    if (status === "Suspended") {
-      return `
-        bg-red-100 text-red-700
-        dark:bg-red-950/50 dark:text-red-400
-      `
-    }
-
-    return `
-      bg-slate-100 text-slate-600
-      dark:bg-slate-800 dark:text-slate-400
-    `
-  }
-
-  const getRoleClass = (role) => {
-    if (role === "Admin") {
-      return `
-        bg-purple-100 text-purple-700
-        dark:bg-purple-950/50 dark:text-purple-400
-      `
-    }
-
-    return `
-      bg-slate-100 text-slate-600
-      dark:bg-slate-800 dark:text-slate-400
-    `
-  }
-
-  const getAvatarClass = (role) => {
-    if (role === "Admin") {
-      return `
-        bg-purple-600 text-white
-        dark:bg-purple-500
-      `
-    }
-
-    return `
-      bg-slate-500 text-white
-      dark:bg-slate-700
-    `
-  }
-
-  // ============================================================
   // ADD USER
   // ============================================================
 
@@ -513,1383 +460,301 @@ function Users() {
   // SHARED INPUT CLASS
   // ============================================================
 
-  const inputClass = `
-    w-full
-    rounded-lg
-    border
-    border-slate-200
-    bg-white
-    px-3
-    py-2.5
-    text-sm
-    text-slate-900
-    outline-none
-    transition
-    placeholder:text-slate-400
-    focus:border-slate-400
-    focus:ring-2
-    focus:ring-slate-100
-
-    dark:border-slate-700
-    dark:bg-slate-900
-    dark:text-white
-    dark:placeholder:text-slate-500
-    dark:focus:border-slate-600
-    dark:focus:ring-slate-800
-  `
+  const inputClass =
+    "h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
 
   // ============================================================
   // RETURN
   // ============================================================
 
+  const adminCount = users.filter((user) => user.role === "Admin").length
+
+  const openRowMenu = (event, user) => {
+    if (openMenu === user.id) {
+      setOpenMenu(null)
+      return
+    }
+
+    const buttonRect = event.currentTarget.getBoundingClientRect()
+    const menuWidth = 176
+    const menuHeight = 132
+    const gap = 8
+    const viewportPadding = 12
+
+    let left = buttonRect.right - menuWidth
+    if (left < viewportPadding) left = viewportPadding
+    if (left + menuWidth > window.innerWidth - viewportPadding) {
+      left = window.innerWidth - menuWidth - viewportPadding
+    }
+
+    const spaceBelow = window.innerHeight - buttonRect.bottom
+    const spaceAbove = buttonRect.top
+    let top
+    if (spaceBelow >= menuHeight + gap) {
+      top = buttonRect.bottom + gap
+    } else if (spaceAbove >= menuHeight + gap) {
+      top = buttonRect.top - menuHeight - gap
+    } else {
+      top = Math.max(
+        viewportPadding,
+        Math.min(buttonRect.bottom + gap, window.innerHeight - menuHeight - viewportPadding)
+      )
+    }
+
+    setMenuPosition({ top, left })
+    setOpenMenu(user.id)
+  }
+
+  const closeAddUser = () => {
+    if (!submitting) setShowAddUser(false)
+  }
+
+  const closeEditUser = () => {
+    if (!submitting) setEditingUser(null)
+  }
+
+  const secondaryButton =
+    "h-9 rounded-lg border border-input bg-card px-4 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
+  const primaryButton =
+    "h-9 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+  const fieldLabel = "mb-2 block text-sm font-medium"
+
   return (
-    <div
-      className="
-        min-h-screen
-        bg-slate-50
-        p-6
-        text-slate-900
-        transition-colors
-        dark:bg-slate-950
-        dark:text-white
-      "
-    >
-      {/* HEADER */}
-
-      <div className="mb-6">
-        <h1
-          className="
-            text-2xl
-            font-bold
-            text-slate-900
-            dark:text-white
-          "
+    <div className="min-h-screen bg-[var(--app-bg)] p-6">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {loading
+              ? "Loading users..."
+              : `${users.length} ${users.length === 1 ? "user" : "users"}, ${adminCount} ${adminCount === 1 ? "admin" : "admins"}.`}
+          </p>
+        </div>
+        <button
+          type="button"
+          className={primaryButton}
+          onClick={() => {
+            setFormError("")
+            setNewUser(initialNewUser)
+            setShowAddUser(true)
+          }}
         >
-          Users
-        </h1>
-
-        <p
-          className="
-            mt-1
-            text-sm
-            text-slate-500
-            dark:text-slate-400
-          "
-        >
-          Manage users and their access
-        </p>
+          Add user
+        </button>
       </div>
 
-      {/* PAGE ERROR */}
-
       {pageError && (
-        <div
-          className="
-            mb-5
-            flex
-            items-center
-            justify-between
-            gap-4
-            rounded-lg
-            border
-            border-red-200
-            bg-red-50
-            px-4
-            py-3
-
-            dark:border-red-900
-            dark:bg-red-950/40
-          "
-        >
-          <p
-            className="
-              text-sm
-              font-medium
-              text-red-600
-              dark:text-red-400
-            "
-          >
-            {pageError}
-          </p>
-
-          <button
-            onClick={loadUsers}
-            className="
-              shrink-0
-              rounded-lg
-              bg-red-600
-              px-3
-              py-2
-              text-sm
-              font-semibold
-              text-white
-              transition
-              hover:bg-red-700
-            "
-          >
+        <div role="alert" className="mb-6 flex items-center justify-between gap-4 rounded-lg bg-destructive/10 px-4 py-3">
+          <p className="text-sm font-medium text-destructive">{pageError}</p>
+          <button type="button" onClick={loadUsers} className="text-sm font-medium underline-offset-4 hover:underline">
             Retry
           </button>
         </div>
       )}
 
-      {/* MAIN CARD */}
-
-      <div
-        className="
-          overflow-hidden
-          rounded-xl
-          border
-          border-slate-200
-          bg-white
-          shadow-sm
-          transition-colors
-
-          dark:border-slate-800
-          dark:bg-slate-900
-        "
-      >
-        {/* TOOLBAR */}
-
-        <div
-          className="
-            flex
-            flex-col
-            gap-4
-            border-b
-            border-slate-200
-            p-5
-            lg:flex-row
-            lg:items-center
-            lg:justify-between
-
-            dark:border-slate-800
-          "
-        >
-          {/* SEARCH */}
-
-          <div className="relative w-full lg:max-w-md">
-            <span
-              className="
-                pointer-events-none
-                absolute
-                left-3
-                top-1/2
-                -translate-y-1/2
-                text-slate-400
-                dark:text-slate-500
-              "
-            >
-              ⌕
-            </span>
-
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={search}
-              onChange={(event) =>
-                setSearch(
-                  event.target.value
-                )
-              }
-              className={`
-                ${inputClass}
-                bg-slate-50
-                pl-9
-
-                dark:bg-slate-950
-                dark:focus:bg-slate-900
-              `}
-            />
-          </div>
-
-          {/* FILTERS */}
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <select
-              value={roleFilter}
-              onChange={(event) =>
-                setRoleFilter(
-                  event.target.value
-                )
-              }
-              className="
-                rounded-lg
-                border
-                border-slate-200
-                bg-white
-                px-3
-                py-2.5
-                text-sm
-                text-slate-700
-                outline-none
-                transition
-                focus:border-slate-400
-
-                dark:border-slate-700
-                dark:bg-slate-900
-                dark:text-slate-300
-                dark:focus:border-slate-600
-              "
-            >
-              <option value="All">
-                All Roles
-              </option>
-
-              <option value="Admin">
-                Admin
-              </option>
-
-              <option value="User">
-                User
-              </option>
-            </select>
-
-            <button
-              onClick={() => {
-                setFormError("")
-                setNewUser(
-                  initialNewUser
-                )
-                setShowAddUser(true)
-              }}
-              className="
-                inline-flex
-                items-center
-                justify-center
-                gap-2
-                whitespace-nowrap
-                rounded-lg
-                bg-slate-900
-                px-4
-                py-2.5
-                text-sm
-                font-semibold
-                text-white
-                shadow-sm
-                transition
-                hover:bg-slate-800
-                hover:shadow-md
-
-                dark:bg-white
-                dark:text-slate-900
-                dark:hover:bg-slate-200
-              "
-            >
-              <span className="text-base leading-none">
-                +
-              </span>
-
-              Add User
-            </button>
-          </div>
-        </div>
-
-        {/* RESULT INFO */}
-
-        <div
-          className="
-            flex
-            items-center
-            justify-between
-            border-b
-            border-slate-100
-            px-5
-            py-3
-
-            dark:border-slate-800
-          "
-        >
-          <p
-            className="
-              text-sm
-              text-slate-500
-              dark:text-slate-400
-            "
+      <section className="rounded-xl bg-card text-card-foreground">
+        <div className="flex flex-wrap items-center gap-3 p-4">
+          <input
+            type="search"
+            aria-label="Search users"
+            placeholder="Search by name or email"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            className="h-9 min-w-0 flex-1 basis-64 rounded-lg border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <select
+            aria-label="Filter by role"
+            value={roleFilter}
+            onChange={(event) => setRoleFilter(event.target.value)}
+            className="h-9 rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            Showing{" "}
-            <span
-              className="
-                font-semibold
-                text-slate-700
-                dark:text-slate-200
-              "
-            >
-              {filteredUsers.length}
-            </span>{" "}
-            of{" "}
-            <span
-              className="
-                font-semibold
-                text-slate-700
-                dark:text-slate-200
-              "
-            >
-              {users.length}
-            </span>{" "}
-            users
+            <option value="All">All roles</option>
+            <option value="Admin">Admin</option>
+            <option value="User">User</option>
+          </select>
+          <p className="ml-auto text-sm text-muted-foreground">
+            {filteredUsers.length} of {users.length}
+            {(search || roleFilter !== "All") && (
+              <button type="button" onClick={clearFilters} className="ml-3 font-medium text-foreground underline-offset-4 hover:underline">
+                Clear filters
+              </button>
+            )}
           </p>
-
-          {(search ||
-            roleFilter !== "All") && (
-            <button
-              onClick={clearFilters}
-              className="
-                text-sm
-                font-medium
-                text-slate-500
-                transition
-                hover:text-slate-900
-
-                dark:text-slate-400
-                dark:hover:text-white
-              "
-            >
-              Clear filters
-            </button>
-          )}
         </div>
-
-        {/* LOADING */}
 
         {loading ? (
-          <div className="px-5 py-16 text-center">
-            <div
-              className="
-                mx-auto
-                h-8
-                w-8
-                animate-spin
-                rounded-full
-                border-2
-                border-slate-200
-                border-t-slate-800
-
-                dark:border-slate-700
-                dark:border-t-white
-              "
-            />
-
-            <p
-              className="
-                mt-4
-                text-sm
-                text-slate-500
-                dark:text-slate-400
-              "
-            >
-              Loading users...
-            </p>
-          </div>
+          <p className="px-4 py-12 text-center text-sm text-muted-foreground">Loading users...</p>
         ) : (
-          <>
-            {/* TABLE */}
-
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[850px]">
-                <thead>
-                  <tr
-                    className="
-                      border-b
-                      border-slate-200
-                      bg-slate-50
-
-                      dark:border-slate-800
-                      dark:bg-slate-950
-                    "
-                  >
-                    {[
-                      "User",
-                      "Role",
-                      "Status",
-                      "Agents",
-                      "Last Active",
-                    ].map((heading) => (
-                      <th
-                        key={heading}
-                        className="
-                          px-5
-                          py-3
-                          text-left
-                          text-xs
-                          font-semibold
-                          uppercase
-                          tracking-wider
-                          text-slate-500
-
-                          dark:text-slate-400
-                        "
-                      >
-                        {heading}
-                      </th>
-                    ))}
-
-                    <th
-                      className="
-                        px-5
-                        py-3
-                        text-right
-                        text-xs
-                        font-semibold
-                        uppercase
-                        tracking-wider
-                        text-slate-500
-
-                        dark:text-slate-400
-                      "
-                    >
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {filteredUsers.map(
-                    (user) => (
-                      <tr
-                        key={user.id}
-                        className="
-                          border-b
-                          border-slate-100
-                          transition
-                          hover:bg-slate-50
-
-                          dark:border-slate-800
-                          dark:hover:bg-slate-800/50
-                        "
-                      >
-                        {/* USER */}
-
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`
-                                flex
-                                h-10
-                                w-10
-                                shrink-0
-                                items-center
-                                justify-center
-                                rounded-full
-                                text-sm
-                                font-semibold
-                                ${getAvatarClass(
-                                  user.role
-                                )}
-                              `}
-                            >
-                              {user.name
-                                .charAt(0)
-                                .toUpperCase()}
-                            </div>
-
-                            <div>
-                              <p
-                                className="
-                                  font-medium
-                                  text-slate-900
-
-                                  dark:text-white
-                                "
-                              >
-                                {user.name}
-                              </p>
-
-                              <p
-                                className="
-                                  text-sm
-                                  text-slate-500
-
-                                  dark:text-slate-400
-                                "
-                              >
-                                {user.email}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* ROLE */}
-
-                        <td className="px-5 py-4">
-                          <span
-                            className={`
-                              inline-flex
-                              rounded-full
-                              px-2.5
-                              py-1
-                              text-xs
-                              font-semibold
-                              ${getRoleClass(
-                                user.role
-                              )}
-                            `}
-                          >
-                            {user.role}
-                          </span>
-                        </td>
-
-                        {/* STATUS */}
-
-                        <td className="px-5 py-4">
-                          <span
-                            className={`
-                              inline-flex
-                              items-center
-                              gap-1.5
-                              rounded-full
-                              px-2.5
-                              py-1
-                              text-xs
-                              font-semibold
-                              ${getStatusClass(
-                                user.status
-                              )}
-                            `}
-                          >
-                            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-
-                            {user.status}
-                          </span>
-                        </td>
-
-                        {/* AGENTS */}
-
-                        <td className="px-5 py-4">
-                          {user.agents.length ===
-                          0 ? (
-                            <span
-                              className="
-                                text-sm
-                                text-slate-400
-                                dark:text-slate-500
-                              "
-                            >
-                              No agents
-                            </span>
-                          ) : (
-                            <div className="flex max-w-[260px] flex-wrap gap-1.5">
-                              {user.agents
-                                .slice(0, 3)
-                                .map(
-                                  (agent) => (
-                                    <span
-                                      key={
-                                        agent.id
-                                      }
-                                      title={`${agent.name} · ${agent.taskCount} tasks`}
-                                      className="
-                                        inline-flex
-                                        max-w-[150px]
-                                        items-center
-                                        rounded-full
-                                        bg-slate-100
-                                        px-2.5
-                                        py-1
-                                        text-xs
-                                        font-medium
-                                        text-slate-700
-
-                                        dark:bg-slate-800
-                                        dark:text-slate-300
-                                      "
-                                    >
-                                      <span className="truncate">
-                                        {
-                                          agent.name
-                                        }
-                                      </span>
-                                    </span>
-                                  )
-                                )}
-
-                              {user.agents
-                                .length >
-                                3 && (
-                                <span
-                                  className="
-                                    inline-flex
-                                    items-center
-                                    rounded-full
-                                    bg-blue-50
-                                    px-2.5
-                                    py-1
-                                    text-xs
-                                    font-semibold
-                                    text-blue-700
-
-                                    dark:bg-blue-950/50
-                                    dark:text-blue-400
-                                  "
-                                >
-                                  +
-                                  {user.agents
-                                    .length -
-                                    3}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </td>
-
-                        {/* LAST ACTIVE */}
-
-                        <td
-                          className="
-                            px-5
-                            py-4
-                            text-sm
-                            text-slate-500
-
-                            dark:text-slate-400
-                          "
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead>
+                <tr className="text-muted-foreground">
+                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">User</th>
+                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Role</th>
+                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Status</th>
+                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Agents</th>
+                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Last active</th>
+                  <th className="w-12 px-4 py-2.5"><span className="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user) => (
+                  <tr key={user.id} className="transition-colors hover:bg-muted/60">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            background: `hsl(${((Number(user.id) || 0) * 67) % 360} 60% 90%)`,
+                            color: `hsl(${((Number(user.id) || 0) * 67) % 360} 45% 28%)`,
+                          }}
+                          className="flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
                         >
-                          {user.lastActive}
-                        </td>
-
-                        {/* ACTION */}
-
-                        <td className="relative px-5 py-4 text-right">
-                          <button
-                            onClick={(event) => {
-                              if (
-                                openMenu ===
-                                user.id
-                              ) {
-                                setOpenMenu(
-                                  null
-                                )
-                                return
-                              }
-
-                              const buttonRect =
-                                event.currentTarget.getBoundingClientRect()
-
-                              const menuWidth =
-                                160
-                              const menuHeight =
-                                132
-                              const gap = 8
-                              const viewportPadding =
-                                12
-
-                              let left =
-                                buttonRect.right -
-                                menuWidth
-
-                              if (
-                                left <
-                                viewportPadding
-                              ) {
-                                left =
-                                  viewportPadding
-                              }
-
-                              if (
-                                left +
-                                  menuWidth >
-                                window.innerWidth -
-                                  viewportPadding
-                              ) {
-                                left =
-                                  window.innerWidth -
-                                  menuWidth -
-                                  viewportPadding
-                              }
-
-                              const spaceBelow =
-                                window.innerHeight -
-                                buttonRect.bottom
-
-                              const spaceAbove =
-                                buttonRect.top
-
-                              let top
-
-                              if (
-                                spaceBelow >=
-                                menuHeight +
-                                  gap
-                              ) {
-                                top =
-                                  buttonRect.bottom +
-                                  gap
-                              } else if (
-                                spaceAbove >=
-                                menuHeight +
-                                  gap
-                              ) {
-                                top =
-                                  buttonRect.top -
-                                  menuHeight -
-                                  gap
-                              } else {
-                                top =
-                                  Math.max(
-                                    viewportPadding,
-                                    Math.min(
-                                      buttonRect.bottom +
-                                        gap,
-                                      window.innerHeight -
-                                        menuHeight -
-                                        viewportPadding
-                                    )
-                                  )
-                              }
-
-                              setMenuPosition({
-                                top,
-                                left,
-                              })
-
-                              setOpenMenu(
-                                user.id
-                              )
-                            }}
-                            disabled={
-                              deletingId ===
-                              user.id
-                            }
-                            className="
-                              inline-flex
-                              h-9
-                              w-9
-                              items-center
-                              justify-center
-                              rounded-lg
-                              text-lg
-                              text-slate-400
-                              transition
-                              hover:bg-slate-100
-                              hover:text-slate-700
-                              disabled:cursor-not-allowed
-                              disabled:opacity-50
-
-                              dark:text-slate-500
-                              dark:hover:bg-slate-800
-                              dark:hover:text-white
-                            "
-                            aria-label={`Actions for ${user.name}`}
+                          {user.name.charAt(0).toUpperCase()}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{user.name}</p>
+                          <p className="truncate text-muted-foreground">{user.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className={`px-4 py-3 ${user.role === "Admin" ? "font-medium" : "text-muted-foreground"}`}>{user.role}</td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                        <span
+                          aria-hidden="true"
+                          className={`size-2 rounded-full ${user.status === "Active" ? "bg-green-600" : user.status === "Suspended" ? "bg-destructive" : "bg-muted-foreground"}`}
+                        />
+                        {user.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {user.agents.length === 0 ? (
+                        "–"
+                      ) : (
+                        <span title={user.agents.map((agent) => `${agent.name} · ${agent.taskCount} tasks`).join("\n")}>
+                          {user.agents.slice(0, 3).map((agent) => agent.name).join(", ")}
+                          {user.agents.length > 3 && ` +${user.agents.length - 3}`}
+                        </span>
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{user.lastActive}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={(event) => openRowMenu(event, user)}
+                        disabled={deletingId === user.id}
+                        aria-label={`Actions for ${user.name}`}
+                        aria-expanded={openMenu === user.id}
+                        className="size-8 rounded-lg text-lg leading-none text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+                      >
+                        ⋮
+                      </button>
+                      {openMenu === user.id &&
+                        createPortal(
+                          <div
+                            role="menu"
+                            style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
+                            className="fixed z-50 w-44 rounded-lg border border-border bg-popover p-1 text-sm text-popover-foreground shadow-lg"
                           >
-                            ⋮
-                          </button>
-
-                          {openMenu ===
-                            user.id &&
-                            createPortal(
-                              <div
-                                className="
-                                  fixed
-                                  z-[100]
-                                  w-40
-                                  overflow-hidden
-                                  rounded-lg
-                                  border
-                                  border-slate-200
-                                  bg-white
-                                  py-1
-                                  text-left
-                                  shadow-xl
-
-                                  dark:border-slate-700
-                                  dark:bg-slate-900
-                                "
-                                style={{
-                                  top: `${menuPosition.top}px`,
-                                  left: `${menuPosition.left}px`,
-                                }}
-                              >
-                                <button
-                                  onClick={() => {
-                                    setSelectedUser(
-                                      user
-                                    )
-                                    setOpenMenu(
-                                      null
-                                    )
-                                  }}
-                                  className="
-                                    block
-                                    w-full
-                                    px-4
-                                    py-2.5
-                                    text-left
-                                    text-sm
-                                    text-slate-700
-                                    transition
-                                    hover:bg-slate-50
-
-                                    dark:text-slate-300
-                                    dark:hover:bg-slate-800
-                                  "
-                                >
-                                  View Details
-                                </button>
-
-                                <button
-                                  onClick={() =>
-                                    openEditUser(
-                                      user
-                                    )
-                                  }
-                                  className="
-                                    block
-                                    w-full
-                                    px-4
-                                    py-2.5
-                                    text-left
-                                    text-sm
-                                    text-slate-700
-                                    transition
-                                    hover:bg-slate-50
-
-                                    dark:text-slate-300
-                                    dark:hover:bg-slate-800
-                                  "
-                                >
-                                  Edit User
-                                </button>
-
-                                <button
-                                  onClick={() =>
-                                    handleDelete(
-                                      user.id
-                                    )
-                                  }
-                                  disabled={
-                                    deletingId ===
-                                    user.id
-                                  }
-                                  className="
-                                    block
-                                    w-full
-                                    px-4
-                                    py-2.5
-                                    text-left
-                                    text-sm
-                                    text-red-600
-                                    transition
-                                    hover:bg-red-50
-                                    disabled:cursor-not-allowed
-                                    disabled:opacity-50
-
-                                    dark:text-red-400
-                                    dark:hover:bg-red-950/40
-                                  "
-                                >
-                                  {deletingId ===
-                                  user.id
-                                    ? "Deleting..."
-                                    : "Delete User"}
-                                </button>
-                              </div>,
-                              document.body
-                            )}
-                        </td>
-                      </tr>
-                    )
-                  )}
-                </tbody>
-              </table>
-
-              {/* EMPTY STATE */}
-
-              {filteredUsers.length ===
-                0 && (
-                <div className="px-5 py-16 text-center">
-                  <div
-                    className="
-                      mx-auto
-                      mb-3
-                      flex
-                      h-12
-                      w-12
-                      items-center
-                      justify-center
-                      rounded-full
-                      bg-slate-100
-                      text-xl
-                      text-slate-400
-
-                      dark:bg-slate-800
-                      dark:text-slate-500
-                    "
-                  >
-                    ?
-                  </div>
-
-                  <h3
-                    className="
-                      font-semibold
-                      text-slate-800
-                      dark:text-white
-                    "
-                  >
-                    No users found
-                  </h3>
-
-                  <p
-                    className="
-                      mt-1
-                      text-sm
-                      text-slate-500
-                      dark:text-slate-400
-                    "
-                  >
-                    Try changing your
-                    search or filters.
-                  </p>
-                </div>
-              )}
-            </div>
-          </>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="block w-full rounded-md px-3 py-2 text-left hover:bg-muted"
+                              onClick={() => {
+                                setSelectedUser(user)
+                                setOpenMenu(null)
+                              }}
+                            >
+                              View details
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="block w-full rounded-md px-3 py-2 text-left hover:bg-muted"
+                              onClick={() => openEditUser(user)}
+                            >
+                              Edit user
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="block w-full rounded-md px-3 py-2 text-left text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                              onClick={() => handleDelete(user.id)}
+                              disabled={deletingId === user.id}
+                            >
+                              {deletingId === user.id ? "Deleting..." : "Delete user"}
+                            </button>
+                          </div>,
+                          document.body
+                        )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {filteredUsers.length === 0 && (
+              <div className="px-4 py-12 text-center">
+                <h2 className="text-base font-semibold">No users found</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Try changing your search or filters.</p>
+              </div>
+            )}
+          </div>
         )}
-      </div>
-
-      {/* ====================================================== */}
-      {/* VIEW USER MODAL */}
-      {/* ====================================================== */}
+      </section>
 
       {selectedUser && (
         <div
-          className="
-            fixed
-            inset-0
-            z-50
-            flex
-            items-center
-            justify-center
-            bg-slate-900/40
-            p-4
-            backdrop-blur-[2px]
-          "
-          onClick={() =>
-            setSelectedUser(null)
-          }
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setSelectedUser(null)}
         >
           <div
-            className="
-              w-full
-              max-w-md
-              rounded-xl
-              border
-              border-transparent
-              bg-white
-              shadow-2xl
-
-              dark:border-slate-800
-              dark:bg-slate-900
-            "
-            onClick={(event) =>
-              event.stopPropagation()
-            }
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="user-details-title"
+            className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-card p-6 text-card-foreground shadow-xl"
+            onClick={(event) => event.stopPropagation()}
           >
-            {/* HEADER */}
-
-            <div
-              className="
-                flex
-                items-start
-                justify-between
-                border-b
-                border-slate-200
-                p-6
-
-                dark:border-slate-800
-              "
-            >
-              <div>
-                <h2
-                  className="
-                    text-lg
-                    font-semibold
-                    text-slate-900
-                    dark:text-white
-                  "
-                >
-                  User Details
-                </h2>
-
-                <p
-                  className="
-                    mt-1
-                    text-sm
-                    text-slate-500
-                    dark:text-slate-400
-                  "
-                >
-                  View account information
-                </p>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h2 id="user-details-title" className="truncate text-lg font-semibold">{selectedUser.name}</h2>
+                <p className="truncate text-sm text-muted-foreground">{selectedUser.email}</p>
               </div>
-
-              <button
-                onClick={() =>
-                  setSelectedUser(null)
-                }
-                className="
-                  flex
-                  h-8
-                  w-8
-                  items-center
-                  justify-center
-                  rounded-lg
-                  text-slate-400
-                  transition
-                  hover:bg-slate-100
-                  hover:text-slate-700
-
-                  dark:text-slate-500
-                  dark:hover:bg-slate-800
-                  dark:hover:text-white
-                "
-              >
+              <button type="button" aria-label="Close" onClick={() => setSelectedUser(null)} className="size-8 shrink-0 rounded-lg text-xl leading-none text-muted-foreground hover:bg-muted">
                 ×
               </button>
             </div>
 
-            {/* PROFILE */}
+            <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
+              <dt className="text-muted-foreground">User ID</dt>
+              <dd className="text-right tabular-nums">#{selectedUser.id}</dd>
+              <dt className="text-muted-foreground">Role</dt>
+              <dd className="text-right">{selectedUser.role}</dd>
+              <dt className="text-muted-foreground">Status</dt>
+              <dd className="text-right">{selectedUser.status}</dd>
+              <dt className="text-muted-foreground">Last active</dt>
+              <dd className="text-right">{selectedUser.lastActive}</dd>
+            </dl>
 
-            <div className="p-6">
-              <div className="flex items-center gap-4">
-                <div
-                  className={`
-                    flex
-                    h-14
-                    w-14
-                    items-center
-                    justify-center
-                    rounded-full
-                    text-lg
-                    font-semibold
-                    ${getAvatarClass(
-                      selectedUser.role
-                    )}
-                  `}
-                >
-                  {selectedUser.name
-                    .charAt(0)
-                    .toUpperCase()}
-                </div>
-
-                <div>
-                  <h3
-                    className="
-                      font-semibold
-                      text-slate-900
-                      dark:text-white
-                    "
-                  >
-                    {selectedUser.name}
-                  </h3>
-
-                  <p
-                    className="
-                      text-sm
-                      text-slate-500
-                      dark:text-slate-400
-                    "
-                  >
-                    {selectedUser.email}
-                  </p>
-                </div>
-              </div>
-
-              {/* DETAILS */}
-
-              <div
-                className="
-                  mt-6
-                  rounded-lg
-                  border
-                  border-slate-200
-
-                  dark:border-slate-700
-                "
-              >
-                <div
-                  className="
-                    flex
-                    items-center
-                    justify-between
-                    border-b
-                    border-slate-100
-                    px-4
-                    py-3
-
-                    dark:border-slate-800
-                  "
-                >
-                  <span
-                    className="
-                      text-sm
-                      text-slate-500
-                      dark:text-slate-400
-                    "
-                  >
-                    User ID
-                  </span>
-
-                  <span
-                    className="
-                      text-sm
-                      font-semibold
-                      text-slate-800
-                      dark:text-slate-200
-                    "
-                  >
-                    #{selectedUser.id}
-                  </span>
-                </div>
-
-                <div
-                  className="
-                    flex
-                    items-center
-                    justify-between
-                    border-b
-                    border-slate-100
-                    px-4
-                    py-3
-
-                    dark:border-slate-800
-                  "
-                >
-                  <span
-                    className="
-                      text-sm
-                      text-slate-500
-                      dark:text-slate-400
-                    "
-                  >
-                    Role
-                  </span>
-
-                  <span
-                    className={`
-                      rounded-full
-                      px-2.5
-                      py-1
-                      text-xs
-                      font-semibold
-                      ${getRoleClass(
-                        selectedUser.role
-                      )}
-                    `}
-                  >
-                    {selectedUser.role}
-                  </span>
-                </div>
-
-                <div
-                  className="
-                    flex
-                    items-center
-                    justify-between
-                    border-b
-                    border-slate-100
-                    px-4
-                    py-3
-
-                    dark:border-slate-800
-                  "
-                >
-                  <span
-                    className="
-                      text-sm
-                      text-slate-500
-                      dark:text-slate-400
-                    "
-                  >
-                    Status
-                  </span>
-
-                  <span
-                    className={`
-                      rounded-full
-                      px-2.5
-                      py-1
-                      text-xs
-                      font-semibold
-                      ${getStatusClass(
-                        selectedUser.status
-                      )}
-                    `}
-                  >
-                    {selectedUser.status}
-                  </span>
-                </div>
-
-                <div
-                  className="
-                    border-b
-                    border-slate-100
-                    px-4
-                    py-4
-
-                    dark:border-slate-800
-                  "
-                >
-                  <div className="flex items-center justify-between">
-                    <span
-                      className="
-                        text-sm
-                        text-slate-500
-                        dark:text-slate-400
-                      "
-                    >
-                      Assigned Agents
+            <h3 className="mt-6 text-sm font-semibold">Agents ({selectedUser.agents.length})</h3>
+            {selectedUser.agents.length === 0 ? (
+              <p className="mt-2 text-sm text-muted-foreground">This user has not used any agent yet.</p>
+            ) : (
+              <ul className="mt-2 divide-y divide-border">
+                {selectedUser.agents.map((agent) => (
+                  <li key={agent.id} className="flex items-center justify-between gap-4 py-2.5 text-sm">
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">{agent.name}</span>
+                      <span className="block truncate text-muted-foreground">{agent.slug}</span>
                     </span>
+                    <span className="shrink-0 tabular-nums text-muted-foreground">{agent.taskCount} tasks</span>
+                  </li>
+                ))}
+              </ul>
+            )}
 
-                    <span
-                      className="
-                        text-sm
-                        font-semibold
-                        text-slate-800
-                        dark:text-slate-200
-                      "
-                    >
-                      {
-                        selectedUser
-                          .agents.length
-                      }
-                    </span>
-                  </div>
-
-                  {selectedUser.agents
-                    .length === 0 ? (
-                    <p
-                      className="
-                        mt-2
-                        text-sm
-                        text-slate-400
-                        dark:text-slate-500
-                      "
-                    >
-                      This user has not
-                      used any agent yet.
-                    </p>
-                  ) : (
-                    <div className="mt-3 space-y-2">
-                      {selectedUser.agents.map(
-                        (agent) => (
-                          <div
-                            key={agent.id}
-                            className="
-                              rounded-lg
-                              border
-                              border-slate-200
-                              bg-slate-50
-                              px-3
-                              py-2.5
-
-                              dark:border-slate-700
-                              dark:bg-slate-800
-                            "
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="min-w-0">
-                                <p
-                                  className="
-                                    truncate
-                                    text-sm
-                                    font-semibold
-                                    text-slate-800
-
-                                    dark:text-white
-                                  "
-                                >
-                                  {agent.name}
-                                </p>
-
-                                <p
-                                  className="
-                                    mt-0.5
-                                    truncate
-                                    text-xs
-                                    text-slate-500
-
-                                    dark:text-slate-400
-                                  "
-                                >
-                                  {agent.slug}
-                                </p>
-                              </div>
-
-                              <span
-                                className="
-                                  shrink-0
-                                  rounded-full
-                                  bg-white
-                                  px-2.5
-                                  py-1
-                                  text-xs
-                                  font-medium
-                                  text-slate-600
-
-                                  dark:bg-slate-900
-                                  dark:text-slate-300
-                                "
-                              >
-                                {
-                                  agent.taskCount
-                                }{" "}
-                                tasks
-                              </span>
-                            </div>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span
-                    className="
-                      text-sm
-                      text-slate-500
-                      dark:text-slate-400
-                    "
-                  >
-                    Last Active
-                  </span>
-
-                  <span
-                    className="
-                      text-sm
-                      font-medium
-                      text-slate-800
-                      dark:text-slate-200
-                    "
-                  >
-                    {
-                      selectedUser.lastActive
-                    }
-                  </span>
-                </div>
-              </div>
-
-              <button
-                onClick={() =>
-                  setSelectedUser(null)
-                }
-                className="
-                  mt-6
-                  w-full
-                  rounded-lg
-                  bg-slate-900
-                  px-4
-                  py-2.5
-                  text-sm
-                  font-semibold
-                  text-white
-                  transition
-                  hover:bg-slate-800
-
-                  dark:bg-white
-                  dark:text-slate-900
-                  dark:hover:bg-slate-200
-                "
-              >
+            <div className="mt-6 flex justify-end">
+              <button type="button" className={secondaryButton} onClick={() => setSelectedUser(null)}>
                 Close
               </button>
             </div>
@@ -1897,640 +762,99 @@ function Users() {
         </div>
       )}
 
-      {/* ====================================================== */}
-      {/* EDIT USER MODAL */}
-      {/* ====================================================== */}
-
       {editingUser && (
-        <div
-          className="
-            fixed
-            inset-0
-            z-50
-            flex
-            items-center
-            justify-center
-            bg-slate-900/40
-            p-4
-            backdrop-blur-[2px]
-          "
-          onClick={() => {
-            if (!submitting) {
-              setEditingUser(null)
-            }
-          }}
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={closeEditUser}>
           <div
-            className="
-              w-full
-              max-w-lg
-              rounded-xl
-              border
-              border-transparent
-              bg-white
-              shadow-2xl
-
-              dark:border-slate-800
-              dark:bg-slate-900
-            "
-            onClick={(event) =>
-              event.stopPropagation()
-            }
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-user-title"
+            className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-card p-6 text-card-foreground shadow-xl"
+            onClick={(event) => event.stopPropagation()}
           >
-            <div
-              className="
-                flex
-                items-start
-                justify-between
-                border-b
-                border-slate-200
-                p-6
-
-                dark:border-slate-800
-              "
-            >
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <h2
-                  className="
-                    text-lg
-                    font-semibold
-                    text-slate-900
-                    dark:text-white
-                  "
-                >
-                  Edit User
-                </h2>
-
-                <p
-                  className="
-                    mt-1
-                    text-sm
-                    text-slate-500
-                    dark:text-slate-400
-                  "
-                >
-                  Update this user's account
-                  information
-                </p>
+                <h2 id="edit-user-title" className="text-lg font-semibold">Edit user</h2>
+                <p className="text-sm text-muted-foreground">User #{editingUser.id}</p>
               </div>
-
-              <button
-                onClick={() =>
-                  setEditingUser(null)
-                }
-                disabled={submitting}
-                className="
-                  flex
-                  h-8
-                  w-8
-                  items-center
-                  justify-center
-                  rounded-lg
-                  text-slate-400
-                  transition
-                  hover:bg-slate-100
-                  hover:text-slate-700
-
-                  dark:text-slate-500
-                  dark:hover:bg-slate-800
-                  dark:hover:text-white
-                "
-              >
+              <button type="button" aria-label="Close" onClick={closeEditUser} disabled={submitting} className="size-8 rounded-lg text-xl leading-none text-muted-foreground hover:bg-muted">
                 ×
               </button>
             </div>
 
-            <form
-              onSubmit={handleEditUser}
-              className="p-6"
-            >
-              <div className="space-y-4">
-                <div>
-                  <label
-                    className="
-                      mb-1.5
-                      block
-                      text-sm
-                      font-medium
-                      text-slate-700
-                      dark:text-slate-300
-                    "
-                  >
-                    Full Name
-                  </label>
-
-                  <input
-                    type="text"
-                    name="name"
-                    value={editForm.name}
-                    onChange={handleEditChange}
-                    disabled={submitting}
-                    className={inputClass}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    className="
-                      mb-1.5
-                      block
-                      text-sm
-                      font-medium
-                      text-slate-700
-                      dark:text-slate-300
-                    "
-                  >
-                    Email
-                  </label>
-
-                  <input
-                    type="email"
-                    name="email"
-                    value={editForm.email}
-                    onChange={handleEditChange}
-                    disabled={submitting}
-                    className={inputClass}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    className="
-                      mb-1.5
-                      block
-                      text-sm
-                      font-medium
-                      text-slate-700
-                      dark:text-slate-300
-                    "
-                  >
-                    Role
-                  </label>
-
-                  <select
-                    name="role"
-                    value={editForm.role}
-                    onChange={handleEditChange}
-                    disabled={submitting}
-                    className={inputClass}
-                  >
-                    <option value="User">
-                      User
-                    </option>
-
-                    <option value="Admin">
-                      Admin
-                    </option>
-                  </select>
-                </div>
-
-                <div
-                  className="
-                    rounded-lg
-                    bg-slate-50
-                    p-4
-
-                    dark:bg-slate-800
-                  "
-                >
-                  <p
-                    className="
-                      text-xs
-                      font-medium
-                      uppercase
-                      tracking-wider
-                      text-slate-400
-                    "
-                  >
-                    User ID
-                  </p>
-
-                  <p
-                    className="
-                      mt-1
-                      text-sm
-                      font-semibold
-                      text-slate-700
-
-                      dark:text-slate-200
-                    "
-                  >
-                    #{editingUser.id}
-                  </p>
-                </div>
-
-                {formError && (
-                  <div
-                    className="
-                      rounded-lg
-                      border
-                      border-red-200
-                      bg-red-50
-                      px-4
-                      py-3
-
-                      dark:border-red-900
-                      dark:bg-red-950/40
-                    "
-                  >
-                    <p
-                      className="
-                        text-sm
-                        font-medium
-                        text-red-600
-                        dark:text-red-400
-                      "
-                    >
-                      {formError}
-                    </p>
-                  </div>
-                )}
+            <form onSubmit={handleEditUser} className="mt-6 space-y-4">
+              <div>
+                <label htmlFor="edit-name" className={fieldLabel}>Full name</label>
+                <input id="edit-name" type="text" name="name" value={editForm.name} onChange={handleEditChange} disabled={submitting} className={inputClass} />
               </div>
-
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setEditingUser(null)
-                  }
-                  disabled={submitting}
-                  className="
-                    rounded-lg
-                    border
-                    border-slate-200
-                    bg-white
-                    px-4
-                    py-2.5
-                    text-sm
-                    font-semibold
-                    text-slate-600
-                    transition
-                    hover:bg-slate-50
-                    hover:text-slate-900
-
-                    dark:border-slate-700
-                    dark:bg-slate-900
-                    dark:text-slate-300
-                    dark:hover:bg-slate-800
-                    dark:hover:text-white
-                  "
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="
-                    rounded-lg
-                    bg-slate-900
-                    px-4
-                    py-2.5
-                    text-sm
-                    font-semibold
-                    text-white
-                    shadow-sm
-                    transition
-                    hover:bg-slate-800
-
-                    dark:bg-white
-                    dark:text-slate-900
-                    dark:hover:bg-slate-200
-                  "
-                >
-                  {submitting
-                    ? "Saving..."
-                    : "Save Changes"}
-                </button>
+              <div>
+                <label htmlFor="edit-email" className={fieldLabel}>Email</label>
+                <input id="edit-email" type="email" name="email" value={editForm.email} onChange={handleEditChange} disabled={submitting} className={inputClass} />
+              </div>
+              <div>
+                <label htmlFor="edit-role" className={fieldLabel}>Role</label>
+                <select id="edit-role" name="role" value={editForm.role} onChange={handleEditChange} disabled={submitting} className={inputClass}>
+                  <option value="User">User</option>
+                  <option value="Admin">Admin</option>
+                </select>
+              </div>
+              {formError && <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{formError}</p>}
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" className={secondaryButton} onClick={closeEditUser} disabled={submitting}>Cancel</button>
+                <button type="submit" className={primaryButton} disabled={submitting}>{submitting ? "Saving..." : "Save changes"}</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* ====================================================== */}
-      {/* ADD USER MODAL */}
-      {/* ====================================================== */}
-
       {showAddUser && (
-        <div
-          className="
-            fixed
-            inset-0
-            z-50
-            flex
-            items-center
-            justify-center
-            bg-slate-900/40
-            p-4
-            backdrop-blur-[2px]
-          "
-          onClick={() => {
-            if (!submitting) {
-              setShowAddUser(false)
-            }
-          }}
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={closeAddUser}>
           <div
-            className="
-              w-full
-              max-w-lg
-              rounded-xl
-              border
-              border-transparent
-              bg-white
-              shadow-2xl
-
-              dark:border-slate-800
-              dark:bg-slate-900
-            "
-            onClick={(event) =>
-              event.stopPropagation()
-            }
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-user-title"
+            className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-card p-6 text-card-foreground shadow-xl"
+            onClick={(event) => event.stopPropagation()}
           >
-            <div
-              className="
-                flex
-                items-start
-                justify-between
-                border-b
-                border-slate-200
-                p-6
-
-                dark:border-slate-800
-              "
-            >
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <h2
-                  className="
-                    text-lg
-                    font-semibold
-                    text-slate-900
-                    dark:text-white
-                  "
-                >
-                  Add New User
-                </h2>
-
-                <p
-                  className="
-                    mt-1
-                    text-sm
-                    text-slate-500
-                    dark:text-slate-400
-                  "
-                >
-                  Create a new user account
-                </p>
+                <h2 id="add-user-title" className="text-lg font-semibold">Add user</h2>
+                <p className="text-sm text-muted-foreground">Create a new user account.</p>
               </div>
-
-              <button
-                onClick={() =>
-                  setShowAddUser(false)
-                }
-                disabled={submitting}
-                className="
-                  flex
-                  h-8
-                  w-8
-                  items-center
-                  justify-center
-                  rounded-lg
-                  text-slate-400
-                  transition
-                  hover:bg-slate-100
-                  hover:text-slate-700
-
-                  dark:text-slate-500
-                  dark:hover:bg-slate-800
-                  dark:hover:text-white
-                "
-              >
+              <button type="button" aria-label="Close" onClick={closeAddUser} disabled={submitting} className="size-8 rounded-lg text-xl leading-none text-muted-foreground hover:bg-muted">
                 ×
               </button>
             </div>
 
-            <form
-              onSubmit={handleAddUser}
-              className="p-6"
-            >
-              <div className="space-y-4">
-                <div>
-                  <label
-                    className="
-                      mb-1.5
-                      block
-                      text-sm
-                      font-medium
-                      text-slate-700
-                      dark:text-slate-300
-                    "
-                  >
-                    Full Name
-                  </label>
-
-                  <input
-                    type="text"
-                    name="name"
-                    value={newUser.name}
-                    onChange={handleNewUserChange}
-                    disabled={submitting}
-                    placeholder="Enter full name"
-                    className={inputClass}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    className="
-                      mb-1.5
-                      block
-                      text-sm
-                      font-medium
-                      text-slate-700
-                      dark:text-slate-300
-                    "
-                  >
-                    Email
-                  </label>
-
-                  <input
-                    type="email"
-                    name="email"
-                    value={newUser.email}
-                    onChange={handleNewUserChange}
-                    disabled={submitting}
-                    placeholder="Enter email address"
-                    className={inputClass}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    className="
-                      mb-1.5
-                      block
-                      text-sm
-                      font-medium
-                      text-slate-700
-                      dark:text-slate-300
-                    "
-                  >
-                    Role
-                  </label>
-
-                  <select
-                    name="role"
-                    value={newUser.role}
-                    onChange={handleNewUserChange}
-                    disabled={submitting}
-                    className={inputClass}
-                  >
-                    <option value="User">
-                      User
-                    </option>
-
-                    <option value="Admin">
-                      Admin
-                    </option>
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    className="
-                      mb-1.5
-                      block
-                      text-sm
-                      font-medium
-                      text-slate-700
-                      dark:text-slate-300
-                    "
-                  >
-                    Password
-                  </label>
-
-                  <input
-                    type="password"
-                    name="password"
-                    value={newUser.password}
-                    onChange={handleNewUserChange}
-                    disabled={submitting}
-                    placeholder="Enter password"
-                    className={inputClass}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    className="
-                      mb-1.5
-                      block
-                      text-sm
-                      font-medium
-                      text-slate-700
-                      dark:text-slate-300
-                    "
-                  >
-                    Confirm Password
-                  </label>
-
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={
-                      newUser.confirmPassword
-                    }
-                    onChange={handleNewUserChange}
-                    disabled={submitting}
-                    placeholder="Confirm password"
-                    className={inputClass}
-                  />
-                </div>
-
-                {formError && (
-                  <div
-                    className="
-                      rounded-lg
-                      border
-                      border-red-200
-                      bg-red-50
-                      px-4
-                      py-3
-
-                      dark:border-red-900
-                      dark:bg-red-950/40
-                    "
-                  >
-                    <p
-                      className="
-                        text-sm
-                        font-medium
-                        text-red-600
-                        dark:text-red-400
-                      "
-                    >
-                      {formError}
-                    </p>
-                  </div>
-                )}
+            <form onSubmit={handleAddUser} className="mt-6 space-y-4">
+              <div>
+                <label htmlFor="add-name" className={fieldLabel}>Full name</label>
+                <input id="add-name" type="text" name="name" value={newUser.name} onChange={handleNewUserChange} disabled={submitting} placeholder="Enter full name" className={inputClass} />
               </div>
-
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowAddUser(false)
-                  }
-                  disabled={submitting}
-                  className="
-                    rounded-lg
-                    border
-                    border-slate-200
-                    bg-white
-                    px-4
-                    py-2.5
-                    text-sm
-                    font-semibold
-                    text-slate-600
-                    transition
-                    hover:bg-slate-50
-                    hover:text-slate-900
-
-                    dark:border-slate-700
-                    dark:bg-slate-900
-                    dark:text-slate-300
-                    dark:hover:bg-slate-800
-                    dark:hover:text-white
-                  "
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="
-                    rounded-lg
-                    bg-slate-900
-                    px-4
-                    py-2.5
-                    text-sm
-                    font-semibold
-                    text-white
-                    shadow-sm
-                    transition
-                    hover:bg-slate-800
-
-                    dark:bg-white
-                    dark:text-slate-900
-                    dark:hover:bg-slate-200
-                  "
-                >
-                  {submitting
-                    ? "Creating..."
-                    : "Create User"}
-                </button>
+              <div>
+                <label htmlFor="add-email" className={fieldLabel}>Email</label>
+                <input id="add-email" type="email" name="email" value={newUser.email} onChange={handleNewUserChange} disabled={submitting} placeholder="Enter email address" className={inputClass} />
+              </div>
+              <div>
+                <label htmlFor="add-role" className={fieldLabel}>Role</label>
+                <select id="add-role" name="role" value={newUser.role} onChange={handleNewUserChange} disabled={submitting} className={inputClass}>
+                  <option value="User">User</option>
+                  <option value="Admin">Admin</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="add-password" className={fieldLabel}>Password</label>
+                <input id="add-password" type="password" name="password" value={newUser.password} onChange={handleNewUserChange} disabled={submitting} placeholder="Enter password" aria-describedby="add-password-hint" className={inputClass} />
+                <p id="add-password-hint" className="mt-1.5 text-sm text-muted-foreground">At least 6 characters.</p>
+              </div>
+              <div>
+                <label htmlFor="add-confirm" className={fieldLabel}>Confirm password</label>
+                <input id="add-confirm" type="password" name="confirmPassword" value={newUser.confirmPassword} onChange={handleNewUserChange} disabled={submitting} placeholder="Repeat the password" className={inputClass} />
+              </div>
+              {formError && <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{formError}</p>}
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" className={secondaryButton} onClick={closeAddUser} disabled={submitting}>Cancel</button>
+                <button type="submit" className={primaryButton} disabled={submitting}>{submitting ? "Creating..." : "Create user"}</button>
               </div>
             </form>
           </div>
