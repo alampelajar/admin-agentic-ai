@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom"
 import { API_BASE_URL } from "../../lib/config.js"
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert.jsx"
 import { Button } from "../../components/ui/button.jsx"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../components/ui/card.jsx"
 import { Input } from "../../components/ui/input.jsx"
 
 function Login({ onAuthenticated = () => {} }) {
@@ -49,33 +48,51 @@ function Login({ onAuthenticated = () => {} }) {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-10 text-foreground">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-primary" />
-      <div className="pointer-events-none absolute -top-40 left-1/2 size-[420px] -translate-x-1/2 rounded-full bg-muted/80 blur-3xl" />
-      <Card className="relative w-full max-w-md shadow-lg">
-        <CardHeader className="items-center space-y-3 pb-3 text-center">
-          <div className="flex size-12 items-center justify-center rounded-xl bg-primary text-lg font-semibold text-primary-foreground shadow-sm">AI</div>
-          <div className="space-y-1">
-            <CardTitle className="text-2xl tracking-tight">Admin Console</CardTitle>
-            <CardDescription>Sign in to manage your Agentic AI platform.</CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-5">
-          <form onSubmit={handleLogin} className="space-y-5">
+    <main className="grid min-h-svh bg-background text-foreground lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <section className="flex flex-col justify-between gap-10 bg-primary px-6 py-8 text-primary-foreground sm:px-10 lg:px-16 lg:py-14">
+        <div className="flex items-center gap-3">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <circle cx="8" cy="16" r="4" fill="currentColor" />
+            <circle cx="24" cy="8" r="4" fill="currentColor" />
+            <circle cx="24" cy="24" r="4" fill="currentColor" />
+            <path d="M11.5 14.3 20.5 9.7M11.5 17.7l9 4.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <span className="text-lg font-semibold tracking-tight">Agentic AI</span>
+        </div>
+
+        <p className="max-w-[18ch] text-3xl font-semibold leading-[1.1] tracking-[-0.02em] sm:text-4xl">Agents, models and tickets in one place.</p>
+
+        <ul className="hidden gap-x-8 gap-y-2 text-sm text-primary-foreground/80 sm:grid sm:grid-cols-3 lg:max-w-md">
+          <li>Agents</li>
+          <li>Models</li>
+          <li>Tickets</li>
+        </ul>
+      </section>
+
+      <section className="flex items-center px-6 py-12 sm:px-10 lg:px-16">
+        <div className="mx-auto w-full max-w-sm">
+          <h1 className="text-2xl font-semibold tracking-tight">Admin sign in</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Use your administrator account.</p>
+
+          <form onSubmit={handleLogin} className="mt-8 space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium leading-none">Email</label>
-              <Input id="email" name="email" type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="admin@example.com" required disabled={loading} />
+              <label htmlFor="email" className="text-sm font-medium">Email</label>
+              <Input id="email" name="email" type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@company.com" required disabled={loading} className="h-10 rounded-lg shadow-none!" />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium leading-none">Password</label>
-              <Input id="password" name="password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required disabled={loading} />
+              <label htmlFor="password" className="text-sm font-medium">Password</label>
+              <Input id="password" name="password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Your password" required disabled={loading} className="h-10 rounded-lg shadow-none!" />
             </div>
-            {error && <Alert variant="destructive" className="bg-destructive/5"><AlertTitle>Unable to sign in</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
-            <Button type="submit" className="w-full" disabled={loading}>{loading ? "Signing in..." : "Sign In"}</Button>
+            {error && (
+              <Alert variant="destructive" role="alert" aria-live="polite" className="bg-destructive/5">
+                <AlertTitle>Unable to sign in</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            <Button type="submit" className="h-10 w-full rounded-lg shadow-none!" disabled={loading}>{loading ? "Signing in..." : "Sign in"}</Button>
           </form>
-        </CardContent>
-        <CardFooter className="justify-center border-t px-6 py-4 text-xs text-muted-foreground">Agentic AI Admin Dashboard</CardFooter>
-      </Card>
+        </div>
+      </section>
     </main>
   )
 }
