@@ -14,6 +14,12 @@ const initialForm = {
   agent_id: "",
 }
 
+// The choice that links a model to every active agent instead of one.
+const ALL_AGENTS = "all"
+
+// agent_id is set to undefined for "all" so the form's own "all" string is dropped from the JSON.
+const agentTarget = (value) => (value === ALL_AGENTS ? { agent_id: undefined, all_agents: true } : { agent_id: Number(value) })
+
 function formatDate(value) {
   if (!value) return "-"
   const date = new Date(value)
@@ -105,7 +111,7 @@ function Models() {
           name: form.name.trim(),
           model_id: form.model_id.trim(),
           description: form.description.trim(),
-          agent_id: Number(form.agent_id),
+          ...agentTarget(form.agent_id),
         }),
       })
       const data = await response.json().catch(() => ({}))
@@ -113,7 +119,11 @@ function Models() {
         throw new Error(data?.error || data?.message || "Gagal menambahkan model global.")
       }
       setForm((current) => ({ ...initialForm, provider_name: current.provider_name, provider_type: current.provider_type, base_url: current.base_url, api_key: "" }))
-      setSuccess("Model global berhasil ditambahkan dan dihubungkan hanya ke agent yang dipilih. Model tersedia untuk semua akun pada agent tersebut.")
+      setSuccess(
+        form.agent_id === ALL_AGENTS
+          ? "Model global berhasil ditambahkan dan dihubungkan ke semua agent aktif. Model tersedia untuk semua akun."
+          : "Model global berhasil ditambahkan dan dihubungkan hanya ke agent yang dipilih. Model tersedia untuk semua akun pada agent tersebut."
+      )
       await loadModels()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal menambahkan model global.")
@@ -151,9 +161,11 @@ function Models() {
       name: model.name || "",
       model_id: model.model_id || "",
       description: model.description || "",
-      agent_id: Array.isArray(model.agents) && model.agents.length === 1
+      agent_id: !Array.isArray(model.agents) ? "" : model.agents.length === 1
         ? String(model.agents[0].id)
-        : "",
+        : agents.length > 1 && model.agents.length === agents.length
+          ? ALL_AGENTS
+          : "",
     })
     setError("")
     setSuccess("")
@@ -183,7 +195,7 @@ function Models() {
           name: editForm.name.trim(),
           model_id: editForm.model_id.trim(),
           description: editForm.description.trim(),
-          agent_id: Number(editForm.agent_id),
+          ...agentTarget(editForm.agent_id),
         }),
       })
       const data = await response.json().catch(() => ({}))
@@ -281,7 +293,8 @@ function Models() {
               disabled={agentsLoading || saving}
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950"
             >
-              <option value="">{agentsLoading ? "Memuat agent..." : "Pilih satu agent"}</option>
+              <option value="">{agentsLoading ? "Memuat agent..." : "Pilih agent"}</option>
+              {agents.length > 1 && <option value={ALL_AGENTS}>Semua agent</option>}
               {agents.map((agent) => (
                 <option key={agent.id} value={String(agent.id)}>
                   {agent.name}
@@ -289,7 +302,7 @@ function Models() {
               ))}
             </select>
             {agentLoadError && <p role="alert" className="mt-1.5 text-xs text-red-600 dark:text-red-300">{agentLoadError}</p>}
-            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Model hanya dihubungkan ke agent ini, tetapi katalog model tetap dikelola secara global.</p>
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Pilih satu agent, atau "Semua agent" untuk menghubungkan model ke setiap agent aktif. Katalog model tetap dikelola secara global.</p>
           </div>
           <div className="md:col-span-2">
             <label htmlFor="description" className="mb-1.5 block text-sm font-medium">Deskripsi (opsional)</label>
@@ -374,14 +387,15 @@ function Models() {
                   disabled={updatingId === editingModel.id || agentsLoading}
                   className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950"
                 >
-                  <option value="">{agentsLoading ? "Memuat agent..." : "Pilih satu agent"}</option>
+                  <option value="">{agentsLoading ? "Memuat agent..." : "Pilih agent"}</option>
+                  {agents.length > 1 && <option value={ALL_AGENTS}>Semua agent</option>}
                   {agents.map((agent) => (
                     <option key={agent.id} value={String(agent.id)}>{agent.name}</option>
                   ))}
                 </select>
-                {Array.isArray(editingModel.agents) && editingModel.agents.length > 1 && (
+                {editForm.agent_id === "" && Array.isArray(editingModel.agents) && editingModel.agents.length > 1 && (
                   <p className="mt-1.5 text-xs text-amber-700 dark:text-amber-400">
-                    Model ini saat ini terhubung ke {editingModel.agents.length} agent. Pilih satu agent untuk membetulkan relasinya.
+                    Model ini saat ini terhubung ke {editingModel.agents.length} agent. Pilih satu agent atau "Semua agent" untuk menyimpan relasinya.
                   </p>
                 )}
               </div>
