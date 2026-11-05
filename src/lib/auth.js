@@ -2,10 +2,15 @@ import { API_BASE_URL } from "./config.js"
 
 let refreshPromise = null
 
+// Fired whenever the session is cleared, so the app can move to the login page
+// without a reload (logout, a failed refresh, or a token that is not an admin's).
+export const SESSION_ENDED_EVENT = "admin-session-ended"
+
 export function clearAdminSession() {
   localStorage.removeItem("admin_access_token")
   localStorage.removeItem("admin_refresh_token")
   localStorage.removeItem("admin_user")
+  window.dispatchEvent(new Event(SESSION_ENDED_EVENT))
 }
 
 // Ends the session on the server too. Clearing local storage alone is not enough:
@@ -30,6 +35,11 @@ function decodeJwtPayload(token) {
   } catch {
     return null
   }
+}
+
+// Only used to route the page; the server decides what an admin may actually do.
+export function isAdminToken(token) {
+  return decodeJwtPayload(token || "")?.role === "admin"
 }
 
 export function isTokenExpired(token) {
@@ -77,6 +87,8 @@ export async function refreshAccessToken() {
 
 export async function getAccessToken() {
   const token = localStorage.getItem("admin_access_token")
-  if (token && !isTokenExpired(token)) return token
+  if (token && isAdminToken(token) && !isTokenExpired(token)) return token
+  // A stored token that is not an admin's (left over from another account) is never used.
+  if (token && !isAdminToken(token)) clearAdminSession()
   return await refreshAccessToken()
 }

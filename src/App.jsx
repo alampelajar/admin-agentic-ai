@@ -20,15 +20,7 @@ import Analytics from "./Pages/Analytics.jsx"
 import Logs from "./Pages/Logs.jsx"
 import Settings from "./Pages/Settings.jsx"
 import Login from "./Pages/Login/Login.jsx"
-import { getAccessToken } from "./lib/auth.js"
-
-function ProtectedRoute({ authenticated, children }) {
-  if (!authenticated) {
-    return <Navigate to="/login" replace />
-  }
-
-  return children
-}
+import { getAccessToken, SESSION_ENDED_EVENT } from "./lib/auth.js"
 
 function AdminLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -64,62 +56,61 @@ function AdminLayout() {
   )
 }
 
+function SessionScreen() {
+  return (
+    <div className="session-screen">
+      <span className="session-spinner" aria-hidden="true" />
+      <p>Checking session...</p>
+    </div>
+  )
+}
+
+// One answer for the whole app: "checking" until the stored session has been
+// looked at, then "authenticated" or "anonymous". Signing in and out update it
+// directly, so the page never decides from an answer that is out of date.
 function AppContent() {
   const location = useLocation()
-  const [checkingSession, setCheckingSession] = useState(true)
-  const [authenticated, setAuthenticated] = useState(false)
+  const [session, setSession] = useState("checking")
 
   useEffect(() => {
     let cancelled = false
-
-    const checkSession = async () => {
-      setCheckingSession(true)
-      const accessToken = await getAccessToken()
-
-      if (cancelled) return
-      setAuthenticated(Boolean(accessToken))
-      setCheckingSession(false)
-    }
-
-    checkSession()
-
+    getAccessToken().then((accessToken) => {
+      if (!cancelled) setSession(accessToken ? "authenticated" : "anonymous")
+    })
     return () => {
       cancelled = true
     }
-  }, [location.pathname])
+  }, [])
 
-  // Keep the existing periodic session check so expired sessions still redirect.
+  // Logout, a failed refresh or a token that is not an admin's all clear the session.
   useEffect(() => {
-    if (location.pathname === "/login") return
+    const onEnded = () => setSession("anonymous")
+    window.addEventListener(SESSION_ENDED_EVENT, onEnded)
+    return () => window.removeEventListener(SESSION_ENDED_EVENT, onEnded)
+  }, [])
+
+  // Keep the periodic check so a session that expires while the page is open still ends.
+  useEffect(() => {
+    if (session !== "authenticated") return
 
     const interval = window.setInterval(async () => {
       const accessToken = await getAccessToken()
-
-      if (!accessToken) {
-        setAuthenticated(false)
-        window.location.replace("/login")
-      }
+      if (!accessToken) setSession("anonymous")
     }, 15000)
 
     return () => window.clearInterval(interval)
-  }, [location.pathname])
+  }, [session])
 
-  if (location.pathname === "/login") return <Login />
+  if (session === "checking") return <SessionScreen />
 
-  if (checkingSession) {
-    return (
-      <div className="session-screen">
-        <span className="session-spinner" aria-hidden="true" />
-        <p>Checking session...</p>
-      </div>
-    )
+  if (location.pathname === "/login") {
+    if (session === "authenticated") return <Navigate to="/dashboard" replace />
+    return <Login onAuthenticated={() => setSession("authenticated")} />
   }
 
-  return (
-    <ProtectedRoute authenticated={authenticated}>
-      <AdminLayout />
-    </ProtectedRoute>
-  )
+  if (session !== "authenticated") return <Navigate to="/login" replace />
+
+  return <AdminLayout />
 }
 
 function App() {

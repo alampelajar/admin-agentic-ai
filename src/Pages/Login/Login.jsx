@@ -6,7 +6,7 @@ import { Button } from "../../components/ui/button.jsx"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../components/ui/card.jsx"
 import { Input } from "../../components/ui/input.jsx"
 
-function Login() {
+function Login({ onAuthenticated = () => {} }) {
   const navigate = useNavigate()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -39,6 +39,8 @@ function Login() {
       if (data.refresh_token) localStorage.setItem("admin_refresh_token", data.refresh_token)
       else localStorage.removeItem("admin_refresh_token")
       localStorage.setItem("admin_user", JSON.stringify(data.user))
+      // Tell the app first: otherwise the dashboard would still see "no session" and send the admin back here.
+      onAuthenticated()
       navigate("/dashboard", { replace: true })
     } catch (error) {
       console.error("Login gagal:", error)
