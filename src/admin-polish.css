@@ -234,10 +234,10 @@ html.dark .page-content > div.min-h-screen > [class~="mt-6"][class~="rounded-xl"
 }
 
 .page-content thead th {
-  font-size: 10px;
-  font-weight: 750;
-  letter-spacing: .075em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .page-content input,

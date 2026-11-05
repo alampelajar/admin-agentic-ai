@@ -168,52 +168,6 @@ function Agents() {
   )
 
   // ============================================================
-  // STATUS
-  // ============================================================
-
-  const getStatusClass = (status) => {
-    if (
-      status === "Running" ||
-      status === "Active"
-    ) {
-      return `
-        bg-green-100
-        text-green-700
-        dark:bg-green-500/15
-        dark:text-green-400
-      `
-    }
-
-    if (status === "Idle") {
-      return `
-        bg-yellow-100
-        text-yellow-700
-        dark:bg-yellow-500/15
-        dark:text-yellow-400
-      `
-    }
-
-    if (
-      status === "Stopped" ||
-      status === "Inactive"
-    ) {
-      return `
-        bg-slate-100
-        text-slate-600
-        dark:bg-slate-800
-        dark:text-slate-400
-      `
-    }
-
-    return `
-      bg-slate-100
-      text-slate-600
-      dark:bg-slate-800
-      dark:text-slate-400
-    `
-  }
-
-  // ============================================================
   // ACTION MENU
   // ============================================================
 
@@ -308,1544 +262,234 @@ function Agents() {
   // RETURN
   // ============================================================
 
+  const statusDot = (status) =>
+    status === "Running" || status === "Active"
+      ? "bg-green-600"
+      : status === "Idle"
+        ? "bg-amber-500"
+        : "bg-muted-foreground"
+
+  const controlClass =
+    "h-9 rounded-lg border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+
   return (
-    <div
-      className="
-        min-h-screen
-        bg-slate-50
-        p-6
-        text-slate-900
-        transition-colors
-        duration-200
-        dark:bg-slate-950
-        dark:text-slate-100
-      "
-    >
-
-      {/* ====================================================== */}
-      {/* HEADER */}
-      {/* ====================================================== */}
-
+    <div className="min-h-screen bg-[var(--app-bg)] p-6">
       <div className="mb-6">
-        <h1
-          className="
-            text-2xl
-            font-bold
-            text-slate-900
-            dark:text-white
-          "
-        >
-          Agents
-        </h1>
-
-        <p
-          className="
-            mt-1
-            text-sm
-            text-slate-500
-            dark:text-slate-400
-          "
-        >
-          View and monitor AI agents from your platform
+        <h1 className="text-2xl font-semibold tracking-tight">Agents</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {loading
+            ? "Loading agents..."
+            : `${agents.length} ${agents.length === 1 ? "agent" : "agents"}, ${activeAgents} active, ${runningAgents} running now, ${totalModels} ${totalModels === 1 ? "model" : "models"} connected.`}
         </p>
       </div>
 
-      {/* ====================================================== */}
-      {/* PAGE ERROR */}
-      {/* ====================================================== */}
-
       {pageError && (
-        <div
-          className="
-            mb-5
-            flex
-            items-center
-            justify-between
-            gap-4
-            rounded-lg
-            border
-            border-red-200
-            bg-red-50
-            px-4
-            py-3
-            dark:border-red-900/60
-            dark:bg-red-950/40
-          "
-        >
-          <p
-            className="
-              text-sm
-              font-medium
-              text-red-600
-              dark:text-red-400
-            "
-          >
-            {pageError}
-          </p>
-
-          <button
-            onClick={loadAgents}
-            className="
-              shrink-0
-              rounded-lg
-              bg-red-600
-              px-3
-              py-2
-              text-sm
-              font-semibold
-              text-white
-              transition
-              hover:bg-red-700
-              dark:bg-red-600
-              dark:hover:bg-red-500
-            "
-          >
+        <div role="alert" className="mb-6 flex items-center justify-between gap-4 rounded-lg bg-destructive/10 px-4 py-3">
+          <p className="text-sm font-medium text-destructive">{pageError}</p>
+          <button type="button" onClick={loadAgents} className="text-sm font-medium underline-offset-4 hover:underline">
             Retry
           </button>
         </div>
       )}
 
-      {/* ====================================================== */}
-      {/* SUMMARY */}
-      {/* ====================================================== */}
-
-      <div
-        className="
-          mb-6
-          grid
-          grid-cols-1
-          gap-5
-          sm:grid-cols-2
-          xl:grid-cols-4
-        "
-      >
-
-        {/* Total */}
-
-        <div
-          className="
-            rounded-xl
-            border
-            border-slate-200
-            bg-white
-            p-5
-            shadow-sm
-            transition-all
-            duration-200
-            hover:-translate-y-0.5
-            hover:shadow-lg
-            dark:border-slate-800
-            dark:bg-slate-900
-            dark:shadow-none
-            dark:hover:bg-slate-900/80
-          "
-        >
-          <p
-            className="
-              text-sm
-              font-medium
-              text-slate-500
-              dark:text-slate-400
-            "
+      <section className="rounded-xl bg-card text-card-foreground">
+        <div className="flex flex-wrap items-center gap-3 p-4">
+          <input
+            type="search"
+            aria-label="Search agents"
+            placeholder="Search by name, slug, ID or description"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            className={`${controlClass} min-w-0 flex-1 basis-64`}
+          />
+          <select
+            aria-label="Filter by status"
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className={controlClass}
           >
-            Total Agents
-          </p>
-
-          <p
-            className="
-              mt-2
-              text-3xl
-              font-bold
-              text-slate-900
-              dark:text-white
-            "
-          >
-            {agents.length}
+            <option value="All">All statuses</option>
+            <option value="Running">Running</option>
+            <option value="Idle">Idle</option>
+            <option value="Stopped">Stopped</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+          <p className="ml-auto text-sm text-muted-foreground">
+            {filteredAgents.length} of {agents.length}
+            {(search || statusFilter !== "All") && (
+              <button type="button" onClick={clearFilters} className="ml-3 font-medium text-foreground underline-offset-4 hover:underline">
+                Clear filters
+              </button>
+            )}
           </p>
         </div>
-
-        {/* Active */}
-
-        <div
-          className="
-            rounded-xl
-            border
-            border-slate-200
-            bg-white
-            p-5
-            shadow-sm
-            transition-all
-            duration-200
-            hover:-translate-y-0.5
-            hover:shadow-lg
-            dark:border-slate-800
-            dark:bg-slate-900
-            dark:shadow-none
-            dark:hover:bg-slate-900/80
-          "
-        >
-          <p
-            className="
-              text-sm
-              font-medium
-              text-slate-500
-              dark:text-slate-400
-            "
-          >
-            Active
-          </p>
-
-          <p
-            className="
-              mt-2
-              text-3xl
-              font-bold
-              text-green-600
-              dark:text-green-400
-            "
-          >
-            {activeAgents}
-          </p>
-        </div>
-
-        {/* Running */}
-
-        <div
-          className="
-            rounded-xl
-            border
-            border-slate-200
-            bg-white
-            p-5
-            shadow-sm
-            transition-all
-            duration-200
-            hover:-translate-y-0.5
-            hover:shadow-lg
-            dark:border-slate-800
-            dark:bg-slate-900
-            dark:shadow-none
-            dark:hover:bg-slate-900/80
-          "
-        >
-          <p
-            className="
-              text-sm
-              font-medium
-              text-slate-500
-              dark:text-slate-400
-            "
-          >
-            Running
-          </p>
-
-          <p
-            className="
-              mt-2
-              text-3xl
-              font-bold
-              text-blue-600
-              dark:text-blue-400
-            "
-          >
-            {runningAgents}
-          </p>
-        </div>
-
-        {/* Models */}
-
-        <div
-          className="
-            rounded-xl
-            border
-            border-slate-200
-            bg-white
-            p-5
-            shadow-sm
-            transition-all
-            duration-200
-            hover:-translate-y-0.5
-            hover:shadow-lg
-            dark:border-slate-800
-            dark:bg-slate-900
-            dark:shadow-none
-            dark:hover:bg-slate-900/80
-          "
-        >
-          <p
-            className="
-              text-sm
-              font-medium
-              text-slate-500
-              dark:text-slate-400
-            "
-          >
-            Connected Models
-          </p>
-
-          <p
-            className="
-              mt-2
-              text-3xl
-              font-bold
-              text-slate-900
-              dark:text-white
-            "
-          >
-            {totalModels}
-          </p>
-        </div>
-      </div>
-
-      {/* ====================================================== */}
-      {/* MAIN CARD */}
-      {/* ====================================================== */}
-
-      <div
-        className="
-          overflow-hidden
-          rounded-xl
-          border
-          border-slate-200
-          bg-white
-          shadow-sm
-          dark:border-slate-800
-          dark:bg-slate-900
-          dark:shadow-none
-        "
-      >
-
-        {/* ================================================== */}
-        {/* TOOLBAR */}
-        {/* ================================================== */}
-
-        <div
-          className="
-            flex
-            flex-col
-            gap-4
-            border-b
-            border-slate-200
-            p-5
-            lg:flex-row
-            lg:items-center
-            lg:justify-between
-            dark:border-slate-800
-          "
-        >
-
-          {/* Search */}
-
-          <div className="relative w-full lg:max-w-md">
-
-            <span
-              className="
-                pointer-events-none
-                absolute
-                left-3
-                top-1/2
-                -translate-y-1/2
-                text-slate-400
-                dark:text-slate-500
-              "
-            >
-              ⌕
-            </span>
-
-            <input
-              type="text"
-              placeholder="Search agents..."
-              value={search}
-              onChange={(event) =>
-                setSearch(
-                  event.target.value
-                )
-              }
-              className="
-                w-full
-                rounded-lg
-                border
-                border-slate-200
-                bg-slate-50
-                py-2.5
-                pl-9
-                pr-4
-                text-sm
-                text-slate-900
-                outline-none
-                transition
-                placeholder:text-slate-400
-                focus:border-slate-400
-                focus:bg-white
-                focus:ring-2
-                focus:ring-slate-100
-
-                dark:border-slate-700
-                dark:bg-slate-800
-                dark:text-slate-100
-                dark:placeholder:text-slate-500
-                dark:focus:border-slate-600
-                dark:focus:bg-slate-800
-                dark:focus:ring-slate-700
-              "
-            />
-          </div>
-
-          {/* Filter */}
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-
-            <select
-              value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(
-                  event.target.value
-                )
-              }
-              className="
-                rounded-lg
-                border
-                border-slate-200
-                bg-white
-                px-3
-                py-2.5
-                text-sm
-                text-slate-700
-                outline-none
-                focus:border-slate-400
-
-                dark:border-slate-700
-                dark:bg-slate-800
-                dark:text-slate-200
-                dark:focus:border-slate-600
-              "
-            >
-              <option value="All">
-                All Status
-              </option>
-
-              <option value="Running">
-                Running
-              </option>
-
-              <option value="Idle">
-                Idle
-              </option>
-
-              <option value="Stopped">
-                Stopped
-              </option>
-
-              <option value="Active">
-                Active
-              </option>
-
-              <option value="Inactive">
-                Inactive
-              </option>
-            </select>
-          </div>
-        </div>
-
-        {/* ================================================== */}
-        {/* RESULT INFO */}
-        {/* ================================================== */}
-
-        <div
-          className="
-            flex
-            items-center
-            justify-between
-            border-b
-            border-slate-100
-            px-5
-            py-3
-            dark:border-slate-800
-          "
-        >
-          <p
-            className="
-              text-sm
-              text-slate-500
-              dark:text-slate-400
-            "
-          >
-            Showing{" "}
-            <span
-              className="
-                font-semibold
-                text-slate-700
-                dark:text-slate-200
-              "
-            >
-              {filteredAgents.length}
-            </span>{" "}
-            of{" "}
-            <span
-              className="
-                font-semibold
-                text-slate-700
-                dark:text-slate-200
-              "
-            >
-              {agents.length}
-            </span>{" "}
-            agents
-          </p>
-
-          {(search ||
-            statusFilter !== "All") && (
-            <button
-              onClick={clearFilters}
-              className="
-                text-sm
-                font-medium
-                text-slate-500
-                transition
-                hover:text-slate-900
-                dark:text-slate-400
-                dark:hover:text-white
-              "
-            >
-              Clear filters
-            </button>
-          )}
-        </div>
-
-        {/* ================================================== */}
-        {/* LOADING */}
-        {/* ================================================== */}
 
         {loading ? (
-          <div className="px-5 py-16 text-center">
-
-            <div
-              className="
-                mx-auto
-                h-8
-                w-8
-                animate-spin
-                rounded-full
-                border-2
-                border-slate-200
-                border-t-slate-800
-                dark:border-slate-700
-                dark:border-t-slate-200
-              "
-            />
-
-            <p
-              className="
-                mt-4
-                text-sm
-                text-slate-500
-                dark:text-slate-400
-              "
-            >
-              Loading agents...
-            </p>
-          </div>
+          <p className="px-4 py-12 text-center text-sm text-muted-foreground">Loading agents...</p>
         ) : (
-          <>
-            {/* ================================================== */}
-            {/* TABLE */}
-            {/* ================================================== */}
-
-            <div className="overflow-x-auto">
-
-              <table className="w-full min-w-[900px]">
-
-                <thead>
-                  <tr
-                    className="
-                      border-b
-                      border-slate-200
-                      bg-slate-50
-                      dark:border-slate-800
-                      dark:bg-slate-950/60
-                    "
-                  >
-
-                    <th
-                      className="
-                        px-5
-                        py-3
-                        text-left
-                        text-xs
-                        font-semibold
-                        uppercase
-                        tracking-wider
-                        text-slate-500
-                        dark:text-slate-400
-                      "
-                    >
-                      Agent
-                    </th>
-
-                    <th
-                      className="
-                        px-5
-                        py-3
-                        text-left
-                        text-xs
-                        font-semibold
-                        uppercase
-                        tracking-wider
-                        text-slate-500
-                        dark:text-slate-400
-                      "
-                    >
-                      Slug
-                    </th>
-
-                    <th
-                      className="
-                        px-5
-                        py-3
-                        text-left
-                        text-xs
-                        font-semibold
-                        uppercase
-                        tracking-wider
-                        text-slate-500
-                        dark:text-slate-400
-                      "
-                    >
-                      Status
-                    </th>
-
-                    <th
-                      className="
-                        px-5
-                        py-3
-                        text-left
-                        text-xs
-                        font-semibold
-                        uppercase
-                        tracking-wider
-                        text-slate-500
-                        dark:text-slate-400
-                      "
-                    >
-                      Active
-                    </th>
-
-                    <th
-                      className="
-                        px-5
-                        py-3
-                        text-left
-                        text-xs
-                        font-semibold
-                        uppercase
-                        tracking-wider
-                        text-slate-500
-                        dark:text-slate-400
-                      "
-                    >
-                      Models
-                    </th>
-
-                    <th
-                      className="
-                        px-5
-                        py-3
-                        text-right
-                        text-xs
-                        font-semibold
-                        uppercase
-                        tracking-wider
-                        text-slate-500
-                        dark:text-slate-400
-                      "
-                    >
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-
-                  {filteredAgents.map(
-                    (agent) => (
-                      <tr
-                        key={agent.id}
-                        className="
-                          border-b
-                          border-slate-100
-                          transition
-                          hover:bg-slate-50
-                          dark:border-slate-800
-                          dark:hover:bg-slate-800/50
-                        "
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead>
+                <tr className="text-muted-foreground">
+                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Agent</th>
+                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Status</th>
+                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Active</th>
+                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Models</th>
+                  <th className="w-12 px-4 py-2.5"><span className="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAgents.map((agent) => (
+                  <tr key={agent.id} className="transition-colors hover:bg-muted/60">
+                    <td className="max-w-md px-4 py-3">
+                      <p className="truncate font-medium">{agent.name}</p>
+                      <p className="truncate text-muted-foreground">
+                        {agent.slug} · #{agent.id}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                        <span aria-hidden="true" className={`size-2 rounded-full ${statusDot(agent.status)}`} />
+                        {agent.status}
+                      </span>
+                    </td>
+                    <td className={`px-4 py-3 ${agent.isActive ? "" : "text-muted-foreground"}`}>
+                      {agent.isActive ? "Yes" : "No"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {agent.models.length === 0 ? (
+                        "–"
+                      ) : (
+                        <span title={agent.models.map((model) => model.name).join("\n")}>
+                          {agent.models.slice(0, 2).map((model) => model.name).join(", ")}
+                          {agent.models.length > 2 && ` +${agent.models.length - 2}`}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={(event) => toggleActionMenu(event, agent.id)}
+                        aria-label={`Actions for ${agent.name}`}
+                        aria-expanded={openMenu === agent.id}
+                        className="size-8 rounded-lg text-lg leading-none text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                       >
-
-                        {/* Agent */}
-
-                        <td className="px-5 py-4">
-
-                          <div className="flex items-center gap-3">
-
-                            <div
-                              className="
-                                flex
-                                h-10
-                                w-10
-                                shrink-0
-                                items-center
-                                justify-center
-                                rounded-lg
-                                bg-slate-900
-                                text-sm
-                                font-semibold
-                                text-white
-                                dark:bg-slate-700
-                              "
+                        ⋮
+                      </button>
+                      {openMenu === agent.id &&
+                        createPortal(
+                          <div
+                            role="menu"
+                            style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
+                            className="fixed z-50 w-40 rounded-lg border border-border bg-popover p-1 text-sm text-popover-foreground shadow-lg"
+                          >
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="block w-full rounded-md px-3 py-2 text-left hover:bg-muted"
+                              onClick={() => {
+                                setSelectedAgent(agent)
+                                setOpenMenu(null)
+                              }}
                             >
-                              AI
-                            </div>
-
-                            <div>
-
-                              <p
-                                className="
-                                  font-medium
-                                  text-slate-900
-                                  dark:text-white
-                                "
-                              >
-                                {agent.name}
-                              </p>
-
-                              <p
-                                className="
-                                  text-xs
-                                  text-slate-500
-                                  dark:text-slate-400
-                                "
-                              >
-                                ID #{agent.id}
-                              </p>
-
-                            </div>
-
-                          </div>
-
-                        </td>
-
-                        {/* Slug */}
-
-                        <td className="px-5 py-4">
-
-                          <span
-                            className="
-                              rounded-md
-                              bg-slate-100
-                              px-2.5
-                              py-1
-                              text-xs
-                              font-medium
-                              text-slate-600
-                              dark:bg-slate-800
-                              dark:text-slate-300
-                            "
-                          >
-                            {agent.slug}
-                          </span>
-
-                        </td>
-
-                        {/* Status */}
-
-                        <td className="px-5 py-4">
-
-                          <span
-                            className={`
-                              inline-flex
-                              items-center
-                              gap-1.5
-                              rounded-full
-                              px-2.5
-                              py-1
-                              text-xs
-                              font-semibold
-                              ${getStatusClass(
-                                agent.status
-                              )}
-                            `}
-                          >
-                            <span
-                              className="
-                                h-1.5
-                                w-1.5
-                                rounded-full
-                                bg-current
-                              "
-                            />
-
-                            {agent.status}
-                          </span>
-
-                        </td>
-
-                        {/* Active */}
-
-                        <td className="px-5 py-4">
-
-                          {agent.isActive ? (
-                            <span
-                              className="
-                                inline-flex
-                                rounded-full
-                                bg-green-100
-                                px-2.5
-                                py-1
-                                text-xs
-                                font-semibold
-                                text-green-700
-                                dark:bg-green-500/15
-                                dark:text-green-400
-                              "
-                            >
-                              Yes
-                            </span>
-                          ) : (
-                            <span
-                              className="
-                                inline-flex
-                                rounded-full
-                                bg-slate-100
-                                px-2.5
-                                py-1
-                                text-xs
-                                font-semibold
-                                text-slate-600
-                                dark:bg-slate-800
-                                dark:text-slate-400
-                              "
-                            >
-                              No
-                            </span>
-                          )}
-
-                        </td>
-
-                        {/* Models */}
-
-                        <td className="px-5 py-4">
-
-                          <span
-                            className="
-                              text-sm
-                              font-semibold
-                              text-slate-700
-                              dark:text-slate-300
-                            "
-                          >
-                            {agent.models.length}
-                          </span>
-
-                        </td>
-
-                        {/* Action */}
-
-                        <td className="relative px-5 py-4 text-right">
-
-                          <button
-                            onClick={(event) =>
-                              toggleActionMenu(
-                                event,
-                                agent.id
-                              )
-                            }
-                            className="
-                              inline-flex
-                              h-9
-                              w-9
-                              items-center
-                              justify-center
-                              rounded-lg
-                              text-lg
-                              text-slate-400
-                              transition
-                              hover:bg-slate-100
-                              hover:text-slate-700
-                              dark:text-slate-500
-                              dark:hover:bg-slate-800
-                              dark:hover:text-slate-200
-                            "
-                            aria-label={`Actions for ${agent.name}`}
-                          >
-                            ⋮
-                          </button>
-
-                          {openMenu ===
-                            agent.id &&
-                            createPortal(
-                              <div
-                                className="
-                                  fixed
-                                  z-[100]
-                                  w-40
-                                  overflow-hidden
-                                  rounded-lg
-                                  border
-                                  border-slate-200
-                                  bg-white
-                                  py-1
-                                  text-left
-                                  shadow-xl
-                                  dark:border-slate-700
-                                  dark:bg-slate-900
-                                  dark:shadow-black/40
-                                "
-                                style={{
-                                  top: `${menuPosition.top}px`,
-                                  left: `${menuPosition.left}px`,
-                                }}
-                              >
-
-                                <button
-                                  onClick={() => {
-                                    setSelectedAgent(
-                                      agent
-                                    )
-
-                                    setOpenMenu(
-                                      null
-                                    )
-                                  }}
-                                  className="
-                                    block
-                                    w-full
-                                    px-4
-                                    py-2.5
-                                    text-sm
-                                    text-slate-700
-                                    transition
-                                    hover:bg-slate-50
-                                    dark:text-slate-200
-                                    dark:hover:bg-slate-800
-                                  "
-                                >
-                                  View Details
-                                </button>
-
-                              </div>,
-                              document.body
-                            )}
-
-                        </td>
-
-                      </tr>
-                    )
-                  )}
-
-                </tbody>
-
-              </table>
-
-              {/* ================================================= */}
-              {/* EMPTY STATE */}
-              {/* ================================================= */}
-
-              {filteredAgents.length ===
-                0 && (
-                <div className="px-5 py-16 text-center">
-
-                  <div
-                    className="
-                      mx-auto
-                      mb-3
-                      flex
-                      h-12
-                      w-12
-                      items-center
-                      justify-center
-                      rounded-full
-                      bg-slate-100
-                      text-xl
-                      text-slate-400
-                      dark:bg-slate-800
-                      dark:text-slate-500
-                    "
-                  >
-                    ?
-                  </div>
-
-                  <h3
-                    className="
-                      font-semibold
-                      text-slate-800
-                      dark:text-slate-200
-                    "
-                  >
-                    No agents found
-                  </h3>
-
-                  <p
-                    className="
-                      mt-1
-                      text-sm
-                      text-slate-500
-                      dark:text-slate-400
-                    "
-                  >
-                    Try changing your search
-                    or filter.
-                  </p>
-
-                </div>
-              )}
-
-            </div>
-          </>
+                              View details
+                            </button>
+                          </div>,
+                          document.body
+                        )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {filteredAgents.length === 0 && (
+              <div className="px-4 py-12 text-center">
+                <h2 className="text-base font-semibold">No agents found</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Try changing your search or filter.</p>
+              </div>
+            )}
+          </div>
         )}
-
-      </div>
-
-      {/* ====================================================== */}
-      {/* AGENT DETAILS MODAL */}
-      {/* ====================================================== */}
+      </section>
 
       {selectedAgent && (
         <div
-          className="
-            fixed
-            inset-0
-            z-50
-            flex
-            items-center
-            justify-center
-            bg-slate-900/40
-            p-4
-            backdrop-blur-[2px]
-            dark:bg-black/60
-          "
-          onClick={() =>
-            setSelectedAgent(null)
-          }
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setSelectedAgent(null)}
         >
-
           <div
-            className="
-              max-h-[90vh]
-              w-full
-              max-w-lg
-              overflow-y-auto
-              rounded-xl
-              bg-white
-              shadow-2xl
-              dark:border
-              dark:border-slate-800
-              dark:bg-slate-900
-            "
-            onClick={(event) =>
-              event.stopPropagation()
-            }
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="agent-details-title"
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-card p-6 text-card-foreground shadow-xl"
+            onClick={(event) => event.stopPropagation()}
           >
-
-            {/* Header */}
-
-            <div
-              className="
-                flex
-                items-start
-                justify-between
-                border-b
-                border-slate-200
-                p-6
-                dark:border-slate-800
-              "
-            >
-
-              <div>
-
-                <h2
-                  className="
-                    text-lg
-                    font-semibold
-                    text-slate-900
-                    dark:text-white
-                  "
-                >
-                  Agent Details
-                </h2>
-
-                <p
-                  className="
-                    mt-1
-                    text-sm
-                    text-slate-500
-                    dark:text-slate-400
-                  "
-                >
-                  Information from the database
-                </p>
-
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h2 id="agent-details-title" className="truncate text-lg font-semibold">{selectedAgent.name}</h2>
+                <p className="truncate text-sm text-muted-foreground">{selectedAgent.slug}</p>
               </div>
-
               <button
-                onClick={() =>
-                  setSelectedAgent(null)
-                }
-                className="
-                  flex
-                  h-8
-                  w-8
-                  items-center
-                  justify-center
-                  rounded-lg
-                  text-slate-400
-                  transition
-                  hover:bg-slate-100
-                  hover:text-slate-700
-                  dark:text-slate-500
-                  dark:hover:bg-slate-800
-                  dark:hover:text-slate-200
-                "
+                type="button"
+                aria-label="Close"
+                onClick={() => setSelectedAgent(null)}
+                className="size-8 shrink-0 rounded-lg text-xl leading-none text-muted-foreground hover:bg-muted"
               >
                 ×
               </button>
-
             </div>
 
-            {/* Content */}
+            <p className="mt-4 text-sm leading-6">{selectedAgent.description}</p>
 
-            <div className="p-6">
+            <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
+              <dt className="text-muted-foreground">Agent ID</dt>
+              <dd className="text-right tabular-nums">#{selectedAgent.id}</dd>
+              <dt className="text-muted-foreground">Status</dt>
+              <dd className="text-right">
+                <span className="inline-flex items-center gap-2">
+                  <span aria-hidden="true" className={`size-2 rounded-full ${statusDot(selectedAgent.status)}`} />
+                  {selectedAgent.status}
+                </span>
+              </dd>
+              <dt className="text-muted-foreground">Active</dt>
+              <dd className="text-right">{selectedAgent.isActive ? "Yes" : "No"}</dd>
+            </dl>
 
-              <div className="flex items-center gap-4">
+            <h3 className="mt-6 text-sm font-semibold">Models ({selectedAgent.models.length})</h3>
+            {selectedAgent.models.length === 0 ? (
+              <p className="mt-2 text-sm text-muted-foreground">No models connected.</p>
+            ) : (
+              <ul className="mt-2 divide-y divide-border">
+                {selectedAgent.models.map((model) => (
+                  <li key={model.id} className="py-3 text-sm">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{model.name}</p>
+                        {model.model_id !== model.name && (
+                          <p className="truncate text-muted-foreground">{model.model_id}</p>
+                        )}
+                      </div>
+                      <span className="shrink-0 text-muted-foreground">{model.provider?.name || "Unknown provider"}</span>
+                    </div>
+                    {model.description && <p className="mt-2 text-muted-foreground">{model.description}</p>}
+                  </li>
+                ))}
+              </ul>
+            )}
 
-                <div
-                  className="
-                    flex
-                    h-14
-                    w-14
-                    items-center
-                    justify-center
-                    rounded-xl
-                    bg-slate-900
-                    text-lg
-                    font-semibold
-                    text-white
-                    dark:bg-slate-700
-                  "
-                >
-                  AI
-                </div>
-
-                <div>
-
-                  <h3
-                    className="
-                      font-semibold
-                      text-slate-900
-                      dark:text-white
-                    "
-                  >
-                    {selectedAgent.name}
-                  </h3>
-
-                  <p
-                    className="
-                      text-sm
-                      text-slate-500
-                      dark:text-slate-400
-                    "
-                  >
-                    {selectedAgent.slug}
-                  </p>
-
-                </div>
-
-              </div>
-
-              {/* Details */}
-
-              <div
-                className="
-                  mt-6
-                  rounded-lg
-                  border
-                  border-slate-200
-                  dark:border-slate-800
-                "
-              >
-
-                <div
-                  className="
-                    flex
-                    items-center
-                    justify-between
-                    border-b
-                    border-slate-100
-                    px-4
-                    py-3
-                    dark:border-slate-800
-                  "
-                >
-                  <span
-                    className="
-                      text-sm
-                      text-slate-500
-                      dark:text-slate-400
-                    "
-                  >
-                    Agent ID
-                  </span>
-
-                  <span
-                    className="
-                      text-sm
-                      font-semibold
-                      text-slate-800
-                      dark:text-slate-200
-                    "
-                  >
-                    #{selectedAgent.id}
-                  </span>
-                </div>
-
-                <div
-                  className="
-                    flex
-                    items-center
-                    justify-between
-                    border-b
-                    border-slate-100
-                    px-4
-                    py-3
-                    dark:border-slate-800
-                  "
-                >
-                  <span
-                    className="
-                      text-sm
-                      text-slate-500
-                      dark:text-slate-400
-                    "
-                  >
-                    Slug
-                  </span>
-
-                  <span
-                    className="
-                      text-sm
-                      font-medium
-                      text-slate-800
-                      dark:text-slate-200
-                    "
-                  >
-                    {selectedAgent.slug}
-                  </span>
-                </div>
-
-                <div
-                  className="
-                    flex
-                    items-center
-                    justify-between
-                    border-b
-                    border-slate-100
-                    px-4
-                    py-3
-                    dark:border-slate-800
-                  "
-                >
-                  <span
-                    className="
-                      text-sm
-                      text-slate-500
-                      dark:text-slate-400
-                    "
-                  >
-                    Status
-                  </span>
-
-                  <span
-                    className={`
-                      rounded-full
-                      px-2.5
-                      py-1
-                      text-xs
-                      font-semibold
-                      ${getStatusClass(
-                        selectedAgent.status
-                      )}
-                    `}
-                  >
-                    {selectedAgent.status}
-                  </span>
-                </div>
-
-                <div
-                  className="
-                    flex
-                    items-center
-                    justify-between
-                    border-b
-                    border-slate-100
-                    px-4
-                    py-3
-                    dark:border-slate-800
-                  "
-                >
-                  <span
-                    className="
-                      text-sm
-                      text-slate-500
-                      dark:text-slate-400
-                    "
-                  >
-                    Active
-                  </span>
-
-                  <span
-                    className="
-                      text-sm
-                      font-medium
-                      text-slate-800
-                      dark:text-slate-200
-                    "
-                  >
-                    {selectedAgent.isActive
-                      ? "Yes"
-                      : "No"}
-                  </span>
-                </div>
-
-                <div
-                  className="
-                    flex
-                    items-center
-                    justify-between
-                    px-4
-                    py-3
-                  "
-                >
-                  <span
-                    className="
-                      text-sm
-                      text-slate-500
-                      dark:text-slate-400
-                    "
-                  >
-                    Connected Models
-                  </span>
-
-                  <span
-                    className="
-                      text-sm
-                      font-semibold
-                      text-slate-800
-                      dark:text-slate-200
-                    "
-                  >
-                    {selectedAgent.models.length}
-                  </span>
-                </div>
-
-              </div>
-
-              {/* Description */}
-
-              <div className="mt-5">
-
-                <p
-                  className="
-                    mb-2
-                    text-sm
-                    font-medium
-                    text-slate-700
-                    dark:text-slate-300
-                  "
-                >
-                  Description
-                </p>
-
-                <div
-                  className="
-                    rounded-lg
-                    bg-slate-50
-                    p-4
-                    dark:bg-slate-800/70
-                  "
-                >
-                  <p
-                    className="
-                      text-sm
-                      leading-6
-                      text-slate-600
-                      dark:text-slate-400
-                    "
-                  >
-                    {selectedAgent.description}
-                  </p>
-                </div>
-
-              </div>
-
-              {/* Models */}
-
-              <div className="mt-5">
-
-                <p
-                  className="
-                    mb-2
-                    text-sm
-                    font-medium
-                    text-slate-700
-                    dark:text-slate-300
-                  "
-                >
-                  Models
-                </p>
-
-                {selectedAgent.models.length ===
-                0 ? (
-                  <div
-                    className="
-                      rounded-lg
-                      bg-slate-50
-                      p-4
-                      dark:bg-slate-800/70
-                    "
-                  >
-                    <p
-                      className="
-                        text-sm
-                        text-slate-500
-                        dark:text-slate-400
-                      "
-                    >
-                      No models connected.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-
-                    {selectedAgent.models.map(
-                      (model) => (
-                        <div
-                          key={model.id}
-                          className="
-                            rounded-lg
-                            border
-                            border-slate-200
-                            p-3
-                            dark:border-slate-800
-                            dark:bg-slate-900
-                          "
-                        >
-
-                          <div
-                            className="
-                              flex
-                              items-center
-                              justify-between
-                              gap-3
-                            "
-                          >
-
-                            <div>
-
-                              <p
-                                className="
-                                  text-sm
-                                  font-semibold
-                                  text-slate-800
-                                  dark:text-slate-200
-                                "
-                              >
-                                {model.name}
-                              </p>
-
-                              <p
-                                className="
-                                  mt-0.5
-                                  text-xs
-                                  text-slate-500
-                                  dark:text-slate-400
-                                "
-                              >
-                                {model.model_id}
-                              </p>
-
-                            </div>
-
-                            <span
-                              className="
-                                shrink-0
-                                rounded-full
-                                bg-slate-100
-                                px-2.5
-                                py-1
-                                text-xs
-                                font-medium
-                                text-slate-600
-                                dark:bg-slate-800
-                                dark:text-slate-300
-                              "
-                            >
-                              {model.provider?.name ||
-                                "Unknown Provider"}
-                            </span>
-
-                          </div>
-
-                          {model.description && (
-                            <p
-                              className="
-                                mt-2
-                                text-xs
-                                leading-5
-                                text-slate-500
-                                dark:text-slate-400
-                              "
-                            >
-                              {model.description}
-                            </p>
-                          )}
-
-                        </div>
-                      )
-                    )}
-
-                  </div>
-                )}
-
-              </div>
-
-              {/* Close */}
-
+            <div className="mt-6 flex justify-end">
               <button
-                onClick={() =>
-                  setSelectedAgent(null)
-                }
-                className="
-                  mt-6
-                  w-full
-                  rounded-lg
-                  bg-slate-900
-                  px-4
-                  py-2.5
-                  text-sm
-                  font-semibold
-                  text-white
-                  transition
-                  hover:bg-slate-800
-                  dark:bg-slate-700
-                  dark:hover:bg-slate-600
-                "
+                type="button"
+                onClick={() => setSelectedAgent(null)}
+                className="h-9 rounded-lg border border-input bg-card px-4 text-sm font-medium transition-colors hover:bg-muted"
               >
                 Close
               </button>
-
             </div>
           </div>
         </div>
       )}
-
     </div>
   )
 }
