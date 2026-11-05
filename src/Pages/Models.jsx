@@ -242,8 +242,6 @@ function Models() {
     "h-9 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
   const secondaryButton =
     "h-9 rounded-lg border border-input bg-card px-4 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
-  const rowAction =
-    "text-sm font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline disabled:opacity-50"
 
   const agentOptions = (
     <>
@@ -334,23 +332,40 @@ function Models() {
                         : "Belum ditetapkan"}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex items-center gap-2 whitespace-nowrap">
-                        <span aria-hidden="true" className={`size-2 rounded-full ${model.is_active ? "bg-green-600" : "bg-muted-foreground"}`} />
-                        {model.is_active ? "Aktif" : "Nonaktif"}
-                      </span>
+                      <label className="inline-flex cursor-pointer items-center gap-3 whitespace-nowrap">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={Boolean(model.is_active)}
+                          aria-label={`${model.is_active ? "Nonaktifkan" : "Aktifkan"} ${model.name}`}
+                          onClick={() => void toggleActive(model)}
+                          disabled={updatingId === model.id}
+                          className={`relative h-5 w-9 shrink-0 rounded-full transition-colors disabled:opacity-50 ${model.is_active ? "bg-green-600" : "bg-muted-foreground/40"}`}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className={`absolute left-0.5 top-0.5 size-4 rounded-full bg-white transition-transform ${model.is_active ? "translate-x-4" : ""}`}
+                          />
+                        </button>
+                        <span className={model.is_active ? "" : "text-muted-foreground"}>
+                          {updatingId === model.id ? "Menyimpan..." : model.is_active ? "Aktif" : "Nonaktif"}
+                        </span>
+                      </label>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{formatDate(model.created_at)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap justify-end gap-x-4 gap-y-1">
-                        <button type="button" className={rowAction} onClick={() => startEditing(model)} disabled={updatingId === model.id}>
+                    <td className="w-40 px-4 py-3">
+                      <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                        <button
+                          type="button"
+                          className="h-8 rounded-lg border border-input bg-card px-3 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
+                          onClick={() => startEditing(model)}
+                          disabled={updatingId === model.id}
+                        >
                           Edit
-                        </button>
-                        <button type="button" className={rowAction} onClick={() => void toggleActive(model)} disabled={updatingId === model.id}>
-                          {updatingId === model.id ? "Menyimpan..." : model.is_active ? "Nonaktifkan" : "Aktifkan"}
                         </button>
                         <button
                           type="button"
-                          className="text-sm font-medium text-destructive underline-offset-4 hover:underline disabled:opacity-50"
+                          className="h-8 rounded-lg px-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
                           onClick={() => void deleteModel(model)}
                           disabled={updatingId === model.id}
                         >
