@@ -11,6 +11,7 @@ function Login({ onAuthenticated = () => {} }) {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [leaving, setLeaving] = useState(false)
 
   const handleLogin = async (event) => {
     event.preventDefault()
@@ -38,6 +39,11 @@ function Login({ onAuthenticated = () => {} }) {
       if (data.refresh_token) localStorage.setItem("admin_refresh_token", data.refresh_token)
       else localStorage.removeItem("admin_refresh_token")
       localStorage.setItem("admin_user", JSON.stringify(data.user))
+      // Let the blue panel sweep away before the dashboard builds in.
+      setLeaving(true)
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        await new Promise((resolve) => setTimeout(resolve, 480))
+      }
       // Tell the app first: otherwise the dashboard would still see "no session" and send the admin back here.
       onAuthenticated()
       navigate("/dashboard", { replace: true })
@@ -48,33 +54,48 @@ function Login({ onAuthenticated = () => {} }) {
   }
 
   return (
-    <main className="grid min-h-svh bg-background text-foreground lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <section className="flex flex-col justify-between gap-10 bg-primary px-6 py-8 text-primary-foreground sm:px-10 lg:px-16 lg:py-14">
-        <div className="flex items-center gap-3">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-            <circle cx="8" cy="16" r="4" fill="currentColor" />
-            <circle cx="24" cy="8" r="4" fill="currentColor" />
-            <circle cx="24" cy="24" r="4" fill="currentColor" />
-            <path d="M11.5 14.3 20.5 9.7M11.5 17.7l9 4.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
+    <main className={`grid min-h-svh overflow-hidden bg-background text-foreground lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] ${leaving ? "login-leaving" : ""}`}>
+      <section className="login-hero flex flex-col justify-between gap-10 px-6 py-8 text-white sm:px-10 lg:px-16 lg:py-14">
+        <span className="blob blob-1" aria-hidden="true" />
+        <span className="blob blob-2" aria-hidden="true" />
+        <span className="dots" aria-hidden="true" />
+
+        <div className="login-reveal flex items-center gap-3" style={{ "--i": 0 }}>
+          <span className="login-hero-logo grid size-11 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/25 backdrop-blur">
+            <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <circle cx="8" cy="16" r="4" fill="currentColor" />
+              <circle cx="24" cy="8" r="4" fill="currentColor" />
+              <circle cx="24" cy="24" r="4" fill="currentColor" />
+              <path d="M11.5 14.3 20.5 9.7M11.5 17.7l9 4.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </span>
           <span className="text-lg font-semibold tracking-tight">Agentic AI</span>
         </div>
 
-        <p className="max-w-[18ch] text-3xl font-semibold leading-[1.1] tracking-[-0.02em] sm:text-4xl">Agents, models and tickets in one place.</p>
+        <div className="space-y-4">
+          <p className="login-reveal max-w-[16ch] text-3xl font-semibold leading-[1.1] tracking-[-0.02em] sm:text-5xl" style={{ "--i": 1 }}>
+            Agents, models and tickets in one place.
+          </p>
+          <p className="login-reveal max-w-md text-sm text-white/75 sm:text-base" style={{ "--i": 2 }}>
+            Watch your platform, answer users and keep every agent running from one console.
+          </p>
+        </div>
 
-        <ul className="hidden gap-x-8 gap-y-2 text-sm text-primary-foreground/80 sm:grid sm:grid-cols-3 lg:max-w-md">
-          <li>Agents</li>
-          <li>Models</li>
-          <li>Tickets</li>
+        <ul className="hidden gap-3 text-sm sm:flex">
+          {["Agents", "Models", "Tickets"].map((label, index) => (
+            <li key={label} className="login-reveal login-chip rounded-full bg-white/10 px-4 py-2 ring-1 ring-white/20 backdrop-blur" style={{ "--i": index + 3 }}>
+              {label}
+            </li>
+          ))}
         </ul>
       </section>
 
       <section className="flex items-center px-6 py-12 sm:px-10 lg:px-16">
-        <div className="mx-auto w-full max-w-sm">
-          <h1 className="text-2xl font-semibold tracking-tight">Admin sign in</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Use your administrator account.</p>
+        <div className="login-card mx-auto w-full max-w-sm rounded-2xl border border-border bg-card p-7 shadow-[0_20px_50px_rgb(24_32_64/8%)]">
+          <h1 className="text-2xl font-semibold tracking-tight">Welcome back 👋</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Sign in with your administrator account.</p>
 
-          <form onSubmit={handleLogin} className="mt-8 space-y-4">
+          <form onSubmit={handleLogin} className="login-form mt-7 space-y-4">
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">Email</label>
               <Input id="email" name="email" type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@company.com" required disabled={loading} className="h-10 rounded-lg shadow-none!" />
@@ -89,7 +110,10 @@ function Login({ onAuthenticated = () => {} }) {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <Button type="submit" className="h-10 w-full rounded-lg shadow-none!" disabled={loading}>{loading ? "Signing in..." : "Sign in"}</Button>
+            <Button type="submit" className="h-11 w-full gap-2 rounded-lg text-white" disabled={loading || leaving}>
+              {(loading || leaving) && <span className="spinner" aria-hidden="true" />}
+              {leaving ? "Opening dashboard..." : loading ? "Signing in..." : "Sign in"}
+            </Button>
           </form>
         </div>
       </section>

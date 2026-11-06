@@ -1,10 +1,29 @@
 import { useEffect, useState } from "react"
+import { flushSync } from "react-dom"
 import { useNavigate } from "react-router-dom"
 import { Button } from "./ui/button.jsx"
 import { logoutAdminSession } from "../lib/auth"
 
+function greeting() {
+  const hour = new Date().getHours()
+  if (hour < 11) return "Good morning"
+  if (hour < 15) return "Good afternoon"
+  if (hour < 19) return "Good evening"
+  return "Good night"
+}
+
+function storedAdminName() {
+  try {
+    const user = JSON.parse(localStorage.getItem("admin_user") || "null")
+    return user?.name?.split(" ")[0] || "Admin"
+  } catch {
+    return "Admin"
+  }
+}
+
 function Header({ onMenuClick = () => {} }) {
   const navigate = useNavigate()
+  const [adminName] = useState(storedAdminName)
   const [profileOpen, setProfileOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
 
@@ -28,11 +47,32 @@ function Header({ onMenuClick = () => {} }) {
     setDarkMode(systemDark)
   }, [])
 
-  const toggleDarkMode = () => {
+  const toggleDarkMode = (event) => {
     const nextMode = !darkMode
-    setDarkMode(nextMode)
-    document.documentElement.classList.toggle("dark", nextMode)
-    localStorage.setItem("admin_theme", nextMode ? "dark" : "light")
+    const apply = () => {
+      setDarkMode(nextMode)
+      document.documentElement.classList.toggle("dark", nextMode)
+      localStorage.setItem("admin_theme", nextMode ? "dark" : "light")
+    }
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    if (!document.startViewTransition || reduceMotion) {
+      apply()
+      return
+    }
+
+    // The new theme spreads out in a circle from the switch.
+    const rect = event.currentTarget.getBoundingClientRect()
+    const x = rect.left + rect.width / 2
+    const y = rect.top + rect.height / 2
+    const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
+    const transition = document.startViewTransition(() => flushSync(apply))
+    transition.ready.then(() => {
+      document.documentElement.animate(
+        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+        { duration: 650, easing: "cubic-bezier(0.22, 1, 0.36, 1)", pseudoElement: "::view-transition-new(root)" },
+      )
+    })
   }
 
   const handleLogout = async () => {
@@ -47,16 +87,28 @@ function Header({ onMenuClick = () => {} }) {
         <Button type="button" variant="outline" size="icon" className="mobile-menu-button" aria-label="Open navigation menu" onClick={onMenuClick}>
           <span aria-hidden="true">☰</span>
         </Button>
-        <div>
-          <h1 className="header-heading">Admin workspace</h1>
-          <p className="header-subheading">Manage your Agentic AI platform</p>
+        <div className="header-greeting">
+          <h1 className="header-heading">
+            {greeting()}, {adminName} <span className="header-wave" aria-hidden="true">👋</span>
+          </h1>
+          <p className="header-subheading">Here is what is happening on your Agentic AI platform.</p>
         </div>
       </div>
 
       <div className="app-header-actions">
-        <Button type="button" variant="outline" size="icon" onClick={toggleDarkMode} aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} title={darkMode ? "Light mode" : "Dark mode"} className="header-icon-button">
-          <span aria-hidden="true">{darkMode ? "☀" : "◐"}</span>
-        </Button>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={darkMode}
+          aria-label="Dark mode"
+          title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+          onClick={toggleDarkMode}
+          className="theme-switch"
+        >
+          <span className="theme-switch-knob" aria-hidden="true" />
+          <span className="theme-switch-icon" aria-hidden="true">☀</span>
+          <span className="theme-switch-icon" aria-hidden="true">☾</span>
+        </button>
 
         <div className="header-profile-wrap">
           <button
