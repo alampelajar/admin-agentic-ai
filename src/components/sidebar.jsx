@@ -1,5 +1,7 @@
 
+import { useState } from "react"
 import { NavLink } from "react-router-dom"
+import { getStoredAdmin } from "../lib/auth"
 
 const menuItems = [
   {
@@ -197,6 +199,8 @@ function MenuIcon({ name, active }) {
 }
 
 function Sidebar({ open = false, collapsed = false, onToggleCollapse = () => {}, onNavigate = () => {} }) {
+  const [admin] = useState(getStoredAdmin)
+
   return (
     <>
       <button
@@ -334,7 +338,7 @@ function Sidebar({ open = false, collapsed = false, onToggleCollapse = () => {},
             "
             aria-hidden="true"
           >
-            A
+            {admin.initial}
           </div>
 
           <div className="sidebar-profile-text min-w-0 flex-1">
@@ -344,8 +348,9 @@ function Sidebar({ open = false, collapsed = false, onToggleCollapse = () => {},
                 text-slate-900
                 dark:text-white
               "
+              title={admin.name}
             >
-              Admin
+              {admin.name}
             </p>
 
             <p
@@ -354,8 +359,9 @@ function Sidebar({ open = false, collapsed = false, onToggleCollapse = () => {},
                 text-slate-500
                 dark:text-slate-400
               "
+              title={admin.email || admin.role}
             >
-              Workspace administrator
+              {admin.email || admin.role}
             </p>
           </div>
 

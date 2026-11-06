@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { flushSync } from "react-dom"
 import { useNavigate } from "react-router-dom"
 import { Button } from "./ui/button.jsx"
-import { logoutAdminSession } from "../lib/auth"
+import { getStoredAdmin, logoutAdminSession } from "../lib/auth"
 
 function greeting() {
   const hour = new Date().getHours()
@@ -12,18 +12,9 @@ function greeting() {
   return "Good night"
 }
 
-function storedAdminName() {
-  try {
-    const user = JSON.parse(localStorage.getItem("admin_user") || "null")
-    return user?.name?.split(" ")[0] || "Admin"
-  } catch {
-    return "Admin"
-  }
-}
-
 function Header({ onMenuClick = () => {} }) {
   const navigate = useNavigate()
-  const [adminName] = useState(storedAdminName)
+  const [admin] = useState(getStoredAdmin)
   const [profileOpen, setProfileOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
 
@@ -89,7 +80,7 @@ function Header({ onMenuClick = () => {} }) {
         </Button>
         <div className="header-greeting">
           <h1 className="header-heading">
-            {greeting()}, {adminName} <span className="header-wave" aria-hidden="true">👋</span>
+            {greeting()}, {admin.firstName}<span className="header-wave" aria-hidden="true">👋</span>
           </h1>
           <p className="header-subheading">Here is what is happening on your Agentic AI platform.</p>
         </div>
@@ -117,10 +108,10 @@ function Header({ onMenuClick = () => {} }) {
             aria-expanded={profileOpen}
             className="header-profile-button"
           >
-            <span className="header-profile-avatar" aria-hidden="true">A</span>
+            <span className="header-profile-avatar" aria-hidden="true">{admin.initial}</span>
             <span className="header-profile-copy">
-              <span className="header-profile-name">Admin</span>
-              <span className="header-profile-role">Administrator</span>
+              <span className="header-profile-name">{admin.name}</span>
+              <span className="header-profile-role">{admin.email || admin.role}</span>
             </span>
             <span className="header-profile-chevron" aria-hidden="true">⌄</span>
           </button>
@@ -128,8 +119,8 @@ function Header({ onMenuClick = () => {} }) {
           {profileOpen && (
             <div className="header-profile-menu">
               <div className="header-profile-menu-heading">
-                <strong>Administrator</strong>
-                <span>admin@example.com</span>
+                <strong>{admin.name}</strong>
+                <span>{admin.email || admin.role}</span>
               </div>
               <button type="button" className="header-logout-button" onClick={handleLogout}>
                 <span aria-hidden="true">↪</span>
