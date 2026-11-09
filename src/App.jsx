@@ -17,25 +17,40 @@ import Agents from "./Pages/Agents.jsx"
 import Models from "./Pages/Models.jsx"
 import Tasks from "./Pages/Tasks.jsx"
 import Analytics from "./Pages/Analytics.jsx"
+import Reports from "./Pages/Reports.jsx"
 import Logs from "./Pages/Logs.jsx"
 import Settings from "./Pages/Settings.jsx"
 import Login from "./Pages/Login/Login.jsx"
 import { getAccessToken, SESSION_ENDED_EVENT } from "./lib/auth.js"
 
+const SIDEBAR_KEY = "admin_sidebar"
+
 function AdminLayout() {
+  const location = useLocation()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDEBAR_KEY) === "collapsed")
+
+  const toggleCollapsed = () => {
+    setCollapsed((value) => {
+      localStorage.setItem(SIDEBAR_KEY, value ? "expanded" : "collapsed")
+      return !value
+    })
+  }
 
   return (
-    <div className="app">
+    <div className={`app ${collapsed ? "sidebar-collapsed" : ""}`}>
       <Sidebar
         open={mobileNavOpen}
+        collapsed={collapsed}
+        onToggleCollapse={toggleCollapsed}
         onNavigate={() => setMobileNavOpen(false)}
       />
 
       <main className="main-content">
         <Header onMenuClick={() => setMobileNavOpen(true)} />
 
-        <div className="page-content">
+        {/* Keyed by path so each page plays its entrance animation. */}
+        <div key={location.pathname} className="page-content page-enter">
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/users" element={<Users />} />
@@ -45,6 +60,7 @@ function AdminLayout() {
             <Route path="/models" element={<Models />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/reports" element={<Reports />} />
             <Route path="/logs" element={<Logs />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

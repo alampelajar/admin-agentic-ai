@@ -25,6 +25,26 @@ export async function logoutAdminSession() {
   }
 }
 
+// The signed-in admin as the login response described them, for display only.
+export function getStoredAdmin() {
+  let user = null
+  try {
+    user = JSON.parse(localStorage.getItem("admin_user") || "null")
+  } catch {
+    user = null
+  }
+  const email = typeof user?.email === "string" ? user.email.trim() : ""
+  const name = typeof user?.name === "string" && user.name.trim() ? user.name.trim() : email.split("@")[0] || "Admin"
+  const role = typeof user?.role === "string" && user.role ? user.role : "admin"
+  return {
+    name,
+    firstName: name.split(/\s+/)[0],
+    email,
+    role: role.charAt(0).toUpperCase() + role.slice(1),
+    initial: (name || email || "A").charAt(0).toUpperCase(),
+  }
+}
+
 function decodeJwtPayload(token) {
   try {
     const parts = token.split(".")
