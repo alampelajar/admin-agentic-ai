@@ -40,6 +40,11 @@ const menuItems = [
     icon: "analytics",
   },
   {
+    name: "Reports",
+    path: "/reports",
+    icon: "reports",
+  },
+  {
     name: "Logs",
     path: "/logs",
     icon: "logs",
@@ -173,6 +178,12 @@ function MenuIcon({ name, active }) {
         <path d="M3 3v18h18" />
         <path d="m7 14 4-4 3 3 6-7" />
         <path d="M16 6h4v4" />
+      </>
+    ),
+    reports: (
+      <>
+        <path d="M6 3h9l4 4v14H6z" />
+        <path d="M14 3v5h5M9 17v-3M12.5 17v-5M16 17v-2" />
       </>
     ),
     logs: (
