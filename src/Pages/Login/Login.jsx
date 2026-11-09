@@ -4,6 +4,7 @@ import { API_BASE_URL } from "../../lib/config.js"
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert.jsx"
 import { Button } from "../../components/ui/button.jsx"
 import { Input } from "../../components/ui/input.jsx"
+import { PasswordInput } from "../../components/ui/password-input.jsx"
 
 function Login({ onAuthenticated = () => {} }) {
   const navigate = useNavigate()
@@ -102,7 +103,7 @@ function Login({ onAuthenticated = () => {} }) {
             </div>
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium">Password</label>
-              <Input id="password" name="password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Your password" required disabled={loading} className="h-10 rounded-lg shadow-none!" />
+              <PasswordInput id="password" name="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Your password" required disabled={loading} className="h-10 rounded-lg shadow-none!" />
             </div>
             {error && (
               <Alert variant="destructive" role="alert" aria-live="polite" className="bg-destructive/5">

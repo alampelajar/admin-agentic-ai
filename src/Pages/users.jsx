@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { createPortal } from "react-dom"
 import { apiFetch } from "../lib/api"
+import { PasswordInput } from "../components/ui/password-input.jsx"
 
 const normalizeUser = (user) => {
   const roleMap = {
@@ -844,12 +845,12 @@ function Users() {
               </div>
               <div>
                 <label htmlFor="add-password" className={fieldLabel}>Password</label>
-                <input id="add-password" type="password" name="password" value={newUser.password} onChange={handleNewUserChange} disabled={submitting} placeholder="Enter password" aria-describedby="add-password-hint" className={inputClass} />
+                <PasswordInput id="add-password" name="password" autoComplete="new-password" value={newUser.password} onChange={handleNewUserChange} disabled={submitting} placeholder="Enter password" aria-describedby="add-password-hint" className={`${inputClass} shadow-none!`} />
                 <p id="add-password-hint" className="mt-1.5 text-sm text-muted-foreground">At least 6 characters.</p>
               </div>
               <div>
                 <label htmlFor="add-confirm" className={fieldLabel}>Confirm password</label>
-                <input id="add-confirm" type="password" name="confirmPassword" value={newUser.confirmPassword} onChange={handleNewUserChange} disabled={submitting} placeholder="Repeat the password" className={inputClass} />
+                <PasswordInput id="add-confirm" name="confirmPassword" autoComplete="new-password" value={newUser.confirmPassword} onChange={handleNewUserChange} disabled={submitting} placeholder="Repeat the password" className={`${inputClass} shadow-none!`} />
               </div>
               {formError && <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{formError}</p>}
               <div className="flex justify-end gap-3 pt-2">
