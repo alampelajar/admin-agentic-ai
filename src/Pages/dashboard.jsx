@@ -447,8 +447,8 @@ function Dashboard() {
                 <BarChart data={activityData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
                   <defs>
                     <linearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#4d6bff" />
-                      <stop offset="100%" stopColor="#1534d6" />
+                      <stop offset="0%" style={{ stopColor: "var(--brand)" }} />
+                      <stop offset="100%" style={{ stopColor: "var(--brand-strong)" }} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />

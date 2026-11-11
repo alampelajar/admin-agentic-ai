@@ -74,6 +74,7 @@ function Login({ onAuthenticated = () => {} }) {
         </div>
 
         <div className="space-y-4">
+          {/* design-system-ignore: the hero headline is display type, larger than the type scale */}
           <p className="login-reveal max-w-[16ch] text-3xl font-semibold leading-[1.1] tracking-[-0.02em] sm:text-5xl" style={{ "--i": 1 }}>
             Agents, models and tickets in one place.
           </p>

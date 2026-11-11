@@ -101,3 +101,22 @@ The console is in English, with some older Indonesian text. New text is in Engli
 
 Many older pages use raw `slate` colors. Do not copy them, and do not restyle them as
 part of unrelated work: follow the rules in what you touch, and mention the rest.
+
+## Automatic checks
+
+`scripts/check-design.mjs` checks these rules, so they do not depend on anyone remembering them.
+
+- **While Claude Code works:** a hook in `.claude/settings.json` checks every file it edits and
+  reports problems straight back, so it fixes them before you see the change.
+- **By hand:** `npm run design:check` checks what this branch changes compared with `main`.
+  `node scripts/check-design.mjs --all` lists what older code still breaks.
+- **On pull requests:** the CI workflow runs the same check and fails when new lines break a rule.
+
+It checks hex colors, palette colors (except the status pairs above, and white on the blue
+brand surfaces), arbitrary values like `p-[13px]` (`var(...)` values are fine), and
+`window.confirm` and `alert`. Only new and changed lines are checked, so older pages pass
+until someone touches them.
+
+When a line must break a rule on purpose, put a comment containing `design-system-ignore` and
+the reason on that line or the line above it. Spacing, wording and visual polish still need a
+person to look at the result.
