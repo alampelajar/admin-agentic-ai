@@ -3,6 +3,7 @@ import {
   getAccessToken,
   refreshAccessToken,
   clearAdminSession,
+  getStoredAccessToken,
 } from "./auth"
 
 
@@ -72,9 +73,7 @@ export async function apiFetch(
     }
 
     accessToken =
-      localStorage.getItem(
-        "admin_access_token"
-      )
+      getStoredAccessToken()
 
     if (!accessToken) {
       clearAdminSession()

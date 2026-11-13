@@ -2,13 +2,29 @@ import { API_BASE_URL } from "./config.js"
 
 let refreshPromise = null
 
+// The access token is kept in memory only: a script injected into the page cannot
+// read it from storage. After a reload it is renewed with the HTTP-only refresh
+// cookie (see getAccessToken).
+let accessTokenInMemory = ""
+
+// Older versions kept tokens in localStorage; they are only removed now.
+localStorage.removeItem("admin_access_token")
+localStorage.removeItem("admin_refresh_token")
+
+export function setAdminAccessToken(token) {
+  accessTokenInMemory = typeof token === "string" ? token : ""
+}
+
+export function getStoredAccessToken() {
+  return accessTokenInMemory
+}
+
 // Fired whenever the session is cleared, so the app can move to the login page
 // without a reload (logout, a failed refresh, or a token that is not an admin's).
 export const SESSION_ENDED_EVENT = "admin-session-ended"
 
 export function clearAdminSession() {
-  localStorage.removeItem("admin_access_token")
-  localStorage.removeItem("admin_refresh_token")
+  accessTokenInMemory = ""
   localStorage.removeItem("admin_user")
   window.dispatchEvent(new Event(SESSION_ENDED_EVENT))
 }
@@ -91,7 +107,7 @@ export async function refreshAccessToken() {
         return null
       }
 
-      localStorage.setItem("admin_access_token", data.access_token)
+      setAdminAccessToken(data.access_token)
       return data.access_token
     } catch (error) {
       // Preserve local session data during temporary network failures.
@@ -106,7 +122,7 @@ export async function refreshAccessToken() {
 }
 
 export async function getAccessToken() {
-  const token = localStorage.getItem("admin_access_token")
+  const token = accessTokenInMemory
   if (token && isAdminToken(token) && !isTokenExpired(token)) return token
   // A stored token that is not an admin's (left over from another account) is never used.
   if (token && !isAdminToken(token)) clearAdminSession()

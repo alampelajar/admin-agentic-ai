@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { API_BASE_URL } from "../../lib/config.js"
+import { setAdminAccessToken } from "../../lib/auth.js"
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert.jsx"
 import { Button } from "../../components/ui/button.jsx"
 import { Input } from "../../components/ui/input.jsx"
@@ -36,9 +37,8 @@ function Login({ onAuthenticated = () => {} }) {
       if (!data || typeof data !== "object") throw new Error("Respons server bukan JSON yang valid.")
       if (!data.access_token) throw new Error("Access token tidak diterima dari server.")
       if (!data.user) throw new Error("Informasi pengguna tidak diterima dari server.")
-      localStorage.setItem("admin_access_token", data.access_token)
-      if (data.refresh_token) localStorage.setItem("admin_refresh_token", data.refresh_token)
-      else localStorage.removeItem("admin_refresh_token")
+      // In memory only; the refresh token stays in its HTTP-only cookie.
+      setAdminAccessToken(data.access_token)
       localStorage.setItem("admin_user", JSON.stringify(data.user))
       // Let the blue panel sweep away before the dashboard builds in.
       setLeaving(true)
