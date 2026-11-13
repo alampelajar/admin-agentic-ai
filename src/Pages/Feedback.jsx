@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
 import { apiFetch } from "../lib/api"
-import { API_BASE_URL } from "../lib/config.js"
 
 const statusOptions = [
   { value: "new", label: "New" },
@@ -23,6 +22,56 @@ const statusDot = {
   processing: "bg-amber-500",
   completed: "bg-green-600",
   rejected: "bg-muted-foreground",
+}
+
+// The ticket's screenshot. It is only served to signed-in admins, so it is fetched
+// with the admin's login and shown from memory instead of from a public address.
+// The caller keys it by ticket, so each ticket starts from a fresh state.
+function AttachmentImage({ feedbackId }) {
+  const [url, setUrl] = useState("")
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let objectUrl = ""
+    let cancelled = false
+    apiFetch(`/api/admin/feedback/${feedbackId}/attachment`)
+      .then((response) => {
+        if (!response.ok) throw new Error(`Attachment request failed with status ${response.status}`)
+        return response.blob()
+      })
+      .then((blob) => {
+        if (cancelled) return
+        objectUrl = URL.createObjectURL(blob)
+        setUrl(objectUrl)
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true)
+      })
+    return () => {
+      cancelled = true
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [feedbackId])
+
+  if (failed) {
+    return (
+      <p role="alert" className="mt-2 text-sm text-destructive">
+        The image could not be loaded.
+      </p>
+    )
+  }
+  if (!url) return <p className="mt-2 text-sm text-muted-foreground">Loading image…</p>
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className="mt-2 inline-flex flex-col gap-2 text-sm underline-offset-4 hover:underline"
+    >
+      <img src={url} alt="Feedback attachment" className="max-h-72 max-w-full rounded-lg object-contain" />
+      Open image in a new tab
+    </a>
+  )
 }
 
 function Ticket() {
@@ -276,19 +325,7 @@ function Ticket() {
                 <div>
                   <h3 className="text-sm font-semibold">Attachment</h3>
                   {selected.attachment.startsWith("/uploads/feedback/") ? (
-                    <a
-                      href={`${API_BASE_URL}${selected.attachment}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-2 inline-flex flex-col gap-2 text-sm underline-offset-4 hover:underline"
-                    >
-                      <img
-                        src={`${API_BASE_URL}${selected.attachment}`}
-                        alt="Feedback attachment"
-                        className="max-h-72 max-w-full rounded-lg object-contain"
-                      />
-                      Open image in a new tab
-                    </a>
+                    <AttachmentImage key={selected.id} feedbackId={selected.id} />
                   ) : (
                     <p className="mt-2 text-sm text-muted-foreground">
                       Attachment filename only (legacy report): {selected.attachment}
