@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+# The workflow only reads the code: the token it gets cannot push, comment or change
+# settings, even if a dependency or step is compromised.
+permissions:
+  contents: read
+
 jobs:
   design-lint-build:
     runs-on: ubuntu-24.04
