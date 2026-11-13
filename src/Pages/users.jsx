@@ -179,9 +179,9 @@ function Users() {
       return
     }
 
-    if (newUser.password.length < 6) {
+    if (newUser.password.length < 8) {
       setFormError(
-        "Password must be at least 6 characters."
+        "Password must be at least 8 characters."
       )
       return
     }
@@ -846,7 +846,7 @@ function Users() {
               <div>
                 <label htmlFor="add-password" className={fieldLabel}>Password</label>
                 <PasswordInput id="add-password" name="password" autoComplete="new-password" value={newUser.password} onChange={handleNewUserChange} disabled={submitting} placeholder="Enter password" aria-describedby="add-password-hint" className={`${inputClass} shadow-none!`} />
-                <p id="add-password-hint" className="mt-1.5 text-sm text-muted-foreground">At least 6 characters.</p>
+                <p id="add-password-hint" className="mt-1.5 text-sm text-muted-foreground">At least 8 characters.</p>
               </div>
               <div>
                 <label htmlFor="add-confirm" className={fieldLabel}>Confirm password</label>
