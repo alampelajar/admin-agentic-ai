@@ -221,7 +221,7 @@ function Settings() {
         tasksResponse,
       ] = await Promise.all([
         apiFetch("/api/admin/users"),
-        apiFetch("/api/agents"),
+        apiFetch("/api/admin/agent-catalog"),
         apiFetch("/api/admin/tasks"),
       ])
 
