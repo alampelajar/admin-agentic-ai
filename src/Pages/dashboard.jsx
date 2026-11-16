@@ -371,13 +371,13 @@ function Dashboard() {
     },
   ]
 
-  const panel = "lift rounded-2xl border border-border bg-card p-5 text-card-foreground"
+  const panel = "lift rounded-card border border-border bg-card p-5 text-card-foreground"
 
   return (
     <div className="min-h-screen bg-[var(--app-bg)] p-6">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl font-normal">Dashboard</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {loading ? "Loading the latest numbers..." : pageError ? "The latest numbers could not be loaded." : finding}
           </p>
@@ -385,13 +385,13 @@ function Dashboard() {
       </div>
 
       {pageError && (
-        <p role="alert" className="mb-6 rounded-lg bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+        <p role="alert" className="mb-6 rounded-card bg-error-container px-4 py-3 text-sm font-medium text-on-error-container">
           {pageError}
         </p>
       )}
 
       <section aria-label="Key figures" className="grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.35fr)_repeat(3,minmax(0,1fr))]">
-        <div className="hero-card kpi-card flex flex-col justify-between gap-5 rounded-2xl p-5 md:col-span-2 xl:col-span-1" style={{ "--i": 0 }}>
+        <div className="hero-card kpi-card flex flex-col justify-between gap-5 rounded-card p-5 md:col-span-2 xl:col-span-1" style={{ "--i": 0 }}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-sm text-white/80">Success rate</p>
@@ -399,7 +399,7 @@ function Dashboard() {
                 {loading ? <span className="skeleton inline-block h-9 w-24 opacity-40" /> : <CountUp value={Number(successRate)} decimals={1} suffix="%" />}
               </p>
             </div>
-            <span className="grid size-10 place-items-center rounded-xl bg-white/15 ring-1 ring-white/25">
+            <span className="grid size-10 place-items-center rounded-card bg-white/15 ring-1 ring-white/25">
               <KpiIcon name="spark" />
             </span>
           </div>
@@ -417,11 +417,11 @@ function Dashboard() {
           <div key={kpi.label} className={`${panel} kpi-card`} style={{ "--i": index + 1 }}>
             <div className="flex items-start justify-between gap-3">
               <p className="text-sm text-muted-foreground">{kpi.label}</p>
-              <span className="grid size-9 place-items-center rounded-xl bg-[var(--brand-soft)] text-[var(--brand)]">
+              <span className="grid size-9 place-items-center rounded-card bg-[var(--brand-soft)] text-[var(--brand)]">
                 <KpiIcon name={kpi.icon} />
               </span>
             </div>
-            <p className="mt-3 text-3xl font-semibold tabular-nums tracking-tight">
+            <p className="mt-3 text-3xl font-normal tabular-nums tracking-tight">
               {loading ? <span className="skeleton inline-block h-8 w-16" /> : <CountUp value={kpi.value} />}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">{loading ? <span className="skeleton inline-block h-4 w-32" /> : kpi.note}</p>
@@ -433,7 +433,7 @@ function Dashboard() {
         <section className={panel}>
           <div className="mb-4 flex items-baseline justify-between gap-4">
             <h2 className="text-base font-semibold">Tasks completed per day</h2>
-            <span className="rounded-full bg-[var(--brand-soft)] px-3 py-1 text-xs font-medium text-[var(--brand)]">Last 7 days</span>
+            <span className="inline-flex items-center rounded-chip bg-secondary px-3 h-8 text-sm font-medium text-secondary-foreground">Last 7 days</span>
           </div>
           <div className="h-64">
             {loading ? (
@@ -534,7 +534,7 @@ function Dashboard() {
             {recentActivity.map((item, index) => (
               <li key={`${item.type}-${item.date}-${index}`} className="activity-item flex items-center justify-between gap-4 py-3" style={{ "--i": index }}>
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--brand-soft)] text-[var(--brand)]">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-card bg-[var(--brand-soft)] text-[var(--brand)]">
                     <KpiIcon name={item.type === "user" ? "user" : "check"} />
                   </span>
                   <div className="min-w-0">

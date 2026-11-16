@@ -18,14 +18,14 @@ import {
 import { apiFetch } from "../lib/api"
 
 const CHART_COLORS = [
-  "#2563EB",
-  "#9333EA",
-  "#16A34A",
-  "#0891B2",
-  "#D97706",
-  "#DC2626",
-  "#475569",
-  "#7C3AED",
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+  "var(--chart-3)",
+  "var(--destructive)",
+  "var(--muted-foreground)",
+  "var(--tertiary)",
 ]
 
 const normalizeStatus = (status) => {
@@ -300,51 +300,14 @@ function Analytics() {
   const [loading, setLoading] = useState(true)
   const [pageError, setPageError] = useState("")
 
-  // ============================================================
-  // THEME
-  // ============================================================
 
-  const [isDark, setIsDark] = useState(() =>
-    document.documentElement.classList.contains(
-      "dark"
-    )
-  )
+  const chartTextColor = "var(--muted-foreground)"
 
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDark(
-        document.documentElement.classList.contains(
-          "dark"
-        )
-      )
-    })
+  const chartGridColor = "var(--border)"
 
-    observer.observe(
-      document.documentElement,
-      {
-        attributes: true,
-        attributeFilter: ["class"],
-      }
-    )
+  const chartTooltipBg = "var(--popover)"
 
-    return () => observer.disconnect()
-  }, [])
-
-  const chartTextColor = isDark
-    ? "#94A3B8"
-    : "#64748B"
-
-  const chartGridColor = isDark
-    ? "#334155"
-    : "#E2E8F0"
-
-  const chartTooltipBg = isDark
-    ? "#0F172A"
-    : "#FFFFFF"
-
-  const chartTooltipBorder = isDark
-    ? "#334155"
-    : "#E2E8F0"
+  const chartTooltipBorder = "var(--border)"
 
   // ============================================================
   // LOAD ANALYTICS DATA
@@ -518,13 +481,13 @@ function Analytics() {
     <div
       className="
         min-h-screen
-        bg-slate-50
+        bg-muted
         p-6
-        text-slate-900
+        text-foreground
         transition-colors
         duration-200
-        dark:bg-slate-950
-        dark:text-slate-100
+       
+       
       "
     >
 
@@ -536,11 +499,11 @@ function Analytics() {
 
         <div>
 
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-normal text-foreground">
             Analytics
           </h1>
 
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Monitor system performance and task analytics
           </p>
 
@@ -552,15 +515,15 @@ function Analytics() {
               inline-flex
               items-center
               gap-2
-              rounded-full
+              rounded-chip
               bg-green-100
               px-3
-              py-1.5
-              text-xs
-              font-semibold
+              h-8
+              text-sm
+              font-medium
               text-green-700
-              dark:bg-green-500/15
-              dark:text-green-400
+              dark:bg-green-950/50
+              dark:text-green-300
             "
           >
 
@@ -581,18 +544,18 @@ function Analytics() {
         <div
           className="
             mb-6
-            rounded-lg
+            rounded-card
             border
-            border-red-200
-            bg-red-50
+            border-transparent
+            bg-error-container
             px-4
             py-3
-            dark:border-red-500/30
-            dark:bg-red-500/10
+           
+           
           "
         >
 
-          <p className="text-sm font-medium text-red-600 dark:text-red-400">
+          <p className="text-sm font-medium text-destructive">
             {pageError}
           </p>
 
@@ -609,34 +572,34 @@ function Analytics() {
 
         <div
           className="
-            rounded-xl
+            rounded-dialog
             border
-            border-slate-200
-            bg-white
+            border-border
+            bg-surface-high
             p-5
-            shadow-sm
+           
             transition-all
             duration-200
             hover:-translate-y-0.5
-            hover:shadow-lg
-            dark:border-slate-800
-            dark:bg-slate-900
+            hover:shadow-m3-2
+           
+           
             dark:shadow-none
-            dark:hover:bg-slate-900
+           
           "
         >
 
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-muted-foreground">
             Total Tasks
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+          <p className="mt-2 text-3xl font-normal text-foreground">
             {loading
               ? "..."
               : tasks.length.toLocaleString()}
           </p>
 
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             From all users
           </p>
 
@@ -646,28 +609,28 @@ function Analytics() {
 
         <div
           className="
-            rounded-xl
+            rounded-dialog
             border
-            border-slate-200
-            bg-white
+            border-border
+            bg-surface-high
             p-5
-            shadow-sm
+           
             transition-all
             duration-200
             hover:-translate-y-0.5
-            hover:shadow-lg
-            dark:border-slate-800
-            dark:bg-slate-900
+            hover:shadow-m3-2
+           
+           
             dark:shadow-none
-            dark:hover:bg-slate-900
+           
           "
         >
 
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-muted-foreground">
             Success Rate
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+          <p className="mt-2 text-3xl font-normal text-foreground">
             {loading
               ? "..."
               : formatPercent(
@@ -675,7 +638,7 @@ function Analytics() {
                 )}
           </p>
 
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Completed vs failed
           </p>
 
@@ -685,34 +648,34 @@ function Analytics() {
 
         <div
           className="
-            rounded-xl
+            rounded-dialog
             border
-            border-slate-200
-            bg-white
+            border-border
+            bg-surface-high
             p-5
-            shadow-sm
+           
             transition-all
             duration-200
             hover:-translate-y-0.5
-            hover:shadow-lg
-            dark:border-slate-800
-            dark:bg-slate-900
+            hover:shadow-m3-2
+           
+           
             dark:shadow-none
-            dark:hover:bg-slate-900
+           
           "
         >
 
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-muted-foreground">
             Failed Tasks
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">
+          <p className="mt-2 text-3xl font-normal text-destructive">
             {loading
               ? "..."
               : failedTasks.toLocaleString()}
           </p>
 
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Need attention
           </p>
 
@@ -722,34 +685,34 @@ function Analytics() {
 
         <div
           className="
-            rounded-xl
+            rounded-dialog
             border
-            border-slate-200
-            bg-white
+            border-border
+            bg-surface-high
             p-5
-            shadow-sm
+           
             transition-all
             duration-200
             hover:-translate-y-0.5
-            hover:shadow-lg
-            dark:border-slate-800
-            dark:bg-slate-900
+            hover:shadow-m3-2
+           
+           
             dark:shadow-none
-            dark:hover:bg-slate-900
+           
           "
         >
 
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-muted-foreground">
             Active Agents
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+          <p className="mt-2 text-3xl font-normal text-foreground">
             {loading
               ? "..."
               : activeAgents.toLocaleString()}
           </p>
 
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Currently active
           </p>
 
@@ -767,14 +730,14 @@ function Analytics() {
 
         <div
           className="
-            rounded-xl
+            rounded-card
             border
-            border-slate-200
-            bg-white
+            border-border
+            bg-card
             p-5
-            shadow-sm
-            dark:border-slate-800
-            dark:bg-slate-900
+           
+           
+           
             dark:shadow-none
             xl:col-span-2
           "
@@ -782,20 +745,20 @@ function Analytics() {
 
           <div className="mb-5">
 
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-lg font-semibold text-foreground">
               Task Performance
             </h2>
 
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-muted-foreground">
               Completed and failed tasks over the last 7 days
             </p>
 
           </div>
 
-          <div className="h-[320px] w-full">
+          <div className="h-80 w-full">
 
             {taskData.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-slate-500 dark:text-slate-400">
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                 No task data available.
               </div>
             ) : (
@@ -839,14 +802,10 @@ function Analytics() {
                       borderColor:
                         chartTooltipBorder,
                       borderRadius: "8px",
-                      color: isDark
-                        ? "#E2E8F0"
-                        : "#0F172A",
+                      color: "var(--popover-foreground)",
                     }}
                     labelStyle={{
-                      color: isDark
-                        ? "#E2E8F0"
-                        : "#0F172A",
+                      color: "var(--popover-foreground)",
                     }}
                   />
 
@@ -865,7 +824,7 @@ function Analytics() {
                       0,
                       0,
                     ]}
-                    fill="#16A34A"
+                    fill="var(--chart-4)"
                   />
 
                   <Bar
@@ -877,7 +836,7 @@ function Analytics() {
                       0,
                       0,
                     ]}
-                    fill="#DC2626"
+                    fill="var(--destructive)"
                   />
 
                 </BarChart>
@@ -893,34 +852,34 @@ function Analytics() {
 
         <div
           className="
-            rounded-xl
+            rounded-card
             border
-            border-slate-200
-            bg-white
+            border-border
+            bg-card
             p-5
-            shadow-sm
-            dark:border-slate-800
-            dark:bg-slate-900
+           
+           
+           
             dark:shadow-none
           "
         >
 
           <div className="mb-3">
 
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            <h2 className="text-lg font-semibold text-foreground">
               Agent Usage
             </h2>
 
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-muted-foreground">
               Task distribution by agent
             </p>
 
           </div>
 
-          <div className="h-[320px] w-full">
+          <div className="h-80 w-full">
 
             {agentData.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-slate-500 dark:text-slate-400">
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                 No agent usage data available.
               </div>
             ) : (
@@ -960,14 +919,10 @@ function Analytics() {
                       borderColor:
                         chartTooltipBorder,
                       borderRadius: "8px",
-                      color: isDark
-                        ? "#E2E8F0"
-                        : "#0F172A",
+                      color: "var(--popover-foreground)",
                     }}
                     labelStyle={{
-                      color: isDark
-                        ? "#E2E8F0"
-                        : "#0F172A",
+                      color: "var(--popover-foreground)",
                     }}
                   />
 
@@ -995,34 +950,34 @@ function Analytics() {
       <div
         className="
           mb-6
-          rounded-xl
+          rounded-card
           border
-          border-slate-200
-          bg-white
+          border-border
+          bg-card
           p-5
-          shadow-sm
-          dark:border-slate-800
-          dark:bg-slate-900
+         
+         
+         
           dark:shadow-none
         "
       >
 
         <div className="mb-5">
 
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-lg font-semibold text-foreground">
             Success Rate
           </h2>
 
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-muted-foreground">
             Completed vs failed task rate over the last 7 days
           </p>
 
         </div>
 
-        <div className="h-[300px] w-full">
+        <div className="h-75 w-full">
 
           {performanceData.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
               No performance data available.
             </div>
           ) : (
@@ -1066,14 +1021,10 @@ function Analytics() {
                     borderColor:
                       chartTooltipBorder,
                     borderRadius: "8px",
-                    color: isDark
-                      ? "#E2E8F0"
-                      : "#0F172A",
+                    color: "var(--popover-foreground)",
                   }}
                   labelStyle={{
-                    color: isDark
-                      ? "#E2E8F0"
-                      : "#0F172A",
+                    color: "var(--popover-foreground)",
                   }}
                   formatter={(value) => [
                     value === null ||
@@ -1088,7 +1039,7 @@ function Analytics() {
                   type="monotone"
                   dataKey="success"
                   name="Success Rate"
-                  stroke="#2563EB"
+                  stroke="var(--chart-1)"
                   strokeWidth={3}
                   connectNulls={false}
                   dot={{ r: 4 }}
@@ -1114,28 +1065,28 @@ function Analytics() {
 
         <div
           className="
-            rounded-xl
+            rounded-card
             border
-            border-slate-200
-            bg-white
+            border-border
+            bg-card
             p-5
-            shadow-sm
-            dark:border-slate-800
-            dark:bg-slate-900
+           
+           
+           
             dark:shadow-none
           "
         >
 
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-muted-foreground">
             Top Success Rate
           </p>
 
-          <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-white">
+          <h3 className="mt-2 text-xl font-medium text-foreground">
             {topSuccessAgent?.name ||
               "No data"}
           </h3>
 
-          <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+          <p className="mt-2 text-sm text-green-700 dark:text-green-300">
             {topSuccessAgent
               ? `${topSuccessAgent.successRate}% success rate`
               : "No completed or failed tasks yet"}
@@ -1147,28 +1098,28 @@ function Analytics() {
 
         <div
           className="
-            rounded-xl
+            rounded-card
             border
-            border-slate-200
-            bg-white
+            border-border
+            bg-card
             p-5
-            shadow-sm
-            dark:border-slate-800
-            dark:bg-slate-900
+           
+           
+           
             dark:shadow-none
           "
         >
 
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-muted-foreground">
             Most Active Agent
           </p>
 
-          <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-white">
+          <h3 className="mt-2 text-xl font-medium text-foreground">
             {mostActiveAgent?.name ||
               "No data"}
           </h3>
 
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          <p className="mt-2 text-sm text-muted-foreground">
             {mostActiveAgent
               ? `${mostActiveAgent.total.toLocaleString()} tasks`
               : "No task usage yet"}
@@ -1180,29 +1131,29 @@ function Analytics() {
 
         <div
           className="
-            rounded-xl
+            rounded-card
             border
-            border-slate-200
-            bg-white
+            border-border
+            bg-card
             p-5
-            shadow-sm
-            dark:border-slate-800
-            dark:bg-slate-900
+           
+           
+           
             dark:shadow-none
           "
         >
 
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-muted-foreground">
             Agent Coverage
           </p>
 
-          <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-white">
+          <h3 className="mt-2 text-xl font-medium text-foreground">
             {agents.length > 0
               ? `${agentData.length}/${agents.length}`
               : "0"}
           </h3>
 
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          <p className="mt-2 text-sm text-muted-foreground">
             Agents used by at least one task
           </p>
 
@@ -1217,19 +1168,19 @@ function Analytics() {
       <div
         className="
           mt-6
-          rounded-xl
+          rounded-card
           border
-          border-slate-200
-          bg-white
+          border-border
+          bg-card
           p-5
-          shadow-sm
-          dark:border-slate-800
-          dark:bg-slate-900
+         
+         
+         
           dark:shadow-none
         "
       >
 
-        <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+        <p className="text-xs leading-5 text-muted-foreground">
           Analytics are calculated from the task and agent data available
           through the admin API. Completion-time and response-time metrics
           are not shown because the current task data does not expose a

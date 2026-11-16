@@ -264,18 +264,18 @@ function Agents() {
 
   const statusDot = (status) =>
     status === "Running" || status === "Active"
-      ? "bg-green-600"
+      ? "bg-current text-green-700 dark:text-green-300"
       : status === "Idle"
-        ? "bg-amber-500"
+        ? "bg-current text-amber-700 dark:text-amber-300"
         : "bg-muted-foreground"
 
   const controlClass =
-    "h-9 rounded-lg border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+    "h-14 rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent px-4 text-base outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
 
   return (
     <div className="min-h-screen bg-[var(--app-bg)] p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Agents</h1>
+        <h1 className="text-2xl font-normal">Agents</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {loading
             ? "Loading agents..."
@@ -284,7 +284,7 @@ function Agents() {
       </div>
 
       {pageError && (
-        <div role="alert" className="mb-6 flex items-center justify-between gap-4 rounded-lg bg-destructive/10 px-4 py-3">
+        <div role="alert" className="mb-6 flex items-center justify-between gap-4 rounded-card bg-error-container px-4 py-3">
           <p className="text-sm font-medium text-destructive">{pageError}</p>
           <button type="button" onClick={loadAgents} className="text-sm font-medium underline-offset-4 hover:underline">
             Retry
@@ -292,7 +292,7 @@ function Agents() {
         </div>
       )}
 
-      <section className="rounded-xl bg-card text-card-foreground">
+      <section className="rounded-card bg-card text-card-foreground">
         <div className="flex flex-wrap items-center gap-3 p-4">
           <input
             type="search"
@@ -329,35 +329,35 @@ function Agents() {
           <p className="px-4 py-12 text-center text-sm text-muted-foreground">Loading agents...</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
+            <table className="w-full min-w-190 text-left text-sm">
               <thead>
                 <tr className="text-muted-foreground">
-                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Agent</th>
-                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Status</th>
-                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Active</th>
-                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Models</th>
-                  <th className="w-12 px-4 py-2.5"><span className="sr-only">Actions</span></th>
+                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Agent</th>
+                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Status</th>
+                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Active</th>
+                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Models</th>
+                  <th className="w-12 px-4 py-0"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAgents.map((agent) => (
                   <tr key={agent.id} className="transition-colors hover:bg-muted/60">
-                    <td className="max-w-md px-4 py-3">
+                    <td className="max-w-md px-4 py-2">
                       <p className="truncate font-medium">{agent.name}</p>
                       <p className="truncate text-muted-foreground">
                         {agent.slug} · #{agent.id}
                       </p>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2">
                       <span className="inline-flex items-center gap-2 whitespace-nowrap">
                         <span aria-hidden="true" className={`size-2 rounded-full ${statusDot(agent.status)}`} />
                         {agent.status}
                       </span>
                     </td>
-                    <td className={`px-4 py-3 ${agent.isActive ? "" : "text-muted-foreground"}`}>
+                    <td className={`px-4 py-2 ${agent.isActive ? "" : "text-muted-foreground"}`}>
                       {agent.isActive ? "Yes" : "No"}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="px-4 py-2 text-muted-foreground">
                       {agent.models.length === 0 ? (
                         "–"
                       ) : (
@@ -367,13 +367,13 @@ function Agents() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-2 text-right">
                       <button
                         type="button"
                         onClick={(event) => toggleActionMenu(event, agent.id)}
                         aria-label={`Actions for ${agent.name}`}
                         aria-expanded={openMenu === agent.id}
-                        className="size-8 rounded-lg text-lg leading-none text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        className="size-10 state-layer rounded-full transition-colors duration-200 ease-m3 text-lg leading-none text-muted-foreground transition-colors hover:text-foreground"
                       >
                         ⋮
                       </button>
@@ -382,12 +382,12 @@ function Agents() {
                           <div
                             role="menu"
                             style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
-                            className="fixed z-50 w-40 rounded-lg border border-border bg-popover p-1 text-sm text-popover-foreground shadow-lg"
+                            className="fixed z-50 w-40 rounded-field bg-popover py-2 text-sm text-popover-foreground shadow-m3-2"
                           >
                             <button
                               type="button"
                               role="menuitem"
-                              className="block w-full rounded-md px-3 py-2 text-left hover:bg-muted"
+                              className="block w-full px-3 min-h-12 text-left hover:bg-accent"
                               onClick={() => {
                                 setSelectedAgent(agent)
                                 setOpenMenu(null)
@@ -415,26 +415,26 @@ function Agents() {
 
       {selectedAgent && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center m3-scrim p-4"
           onClick={() => setSelectedAgent(null)}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="agent-details-title"
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-card p-6 text-card-foreground shadow-xl"
+            className="max-h-full w-full max-w-lg overflow-y-auto rounded-dialog bg-surface-high p-6 text-card-foreground shadow-m3-3"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <h2 id="agent-details-title" className="truncate text-lg font-semibold">{selectedAgent.name}</h2>
+                <h2 id="agent-details-title" className="truncate text-2xl font-normal">{selectedAgent.name}</h2>
                 <p className="truncate text-sm text-muted-foreground">{selectedAgent.slug}</p>
               </div>
               <button
                 type="button"
                 aria-label="Close"
                 onClick={() => setSelectedAgent(null)}
-                className="size-8 shrink-0 rounded-lg text-xl leading-none text-muted-foreground hover:bg-muted"
+                className="size-10 shrink-0 state-layer rounded-full transition-colors duration-200 ease-m3 text-xl leading-none text-muted-foreground"
               >
                 ×
               </button>
@@ -482,7 +482,7 @@ function Agents() {
               <button
                 type="button"
                 onClick={() => setSelectedAgent(null)}
-                className="h-9 rounded-lg border border-input bg-card px-4 text-sm font-medium transition-colors hover:bg-muted"
+                className="h-10 state-layer rounded-full transition-colors duration-200 ease-m3 border border-input bg-transparent px-6 text-sm font-medium text-primary"
               >
                 Close
               </button>

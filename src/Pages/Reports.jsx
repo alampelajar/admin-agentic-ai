@@ -24,7 +24,7 @@ const LOCALE = "en-US"
 const DAYS_PER_WEEK = 7
 const LATEST_TASK_COUNT = 5
 
-const panel = "rounded-2xl border border-border bg-card p-5 text-card-foreground"
+const panel = "rounded-card border border-border bg-card p-5 text-card-foreground"
 
 const STATUS_STYLES = {
   completed: "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300",
@@ -147,7 +147,7 @@ function StatusBadge({ status }) {
   const key = statusKey(status)
 
   return (
-    <span className={`inline-flex items-center gap-2 whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold ${STATUS_STYLES[key]}`}>
+    <span className={`inline-flex items-center gap-2 whitespace-nowrap rounded-chip px-3 h-8 text-sm font-medium ${STATUS_STYLES[key]}`}>
       {key === "running" && <span className="status-dot is-running" aria-hidden="true" />}
       {statusLabel(status)}
     </span>
@@ -252,7 +252,7 @@ function Reports() {
     <div className="min-h-screen bg-[var(--app-bg)] p-6">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Monthly report</h1>
+          <h1 className="text-2xl font-normal">Monthly report</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Tasks and new users for {period}.
           </p>
@@ -268,7 +268,7 @@ function Reports() {
       </div>
 
       {pageError ? (
-        <p role="alert" className="rounded-lg bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+        <p role="alert" className="rounded-card bg-error-container px-4 py-3 text-sm font-medium text-on-error-container">
           {pageError}
         </p>
       ) : (
@@ -277,7 +277,7 @@ function Reports() {
             {summary.map((item, index) => (
               <div key={item.label} className={`${panel} lift kpi-card`} style={{ "--i": index }}>
                 <p className="text-sm text-muted-foreground">{item.label}</p>
-                <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">
+                <p className="mt-2 text-3xl font-normal tabular-nums">
                   {loading ? <span className="skeleton inline-block h-8 w-16" /> : item.value.toLocaleString(LOCALE)}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">

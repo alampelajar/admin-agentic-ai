@@ -328,7 +328,7 @@ function Settings() {
   // ============================================================
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
+    <div className="min-h-screen bg-muted p-6 text-foreground transition-colors duration-200">
 
       {/* ====================================================== */}
       {/* HEADER */}
@@ -336,11 +336,11 @@ function Settings() {
 
       <div className="mb-6">
 
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+        <h1 className="text-2xl font-normal text-foreground">
           Settings
         </h1>
 
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Configure your Agentic AI dashboard
         </p>
 
@@ -358,17 +358,17 @@ function Settings() {
 
         <div className="xl:col-span-2">
 
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900">
+          <div className="rounded-card border border-border bg-card transition-colors duration-200">
 
             {/* HEADER */}
 
-            <div className="border-b border-slate-200 p-5 dark:border-slate-800">
+            <div className="border-b border-border p-5">
 
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              <h2 className="text-lg font-semibold text-foreground">
                 General Settings
               </h2>
 
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Manage dashboard preferences
               </p>
 
@@ -376,7 +376,7 @@ function Settings() {
 
             {/* SETTINGS */}
 
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            <div className="divide-y divide-border">
 
               {/* ================================================== */}
               {/* AUTO REFRESH */}
@@ -386,11 +386,11 @@ function Settings() {
 
                 <div>
 
-                  <p className="font-medium text-slate-800 dark:text-slate-100">
+                  <p className="font-medium text-foreground">
                     Auto Refresh
                   </p>
 
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Automatically refresh system information every 30 seconds
                   </p>
 
@@ -401,25 +401,11 @@ function Settings() {
                   onClick={() =>
                     updateSetting("autoRefresh")
                   }
-                  aria-pressed={
-                    settings.autoRefresh
-                  }
-                  className={`relative h-6 w-11 shrink-0 rounded-full transition ${
-                    settings.autoRefresh
-                      ? "bg-slate-900 dark:bg-white"
-                      : "bg-slate-300 dark:bg-slate-700"
-                  }`}
-                >
-
-                  <span
-                    className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-all ${
-                      settings.autoRefresh
-                        ? "left-6 dark:bg-slate-900"
-                        : "left-1"
-                    }`}
-                  />
-
-                </button>
+                  role="switch"
+                  aria-checked={settings.autoRefresh}
+                  aria-label="Auto refresh"
+                  className="m3-switch"
+                />
 
               </div>
 
@@ -431,22 +417,22 @@ function Settings() {
 
                 <div>
 
-                  <p className="font-medium text-slate-800 dark:text-slate-100">
+                  <p className="font-medium text-foreground">
                     Maintenance Mode
                   </p>
 
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Disable access to the normal website while maintenance is active
                   </p>
 
                   {settings.maintenanceMode && (
-                    <p className="mt-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+                    <p className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300">
                       Website sedang dalam maintenance.
                     </p>
                   )}
 
                   {maintenanceError && (
-                    <p className="mt-2 text-xs font-medium text-red-600 dark:text-red-400">
+                    <p className="mt-2 text-xs font-medium text-destructive">
                       {maintenanceError}
                     </p>
                   )}
@@ -460,30 +446,11 @@ function Settings() {
                     maintenanceLoading ||
                     maintenanceSaving
                   }
-                  aria-pressed={
-                    settings.maintenanceMode
-                  }
-                  className={`relative h-6 w-11 shrink-0 rounded-full transition ${
-                    settings.maintenanceMode
-                      ? "bg-amber-500"
-                      : "bg-slate-300 dark:bg-slate-700"
-                  } ${
-                    maintenanceLoading ||
-                    maintenanceSaving
-                      ? "cursor-not-allowed opacity-50"
-                      : ""
-                  }`}
-                >
-
-                  <span
-                    className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-all ${
-                      settings.maintenanceMode
-                        ? "left-6"
-                        : "left-1"
-                    }`}
-                  />
-
-                </button>
+                  role="switch"
+                  aria-checked={settings.maintenanceMode}
+                  aria-label="Maintenance mode"
+                  className="m3-switch"
+                />
 
               </div>
 
@@ -498,7 +465,7 @@ function Settings() {
           <div className="mt-6 flex items-center justify-end gap-3">
 
             {saved && (
-              <span className="text-sm font-medium text-green-600 dark:text-green-400">
+              <span className="text-sm font-medium text-green-700 dark:text-green-300">
                 Settings saved successfully
               </span>
             )}
@@ -507,20 +474,20 @@ function Settings() {
               type="button"
               onClick={handleSave}
               className="
-                rounded-lg
-                bg-slate-900
-                px-5
-                py-2.5
+                state-layer rounded-full transition-colors duration-200 ease-m3
+                bg-primary
+                px-6
+                h-10
                 text-sm
-                font-semibold
-                text-white
-                shadow-sm
-                transition
-                hover:bg-slate-800
-                hover:shadow-md
-                dark:bg-white
-                dark:text-slate-900
-                dark:hover:bg-slate-200
+                font-medium
+                text-primary-foreground
+               
+               
+               
+               
+               
+               
+               
               "
             >
               Save Changes
@@ -536,17 +503,17 @@ function Settings() {
 
         <div>
 
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900">
+          <div className="rounded-card border border-border bg-card transition-colors duration-200">
 
             {/* HEADER */}
 
-            <div className="border-b border-slate-200 p-5 dark:border-slate-800">
+            <div className="border-b border-border p-5">
 
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              <h2 className="text-lg font-semibold text-foreground">
                 System Information
               </h2>
 
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Current system information
               </p>
 
@@ -558,13 +525,13 @@ function Settings() {
               {/* VERSION */}
               {/* ================================================== */}
 
-              <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800/60">
+              <div className="rounded-card bg-muted p-4">
 
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Version
                 </p>
 
-                <p className="mt-1 font-semibold text-slate-800 dark:text-slate-100">
+                <p className="mt-1 font-semibold text-foreground">
                   {systemInfo.version}
                 </p>
 
@@ -574,13 +541,13 @@ function Settings() {
               {/* ENVIRONMENT */}
               {/* ================================================== */}
 
-              <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800/60">
+              <div className="rounded-card bg-muted p-4">
 
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Environment
                 </p>
 
-                <p className="mt-1 font-semibold text-slate-800 dark:text-slate-100">
+                <p className="mt-1 font-semibold text-foreground">
                   {systemInfo.environment}
                 </p>
 
@@ -590,9 +557,9 @@ function Settings() {
               {/* API STATUS */}
               {/* ================================================== */}
 
-              <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800/60">
+              <div className="rounded-card bg-muted p-4">
 
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   API Status
                 </p>
 
@@ -602,11 +569,11 @@ function Settings() {
                     className={`h-2 w-2 rounded-full ${
                       systemInfo.apiStatus ===
                       "Operational"
-                        ? "bg-green-500"
+                        ? "bg-current text-green-700 dark:text-green-300"
                         : systemInfo.apiStatus ===
                             "Checking"
-                          ? "bg-yellow-500"
-                          : "bg-red-500"
+                          ? "bg-current text-amber-700 dark:text-amber-300"
+                          : "bg-current text-destructive dark:text-red-300"
                     }`}
                   />
 
@@ -614,11 +581,11 @@ function Settings() {
                     className={`font-semibold ${
                       systemInfo.apiStatus ===
                       "Operational"
-                        ? "text-green-700 dark:text-green-400"
+                        ? "text-green-700 dark:text-green-300"
                         : systemInfo.apiStatus ===
                             "Checking"
-                          ? "text-yellow-700 dark:text-yellow-400"
-                          : "text-red-700 dark:text-red-400"
+                          ? "text-amber-700 dark:text-amber-300"
+                          : "text-destructive"
                     }`}
                   >
                     {loadingInfo
@@ -634,9 +601,9 @@ function Settings() {
               {/* DATABASE */}
               {/* ================================================== */}
 
-              <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800/60">
+              <div className="rounded-card bg-muted p-4">
 
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Database
                 </p>
 
@@ -646,11 +613,11 @@ function Settings() {
                     className={`h-2 w-2 rounded-full ${
                       systemInfo.databaseStatus ===
                       "Connected"
-                        ? "bg-green-500"
+                        ? "bg-current text-green-700 dark:text-green-300"
                         : systemInfo.databaseStatus ===
                             "Checking"
-                          ? "bg-yellow-500"
-                          : "bg-red-500"
+                          ? "bg-current text-amber-700 dark:text-amber-300"
+                          : "bg-current text-destructive dark:text-red-300"
                     }`}
                   />
 
@@ -658,11 +625,11 @@ function Settings() {
                     className={`font-semibold ${
                       systemInfo.databaseStatus ===
                       "Connected"
-                        ? "text-green-700 dark:text-green-400"
+                        ? "text-green-700 dark:text-green-300"
                         : systemInfo.databaseStatus ===
                             "Checking"
-                          ? "text-yellow-700 dark:text-yellow-400"
-                          : "text-red-700 dark:text-red-400"
+                          ? "text-amber-700 dark:text-amber-300"
+                          : "text-destructive"
                     }`}
                   >
                     {loadingInfo
@@ -678,13 +645,13 @@ function Settings() {
               {/* ACTIVE AGENTS */}
               {/* ================================================== */}
 
-              <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800/60">
+              <div className="rounded-card bg-muted p-4">
 
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Active Agents
                 </p>
 
-                <p className="mt-1 font-semibold text-slate-800 dark:text-slate-100">
+                <p className="mt-1 font-semibold text-foreground">
                   {loadingInfo
                     ? "Loading..."
                     : `${systemInfo.activeAgents} agents`}
@@ -696,9 +663,9 @@ function Settings() {
               {/* MAINTENANCE STATUS */}
               {/* ================================================== */}
 
-              <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800/60">
+              <div className="rounded-card bg-muted p-4">
 
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Maintenance
                 </p>
 
@@ -707,20 +674,20 @@ function Settings() {
                   <span
                     className={`h-2 w-2 rounded-full ${
                       maintenanceLoading
-                        ? "bg-yellow-500"
+                        ? "bg-current text-amber-700 dark:text-amber-300"
                         : settings.maintenanceMode
-                          ? "bg-amber-500"
-                          : "bg-green-500"
+                          ? "bg-current text-amber-700 dark:text-amber-300"
+                          : "bg-current text-green-700 dark:text-green-300"
                     }`}
                   />
 
                   <p
                     className={`font-semibold ${
                       maintenanceLoading
-                        ? "text-yellow-700 dark:text-yellow-400"
+                        ? "text-amber-700 dark:text-amber-300"
                         : settings.maintenanceMode
-                          ? "text-amber-700 dark:text-amber-400"
-                          : "text-green-700 dark:text-green-400"
+                          ? "text-amber-700 dark:text-amber-300"
+                          : "text-green-700 dark:text-green-300"
                     }`}
                   >
                     {maintenanceLoading
@@ -755,23 +722,23 @@ function Settings() {
             className="
               mt-4
               w-full
-              rounded-lg
+              state-layer rounded-full transition-colors duration-200 ease-m3
               border
-              border-slate-200
-              bg-white
-              px-4
-              py-2.5
+              border-input
+              bg-transparent
+              px-6
+              h-10
               text-sm
-              font-semibold
-              text-slate-700
-              transition
-              hover:bg-slate-50
+              font-medium
+              text-primary
+             
+             
               disabled:cursor-not-allowed
-              disabled:opacity-50
-              dark:border-slate-800
-              dark:bg-slate-900
-              dark:text-slate-200
-              dark:hover:bg-slate-800
+              disabled:border-foreground/12 disabled:text-foreground/38
+             
+             
+             
+             
             "
           >
             {loadingInfo ||
@@ -785,7 +752,7 @@ function Settings() {
           {/* ================================================== */}
 
           {infoError && (
-            <p className="mt-3 text-xs leading-5 text-red-600 dark:text-red-400">
+            <p className="mt-3 text-xs leading-5 text-destructive">
               {infoError}
             </p>
           )}

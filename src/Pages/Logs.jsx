@@ -385,29 +385,29 @@ function Logs() {
 
   const getLevelClass = (level) => {
     if (level === "INFO") {
-      return "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400"
+      return "bg-secondary text-primary"
     }
 
     if (level === "WARNING") {
-      return "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-400"
+      return "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
     }
 
-    return "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400"
+    return "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300"
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
+    <div className="min-h-screen bg-muted p-6 text-foreground transition-colors duration-200">
 
       {/* HEADER */}
 
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-normal text-foreground">
             Logs
           </h1>
 
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Pantau aktivitas pengguna, penghapusan model, dan perubahan keamanan akun
           </p>
         </div>
@@ -416,23 +416,23 @@ function Logs() {
           onClick={loadLogs}
           disabled={loading}
           className="
-            rounded-lg
+            state-layer rounded-full transition-colors duration-200 ease-m3
             border
-            border-slate-200
-            bg-white
-            px-4
-            py-2.5
+            border-input
+            bg-transparent
+            px-6
+            h-10
             text-sm
-            font-semibold
-            text-slate-700
-            transition
-            hover:bg-slate-50
+            font-medium
+            text-primary
+           
+           
             disabled:cursor-not-allowed
-            disabled:opacity-50
-            dark:border-slate-700
-            dark:bg-slate-900
-            dark:text-slate-200
-            dark:hover:bg-slate-800
+            disabled:border-foreground/12 disabled:text-foreground/38
+           
+           
+           
+           
           "
         >
           {loading
@@ -451,17 +451,17 @@ function Logs() {
           items-center
           justify-between
           gap-4
-          rounded-lg
+          rounded-card
           border
-          border-red-200
-          bg-red-50
+          border-transparent
+          bg-error-container
           px-4
           py-3
-          dark:border-red-500/30
-          dark:bg-red-500/10
+         
+         
         ">
 
-          <p className="text-sm font-medium text-red-600 dark:text-red-400">
+          <p className="text-sm font-medium text-destructive">
             {pageError}
           </p>
 
@@ -469,15 +469,15 @@ function Logs() {
             onClick={loadLogs}
             className="
               shrink-0
-              rounded-lg
-              bg-red-600
-              px-3
-              py-2
+              state-layer rounded-full transition-colors duration-200 ease-m3
+              bg-destructive
+              px-6
+              h-10
               text-sm
-              font-semibold
-              text-white
-              transition
-              hover:bg-red-700
+              font-medium
+              text-destructive-foreground
+             
+             
             "
           >
             Retry
@@ -493,25 +493,25 @@ function Logs() {
         {/* Total */}
 
         <div className="
-          rounded-xl
+          rounded-dialog
           border
-          border-slate-200
-          bg-white
+          border-border
+          bg-surface-high
           p-5
-          shadow-sm
+         
           transition-all
           duration-200
           hover:-translate-y-0.5
-          hover:shadow-lg
-          dark:border-slate-800
-          dark:bg-slate-900
+          hover:shadow-m3-2
+         
+         
           dark:shadow-none
         ">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-muted-foreground">
             Total Logs
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+          <p className="mt-2 text-3xl font-normal text-foreground">
             {loading ? "..." : logs.length}
           </p>
         </div>
@@ -519,25 +519,25 @@ function Logs() {
         {/* Info */}
 
         <div className="
-          rounded-xl
+          rounded-dialog
           border
-          border-slate-200
-          bg-white
+          border-border
+          bg-surface-high
           p-5
-          shadow-sm
+         
           transition-all
           duration-200
           hover:-translate-y-0.5
-          hover:shadow-lg
-          dark:border-slate-800
-          dark:bg-slate-900
+          hover:shadow-m3-2
+         
+         
           dark:shadow-none
         ">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-muted-foreground">
             Info
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
+          <p className="mt-2 text-3xl font-normal text-primary">
             {loading ? "..." : infoCount}
           </p>
         </div>
@@ -545,25 +545,25 @@ function Logs() {
         {/* Warning */}
 
         <div className="
-          rounded-xl
+          rounded-dialog
           border
-          border-slate-200
-          bg-white
+          border-border
+          bg-surface-high
           p-5
-          shadow-sm
+         
           transition-all
           duration-200
           hover:-translate-y-0.5
-          hover:shadow-lg
-          dark:border-slate-800
-          dark:bg-slate-900
+          hover:shadow-m3-2
+         
+         
           dark:shadow-none
         ">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-muted-foreground">
             Warnings
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+          <p className="mt-2 text-3xl font-normal text-amber-700 dark:text-amber-300">
             {loading
               ? "..."
               : warningCount}
@@ -573,25 +573,25 @@ function Logs() {
         {/* Errors */}
 
         <div className="
-          rounded-xl
+          rounded-dialog
           border
-          border-slate-200
-          bg-white
+          border-border
+          bg-surface-high
           p-5
-          shadow-sm
+         
           transition-all
           duration-200
           hover:-translate-y-0.5
-          hover:shadow-lg
-          dark:border-slate-800
-          dark:bg-slate-900
+          hover:shadow-m3-2
+         
+         
           dark:shadow-none
         ">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-muted-foreground">
             Errors
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">
+          <p className="mt-2 text-3xl font-normal text-destructive">
             {loading ? "..." : errorCount}
           </p>
         </div>
@@ -602,13 +602,13 @@ function Logs() {
 
       <div className="
         overflow-hidden
-        rounded-xl
+        rounded-card
         border
-        border-slate-200
-        bg-white
-        shadow-sm
-        dark:border-slate-800
-        dark:bg-slate-900
+        border-border
+        bg-card
+       
+       
+       
         dark:shadow-none
       ">
 
@@ -619,12 +619,12 @@ function Logs() {
           flex-col
           gap-4
           border-b
-          border-slate-200
+          border-border
           p-5
           xl:flex-row
           xl:items-center
           xl:justify-between
-          dark:border-slate-800
+         
         ">
 
           {/* Search */}
@@ -637,8 +637,8 @@ function Logs() {
               left-3
               top-1/2
               -translate-y-1/2
-              text-slate-400
-              dark:text-slate-500
+              text-muted-foreground
+             
             ">
               ⌕
             </span>
@@ -654,29 +654,29 @@ function Logs() {
               }
               className="
                 w-full
-                rounded-lg
+                rounded-field hover:border-foreground transition-colors duration-200 ease-m3
                 border
-                border-slate-200
-                bg-slate-50
-                py-2.5
+                border-input
+                bg-transparent
+                h-14
                 pl-9
                 pr-4
-                text-sm
-                text-slate-900
+                text-base
+                text-foreground
                 outline-none
-                transition
-                placeholder:text-slate-400
-                focus:border-slate-400
-                focus:bg-white
+               
+                placeholder:text-muted-foreground
+                focus:border-input
+                focus:bg-card
                 focus:ring-2
-                focus:ring-slate-100
-                dark:border-slate-700
-                dark:bg-slate-800
-                dark:text-slate-100
-                dark:placeholder:text-slate-500
-                dark:focus:border-slate-600
-                dark:focus:bg-slate-800
-                dark:focus:ring-slate-700
+                focus:ring-primary
+               
+               
+               
+               
+               
+               
+               
               "
             />
 
@@ -694,20 +694,20 @@ function Logs() {
                 )
               }
               className="
-                rounded-lg
+                rounded-field hover:border-foreground transition-colors duration-200 ease-m3
                 border
-                border-slate-200
-                bg-white
-                px-3
-                py-2.5
-                text-sm
-                text-slate-700
+                border-input
+                bg-transparent
+                px-4
+                h-14
+                text-base
+                text-foreground
                 outline-none
-                focus:border-slate-400
-                dark:border-slate-700
-                dark:bg-slate-800
-                dark:text-slate-200
-                dark:focus:border-slate-600
+                focus:border-input
+               
+               
+               
+               
               "
             >
               <option value="All">
@@ -735,20 +735,20 @@ function Logs() {
                 )
               }
               className="
-                rounded-lg
+                rounded-field hover:border-foreground transition-colors duration-200 ease-m3
                 border
-                border-slate-200
-                bg-white
-                px-3
-                py-2.5
-                text-sm
-                text-slate-700
+                border-input
+                bg-transparent
+                px-4
+                h-14
+                text-base
+                text-foreground
                 outline-none
-                focus:border-slate-400
-                dark:border-slate-700
-                dark:bg-slate-800
-                dark:text-slate-200
-                dark:focus:border-slate-600
+                focus:border-input
+               
+               
+               
+               
               "
             >
               {sourceOptions.map(
@@ -773,19 +773,19 @@ function Logs() {
 
         <div className="
           border-b
-          border-slate-100
+          border-border
           px-5
           py-3
-          dark:border-slate-800
+         
         ">
 
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-muted-foreground">
             Showing{" "}
-            <span className="font-semibold text-slate-700 dark:text-slate-200">
+            <span className="font-semibold text-foreground">
               {filteredLogs.length}
             </span>{" "}
             of{" "}
-            <span className="font-semibold text-slate-700 dark:text-slate-200">
+            <span className="font-semibold text-foreground">
               {logs.length}
             </span>{" "}
             logs
@@ -805,13 +805,13 @@ function Logs() {
               animate-spin
               rounded-full
               border-2
-              border-slate-200
-              border-t-slate-800
-              dark:border-slate-700
-              dark:border-t-slate-300
+              border-border
+              border-t-primary
+             
+             
             " />
 
-            <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-4 text-sm text-muted-foreground">
               Loading activity logs...
             </p>
 
@@ -822,39 +822,39 @@ function Logs() {
 
             <div className="overflow-x-auto">
 
-              <table className="w-full min-w-[1050px]">
+              <table className="w-full min-w-262">
 
                 <thead>
 
                   <tr className="
                     border-b
-                    border-slate-200
-                    bg-slate-50
-                    dark:border-slate-800
-                    dark:bg-slate-800/50
+                    border-border
+                    bg-muted
+                   
+                   
                   ">
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Time
                     </th>
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Level
                     </th>
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Source
                     </th>
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Action
                     </th>
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Message
                     </th>
 
-                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th className="px-5 py-0 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Action
                     </th>
 
@@ -870,27 +870,27 @@ function Logs() {
                         key={log.id}
                         className="
                           border-b
-                          border-slate-100
+                          border-border
                           transition
-                          hover:bg-slate-50
-                          dark:border-slate-800
-                          dark:hover:bg-slate-800/50
+                          hover:bg-accent
+                         
+                         
                         "
                       >
 
                         {/* Time */}
 
-                        <td className="px-5 py-4">
+                        <td className="px-5 py-2">
 
                           <div>
 
-                            <p className="font-mono text-sm text-slate-500 dark:text-slate-400">
+                            <p className="font-mono text-sm text-muted-foreground">
                               {formatRelativeTime(
                                 log.time
                               )}
                             </p>
 
-                            <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                            <p className="mt-0.5 text-xs text-muted-foreground">
                               {formatDateTime(
                                 log.time
                               )}
@@ -902,16 +902,16 @@ function Logs() {
 
                         {/* Level */}
 
-                        <td className="px-5 py-4">
+                        <td className="px-5 py-2">
 
                           <span
                             className={`
                               inline-flex
-                              rounded-full
-                              px-2.5
-                              py-1
-                              text-xs
-                              font-semibold
+                              inline-flex items-center rounded-chip
+                              px-3
+                              h-8
+                              text-sm
+                              font-medium
                               ${getLevelClass(
                                 log.level
                               )}
@@ -924,25 +924,25 @@ function Logs() {
 
                         {/* Source */}
 
-                        <td className="px-5 py-4 text-sm font-medium text-slate-700 dark:text-slate-200">
+                        <td className="px-5 py-2 text-sm font-medium text-foreground">
                           {log.source}
                         </td>
 
                         {/* Action */}
 
-                        <td className="px-5 py-4 text-sm text-slate-700 dark:text-slate-300">
+                        <td className="px-5 py-2 text-sm text-foreground">
                           {log.action}
                         </td>
 
                         {/* Message */}
 
-                        <td className="max-w-xl px-5 py-4 text-sm text-slate-500 dark:text-slate-400">
+                        <td className="max-w-xl px-5 py-2 text-sm text-muted-foreground">
                           {log.message}
                         </td>
 
                         {/* Details */}
 
-                        <td className="px-5 py-4 text-right">
+                        <td className="px-5 py-2 text-right">
 
                           <button
                             onClick={() =>
@@ -951,18 +951,18 @@ function Logs() {
                               )
                             }
                             className="
-                              rounded-lg
+                              state-layer rounded-full transition-colors duration-200 ease-m3
                               px-3
-                              py-2
+                              h-10
                               text-sm
                               font-medium
-                              text-slate-600
-                              transition
-                              hover:bg-slate-100
-                              hover:text-slate-900
-                              dark:text-slate-400
-                              dark:hover:bg-slate-800
-                              dark:hover:text-white
+                              text-muted-foreground
+                             
+                             
+                              hover:text-foreground
+                             
+                             
+                             
                             "
                           >
                             Details
@@ -993,20 +993,20 @@ function Logs() {
                     items-center
                     justify-center
                     rounded-full
-                    bg-slate-100
+                    bg-muted
                     text-xl
-                    text-slate-400
-                    dark:bg-slate-800
-                    dark:text-slate-500
+                    text-muted-foreground
+                   
+                   
                   ">
                     ?
                   </div>
 
-                  <h3 className="font-semibold text-slate-800 dark:text-slate-200">
+                  <h3 className="font-semibold text-foreground">
                     No logs found
                   </h3>
 
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Try changing your search
                     or filters.
                   </p>
@@ -1031,9 +1031,9 @@ function Logs() {
             flex
             items-center
             justify-center
-            bg-slate-900/40
+            m3-scrim
             p-4
-            dark:bg-black/60
+           
           "
           onClick={() =>
             setSelectedLog(null)
@@ -1044,14 +1044,14 @@ function Logs() {
             className="
               w-full
               max-w-lg
-              rounded-xl
+              rounded-dialog
               border
               border-transparent
-              bg-white
+              bg-surface-high
               p-6
-              shadow-2xl
-              dark:border-slate-800
-              dark:bg-slate-900
+              shadow-m3-3
+             
+             
             "
             onClick={(event) =>
               event.stopPropagation()
@@ -1062,11 +1062,11 @@ function Logs() {
 
               <div>
 
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <h2 className="text-2xl font-normal text-foreground">
                   Log Details
                 </h2>
 
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Detail aktivitas yang tersimpan di database audit
                 </p>
 
@@ -1078,18 +1078,18 @@ function Logs() {
                 }
                 className="
                   flex
-                  h-8
-                  w-8
+                  h-10
+                  w-10
                   items-center
                   justify-center
-                  rounded-lg
-                  text-slate-400
-                  transition
-                  hover:bg-slate-100
-                  hover:text-slate-700
-                  dark:text-slate-500
-                  dark:hover:bg-slate-800
-                  dark:hover:text-slate-200
+                  state-layer rounded-full transition-colors duration-200 ease-m3
+                  text-muted-foreground
+                 
+                 
+                  hover:text-foreground
+                 
+                 
+                 
                 "
               >
                 ×
@@ -1104,16 +1104,16 @@ function Logs() {
                 items-center
                 justify-between
                 border-b
-                border-slate-100
+                border-border
                 pb-3
-                dark:border-slate-800
+               
               ">
 
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm text-muted-foreground">
                   Time
                 </span>
 
-                <span className="font-mono text-sm text-slate-800 dark:text-slate-200">
+                <span className="font-mono text-sm text-foreground">
                   {formatDateTime(
                     selectedLog.time
                   )}
@@ -1126,22 +1126,22 @@ function Logs() {
                 items-center
                 justify-between
                 border-b
-                border-slate-100
+                border-border
                 pb-3
-                dark:border-slate-800
+               
               ">
 
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm text-muted-foreground">
                   Level
                 </span>
 
                 <span
                   className={`
-                    rounded-full
-                    px-2.5
-                    py-1
-                    text-xs
-                    font-semibold
+                    inline-flex items-center rounded-chip
+                    px-3
+                    h-8
+                    text-sm
+                    font-medium
                     ${getLevelClass(
                       selectedLog.level
                     )}
@@ -1157,16 +1157,16 @@ function Logs() {
                 items-center
                 justify-between
                 border-b
-                border-slate-100
+                border-border
                 pb-3
-                dark:border-slate-800
+               
               ">
 
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm text-muted-foreground">
                   Source
                 </span>
 
-                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                <span className="text-sm font-medium text-foreground">
                   {selectedLog.source}
                 </span>
 
@@ -1177,16 +1177,16 @@ function Logs() {
                 items-center
                 justify-between
                 border-b
-                border-slate-100
+                border-border
                 pb-3
-                dark:border-slate-800
+               
               ">
 
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm text-muted-foreground">
                   Action
                 </span>
 
-                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                <span className="text-sm font-medium text-foreground">
                   {selectedLog.action}
                 </span>
 
@@ -1194,19 +1194,19 @@ function Logs() {
 
               <div>
 
-                <p className="mb-2 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mb-2 text-sm text-muted-foreground">
                   Message
                 </p>
 
                 <div className="
-                  rounded-lg
-                  bg-slate-50
+                  rounded-card
+                  bg-muted
                   p-4
                   text-sm
                   leading-6
-                  text-slate-700
-                  dark:bg-slate-800
-                  dark:text-slate-300
+                  text-foreground
+                 
+                 
                 ">
                   {selectedLog.message}
                 </div>
@@ -1222,18 +1222,18 @@ function Logs() {
               className="
                 mt-6
                 w-full
-                rounded-lg
-                bg-slate-900
-                px-4
-                py-2.5
+                state-layer rounded-full transition-colors duration-200 ease-m3
+                bg-primary
+                px-6
+                h-10
                 text-sm
-                font-semibold
-                text-white
-                transition
-                hover:bg-slate-800
-                dark:bg-white
-                dark:text-slate-900
-                dark:hover:bg-slate-200
+                font-medium
+                text-primary-foreground
+               
+               
+               
+               
+               
               "
             >
               Close

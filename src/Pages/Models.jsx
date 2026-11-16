@@ -233,15 +233,15 @@ function Models() {
   const activeModels = models.filter((model) => model.is_active).length
 
   const fieldClass =
-    "h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+    "h-14 w-full rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent px-4 text-base outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-50"
   const areaClass =
-    "w-full resize-y rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+    "w-full resize-y rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent px-4 py-2.5 text-base outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
   const labelClass = "mb-2 block text-sm font-medium"
   const hintClass = "mt-1.5 text-sm text-muted-foreground"
   const primaryButton =
-    "h-9 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+    "h-10 state-layer rounded-full transition-colors duration-200 ease-m3 bg-primary px-6 text-sm font-medium text-primary-foreground disabled:bg-foreground/12 disabled:text-foreground/38"
   const secondaryButton =
-    "h-9 rounded-lg border border-input bg-card px-4 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
+    "h-10 state-layer rounded-full transition-colors duration-200 ease-m3 border border-input bg-transparent px-6 text-sm font-medium disabled:border-foreground/12 disabled:text-foreground/38 text-primary"
 
   const agentOptions = (
     <>
@@ -259,7 +259,7 @@ function Models() {
     <div className="min-h-screen bg-[var(--app-bg)] p-6">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Model AI</h1>
+          <h1 className="text-2xl font-normal">Model AI</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {loading
               ? "Memuat model..."
@@ -280,17 +280,17 @@ function Models() {
       </div>
 
       {error && (
-        <p role="alert" className="mb-4 rounded-lg bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+        <p role="alert" className="mb-4 rounded-card bg-error-container px-4 py-3 text-sm font-medium text-on-error-container">
           {error}
         </p>
       )}
       {success && (
-        <p role="status" className="mb-4 rounded-lg bg-muted px-4 py-3 text-sm">
+        <p role="status" className="mb-4 rounded-card bg-muted px-4 py-3 text-sm">
           {success}
         </p>
       )}
 
-      <section className="rounded-xl bg-card text-card-foreground">
+      <section className="rounded-card bg-card text-card-foreground">
         <div className="flex flex-wrap items-center justify-between gap-3 p-4">
           <h2 className="text-base font-semibold">Katalog model sistem</h2>
           <button type="button" className={secondaryButton} onClick={() => void loadModels()} disabled={loading}>
@@ -304,34 +304,34 @@ function Models() {
           <p className="px-4 py-12 text-center text-sm text-muted-foreground">Belum ada model global.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-sm">
+            <table className="w-full min-w-225 text-left text-sm">
               <thead>
                 <tr className="text-muted-foreground">
-                  <th className="px-4 py-2.5">Model</th>
-                  <th className="px-4 py-2.5">Provider</th>
-                  <th className="px-4 py-2.5">Agent</th>
-                  <th className="px-4 py-2.5">Status</th>
-                  <th className="px-4 py-2.5">Dibuat</th>
-                  <th className="px-4 py-2.5 text-right">Aksi</th>
+                  <th className="px-4 py-0">Model</th>
+                  <th className="px-4 py-0">Provider</th>
+                  <th className="px-4 py-0">Agent</th>
+                  <th className="px-4 py-0">Status</th>
+                  <th className="px-4 py-0">Dibuat</th>
+                  <th className="px-4 py-0 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody>
                 {models.map((model) => (
                   <tr key={model.id} className="align-top transition-colors hover:bg-muted/60">
-                    <td className="max-w-sm px-4 py-3">
+                    <td className="max-w-sm px-4 py-2">
                       <p className="truncate font-medium">{model.name}</p>
                       {model.model_id !== model.name && <p className="truncate text-muted-foreground">{model.model_id}</p>}
                       {model.description && <p className="mt-1 line-clamp-2 text-muted-foreground">{model.description}</p>}
                     </td>
-                    <td className="px-4 py-3">{model.provider?.name || "–"}</td>
-                    <td className="max-w-xs px-4 py-3 text-muted-foreground">
+                    <td className="px-4 py-2">{model.provider?.name || "–"}</td>
+                    <td className="max-w-xs px-4 py-2 text-muted-foreground">
                       {Array.isArray(model.agents) && model.agents.length > 0
                         ? agents.length > 1 && model.agents.length === agents.length
                           ? `Semua agent (${agents.length})`
                           : model.agents.map((agent) => agent.name).join(", ")
                         : "Belum ditetapkan"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2">
                       <label className="inline-flex cursor-pointer items-center gap-3 whitespace-nowrap">
                         <button
                           type="button"
@@ -340,24 +340,19 @@ function Models() {
                           aria-label={`${model.is_active ? "Nonaktifkan" : "Aktifkan"} ${model.name}`}
                           onClick={() => void toggleActive(model)}
                           disabled={updatingId === model.id}
-                          className={`relative h-5 w-9 shrink-0 rounded-full transition-colors disabled:opacity-50 ${model.is_active ? "bg-green-600" : "bg-muted-foreground/40"}`}
-                        >
-                          <span
-                            aria-hidden="true"
-                            className={`absolute left-0.5 top-0.5 size-4 rounded-full bg-white transition-transform ${model.is_active ? "translate-x-4" : ""}`}
-                          />
-                        </button>
+                          className="m3-switch"
+                        />
                         <span className={model.is_active ? "" : "text-muted-foreground"}>
                           {updatingId === model.id ? "Menyimpan..." : model.is_active ? "Aktif" : "Nonaktif"}
                         </span>
                       </label>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{formatDate(model.created_at)}</td>
-                    <td className="w-40 px-4 py-3">
+                    <td className="whitespace-nowrap px-4 py-2 text-muted-foreground">{formatDate(model.created_at)}</td>
+                    <td className="w-40 px-4 py-2">
                       <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                         <button
                           type="button"
-                          className="h-8 rounded-lg border border-input bg-card px-3 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
+                          className="h-10 state-layer rounded-full transition-colors duration-200 ease-m3 border border-input bg-transparent px-6 text-sm font-medium disabled:border-foreground/12 disabled:text-foreground/38 text-primary"
                           onClick={() => startEditing(model)}
                           disabled={updatingId === model.id}
                         >
@@ -365,7 +360,7 @@ function Models() {
                         </button>
                         <button
                           type="button"
-                          className="h-8 rounded-lg px-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
+                          className="h-10 state-layer rounded-full transition-colors duration-200 ease-m3 px-3 text-sm font-medium text-destructive disabled:text-foreground/38"
                           onClick={() => void deleteModel(model)}
                           disabled={updatingId === model.id}
                         >
@@ -383,7 +378,7 @@ function Models() {
 
       {showAdd && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center m3-scrim p-4"
           onClick={() => {
             if (!saving) setShowAdd(false)
           }}
@@ -392,12 +387,12 @@ function Models() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-model-title"
-            className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-card p-6 text-card-foreground shadow-xl"
+            className="max-h-full w-full max-w-2xl overflow-y-auto rounded-dialog bg-surface-high p-6 text-card-foreground shadow-m3-3"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 id="add-model-title" className="text-lg font-semibold">Tambah model bawaan</h2>
+                <h2 id="add-model-title" className="text-2xl font-normal">Tambah model bawaan</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                   API key disimpan terenkripsi di backend. Gunakan endpoint yang kompatibel dengan OpenAI Chat Completions.
                 </p>
@@ -407,7 +402,7 @@ function Models() {
                 aria-label="Tutup"
                 onClick={() => setShowAdd(false)}
                 disabled={saving}
-                className="size-8 shrink-0 rounded-lg text-xl leading-none text-muted-foreground hover:bg-muted"
+                className="size-10 shrink-0 state-layer rounded-full transition-colors duration-200 ease-m3 text-xl leading-none text-muted-foreground"
               >
                 ×
               </button>
@@ -483,14 +478,14 @@ function Models() {
       )}
 
       {editingModel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">
+        <div className="fixed inset-0 z-50 flex items-center justify-center m3-scrim p-4" role="presentation">
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="edit-model-title"
-            className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-xl bg-card p-6 text-card-foreground shadow-xl"
+            className="max-h-full w-full max-w-xl overflow-y-auto rounded-dialog bg-surface-high p-6 text-card-foreground shadow-m3-3"
           >
-            <h2 id="edit-model-title" className="text-lg font-semibold">Edit model AI</h2>
+            <h2 id="edit-model-title" className="text-2xl font-normal">Edit model AI</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Perubahan berlaku bagi semua pengguna yang memakai model global ini.
             </p>

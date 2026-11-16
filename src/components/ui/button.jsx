@@ -1,6 +1,29 @@
 import { cn } from "../../lib/utils.js"
-const variants = { default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90", destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90", outline: "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground", secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80", ghost: "hover:bg-accent hover:text-accent-foreground", link: "text-primary underline-offset-4 hover:underline" }
-const sizes = { default: "h-9 px-4 py-2", sm: "h-8 rounded-md px-3 text-xs", lg: "h-10 rounded-md px-8", icon: "size-9" }
+
+// Material 3 buttons: filled (default), filled tonal (secondary), outlined, text (ghost, link),
+// filled in error colors (destructive) and the round icon button (size="icon").
+const variants = {
+  default: "bg-primary text-primary-foreground disabled:bg-foreground/12",
+  destructive: "bg-destructive text-destructive-foreground disabled:bg-foreground/12",
+  secondary: "bg-secondary text-secondary-foreground disabled:bg-foreground/12",
+  outline: "border border-input bg-transparent text-primary disabled:border-foreground/12",
+  ghost: "bg-transparent text-primary",
+  link: "bg-transparent text-primary underline-offset-4 hover:underline",
+}
+const sizes = { default: "h-10 px-6", sm: "h-8 px-4", lg: "h-12 px-8", icon: "size-10 px-0" }
+
 export function Button({ className, variant = "default", size = "default", type = "button", ...props }) {
-  return <button type={type} className={cn("inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0", variants[variant] || variants.default, sizes[size] || sizes.default, className)} {...props} />
+  return (
+    <button
+      type={type}
+      className={cn(
+        "state-layer inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-colors duration-200 ease-m3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:text-foreground/38 [&_svg]:pointer-events-none [&_svg]:size-4.5 [&_svg]:shrink-0",
+        variants[variant] || variants.default,
+        sizes[size] || sizes.default,
+        size === "icon" && variant === "ghost" && "text-muted-foreground",
+        className
+      )}
+      {...props}
+    />
+  )
 }

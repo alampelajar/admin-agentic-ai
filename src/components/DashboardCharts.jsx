@@ -59,7 +59,7 @@ function DashboardCharts() {
               <Line
                 type="monotone"
                 dataKey="tasks"
-                stroke="#2563eb"
+                stroke="var(--chart-1)"
                 strokeWidth={3}
                 dot={{ r: 4 }}
               />
@@ -92,7 +92,7 @@ function DashboardCharts() {
 
               <Bar
                 dataKey="tokens"
-                fill="#2563eb"
+                fill="var(--chart-1)"
                 radius={[5, 5, 0, 0]}
               />
             </BarChart>

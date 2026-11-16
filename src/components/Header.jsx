@@ -75,7 +75,7 @@ function Header({ onMenuClick = () => {} }) {
   return (
     <header className="app-header">
       <div className="app-header-left">
-        <Button type="button" variant="outline" size="icon" className="mobile-menu-button" aria-label="Open navigation menu" onClick={onMenuClick}>
+        <Button type="button" variant="ghost" size="icon" className="mobile-menu-button" aria-label="Open navigation menu" onClick={onMenuClick}>
           <span aria-hidden="true">☰</span>
         </Button>
         <div className="header-greeting">

@@ -4,6 +4,8 @@ import App from './App.jsx'
 import './index.css'
 import './admin-polish.css'
 import './motion.css'
+import './m3-tokens.css'
+import './m3.css'
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "design:check": "node scripts/check-design.mjs",
     "design:test": "node --test scripts/check-design-tests.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "theme": "node scripts/m3-theme.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.115.0",
@@ -21,6 +22,7 @@
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
+    "@material/material-color-utilities": "^0.3.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",

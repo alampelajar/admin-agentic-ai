@@ -19,8 +19,8 @@ const ratingReasonLabels = {
 
 const statusDot = {
   new: "bg-foreground",
-  processing: "bg-amber-500",
-  completed: "bg-green-600",
+  processing: "bg-current text-amber-700 dark:text-amber-300",
+  completed: "bg-current text-green-700 dark:text-green-300",
   rejected: "bg-muted-foreground",
 }
 
@@ -68,7 +68,7 @@ function AttachmentImage({ feedbackId }) {
       rel="noreferrer"
       className="mt-2 inline-flex flex-col gap-2 text-sm underline-offset-4 hover:underline"
     >
-      <img src={url} alt="Feedback attachment" className="max-h-72 max-w-full rounded-lg object-contain" />
+      <img src={url} alt="Feedback attachment" className="max-h-72 max-w-full rounded-card object-contain" />
       Open image in a new tab
     </a>
   )
@@ -175,12 +175,12 @@ function Ticket() {
   }))
 
   const controlClass =
-    "h-9 rounded-lg border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+    "h-14 rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent px-4 text-base outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-50"
 
   return (
     <div className="min-h-screen bg-[var(--app-bg)] p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Tickets</h1>
+        <h1 className="text-2xl font-normal">Tickets</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {loading
             ? "Loading tickets..."
@@ -191,18 +191,18 @@ function Ticket() {
       </div>
 
       {notice && (
-        <p role="status" className="mb-4 rounded-lg bg-muted px-4 py-3 text-sm">
+        <p role="status" className="mb-4 rounded-card bg-muted px-4 py-3 text-sm">
           {notice}
         </p>
       )}
       {error && (
-        <p role="alert" className="mb-4 rounded-lg bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+        <p role="alert" className="mb-4 rounded-card bg-error-container px-4 py-3 text-sm font-medium text-on-error-container">
           {error}
         </p>
       )}
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,0.8fr)]">
-        <section className="min-w-0 rounded-xl bg-card text-card-foreground">
+        <section className="min-w-0 rounded-card bg-card text-card-foreground">
           <div className="space-y-3 p-4">
             <input
               type="search"
@@ -212,7 +212,7 @@ function Ticket() {
               placeholder="Search by subject, name, email or ID"
               className={`${controlClass} w-full`}
             />
-            <div role="tablist" aria-label="Filter by status" className="flex flex-wrap gap-1">
+            <div role="tablist" aria-label="Filter by status" className="m3-tabs">
               {tabs.map((tab) => (
                 <button
                   key={tab.value}
@@ -220,11 +220,7 @@ function Ticket() {
                   role="tab"
                   aria-selected={filter === tab.value}
                   onClick={() => setFilter(tab.value)}
-                  className={`h-8 rounded-lg px-3 text-sm transition-colors ${
-                    filter === tab.value
-                      ? "bg-muted font-medium text-foreground"
-                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                  }`}
+                  className="m3-tab state-layer transition-colors duration-200 ease-m3"
                 >
                   {tab.label} <span className="tabular-nums text-muted-foreground">{tab.count}</span>
                 </button>
@@ -248,7 +244,7 @@ function Ticket() {
                       setNotice("")
                       setConfirmDelete(false)
                     }}
-                    className={`block w-full rounded-lg px-3 py-3 text-left transition-colors ${
+                    className={`block w-full rounded-card px-3 py-3 text-left transition-colors ${
                       selected?.id === item.id ? "bg-muted" : "hover:bg-muted/60"
                     }`}
                   >
@@ -284,11 +280,11 @@ function Ticket() {
 
         <aside className="min-w-0 xl:sticky xl:top-6" aria-label="Ticket details">
           {!selected ? (
-            <div className="flex min-h-72 items-center justify-center rounded-xl bg-card p-8 text-center text-sm text-muted-foreground">
+            <div className="flex min-h-72 items-center justify-center rounded-card bg-card p-8 text-center text-sm text-muted-foreground">
               Select a ticket to read it and reply.
             </div>
           ) : (
-            <div className="space-y-6 rounded-xl bg-card p-5 text-card-foreground">
+            <div className="space-y-6 rounded-card bg-card p-5 text-card-foreground">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Ticket #{selected.id}</p>
@@ -372,7 +368,7 @@ function Ticket() {
                     <p className="text-sm text-muted-foreground">No replies yet.</p>
                   ) : (
                     selected.replies.map((entry) => (
-                      <div key={entry.id} className="rounded-lg bg-muted p-3 text-sm">
+                      <div key={entry.id} className="rounded-card bg-muted p-3 text-sm">
                         <p className="whitespace-pre-wrap">{entry.message}</p>
                         <p className="mt-2 text-sm text-muted-foreground">{formatDate(entry.created_at)}</p>
                       </div>
@@ -390,11 +386,11 @@ function Ticket() {
                   maxLength={5000}
                   rows={5}
                   placeholder="Type your response to the user"
-                  className="w-full rounded-lg border border-input bg-background p-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                  className="w-full rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent p-4 text-base outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
                 />
                 <button
                   disabled={saving || !reply.trim()}
-                  className="h-9 w-full rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="h-10 w-full state-layer rounded-full transition-colors duration-200 ease-m3 bg-primary px-6 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:bg-foreground/12 disabled:text-foreground/38"
                 >
                   {saving ? "Sending..." : "Send reply"}
                 </button>
@@ -403,7 +399,7 @@ function Ticket() {
               <div>
                 {selected.status === "completed" || selected.status === "rejected" ? (
                   confirmDelete ? (
-                    <div role="alertdialog" aria-label="Confirm delete" className="space-y-3 rounded-lg bg-destructive/10 p-3 text-sm">
+                    <div role="alertdialog" aria-label="Confirm delete" className="space-y-3 rounded-card bg-error-container p-3 text-sm">
                       <p>
                         Delete ticket #{selected.id} permanently? Its replies and attached image are deleted too,
                         and the user no longer sees it.
@@ -413,7 +409,7 @@ function Ticket() {
                           type="button"
                           disabled={saving}
                           onClick={() => deleteTicket(selected)}
-                          className="h-9 rounded-lg bg-destructive px-3 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+                          className="h-10 state-layer rounded-full transition-colors duration-200 ease-m3 bg-destructive px-6 text-sm font-medium text-destructive-foreground disabled:bg-foreground/12 disabled:text-foreground/38"
                         >
                           {saving ? "Deleting..." : "Yes, delete"}
                         </button>
@@ -421,7 +417,7 @@ function Ticket() {
                           type="button"
                           disabled={saving}
                           onClick={() => setConfirmDelete(false)}
-                          className="h-9 rounded-lg border border-input bg-card px-3 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                          className="h-10 state-layer rounded-full transition-colors duration-200 ease-m3 border border-input bg-transparent px-6 text-sm font-medium disabled:border-foreground/12 disabled:text-foreground/38 text-primary"
                         >
                           Cancel
                         </button>

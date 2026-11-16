@@ -119,8 +119,8 @@ function BrandLogo() {
 
 function MenuIcon({ name, active }) {
   const commonProps = {
-    width: 18,
-    height: 18,
+    width: 24,
+    height: 24,
     viewBox: "0 0 24 24",
     fill: "none",
     stroke: "currentColor",
@@ -241,15 +241,13 @@ function Sidebar({ open = false, collapsed = false, onToggleCollapse = () => {},
           <div className="sidebar-brand-text min-w-0">
             <h1
               className="
-                text-base font-semibold tracking-tight
-                text-slate-900
-                dark:text-white
+                text-base font-medium text-foreground
               "
             >
               Agentic AI
             </h1>
 
-            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               Admin console
             </p>
           </div>
@@ -293,18 +291,12 @@ function Sidebar({ open = false, collapsed = false, onToggleCollapse = () => {},
               end={item.path === "/"}
               className={({ isActive }) =>
                 [
-                  "sidebar-link group relative flex h-10 items-center gap-3 rounded-lg px-3",
-                  "text-[13px] font-medium transition-colors duration-150",
-                  "focus-visible:outline-none focus-visible:ring-2",
-                  "focus-visible:ring-blue-500 focus-visible:ring-offset-2",
-                  isActive ? "active" : "",
+                  "sidebar-link group relative flex h-14 items-center gap-3 rounded-full px-4",
+                  "text-sm font-medium transition-colors duration-200 ease-m3",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   isActive
-                    ? "text-slate-900 dark:text-white"
-                    : [
-                        "text-slate-600 hover:bg-black/5 hover:text-slate-900",
-                        "dark:text-slate-400 dark:hover:bg-white/5",
-                        "dark:hover:text-white",
-                      ].join(" "),
+                    ? "active bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
                 ].join(" ")
               }
             >
@@ -313,10 +305,8 @@ function Sidebar({ open = false, collapsed = false, onToggleCollapse = () => {},
                   <span
                     className={[
                       "sidebar-link-icon flex shrink-0 items-center justify-center",
-                      "transition-colors",
-                      isActive
-                        ? "text-slate-900 dark:text-white"
-                        : "text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300",
+                      "transition-colors duration-200 ease-m3",
+                      isActive ? "text-sidebar-accent-foreground" : "text-muted-foreground group-hover:text-foreground",
                     ].join(" ")}
                   >
                     <MenuIcon
@@ -339,13 +329,10 @@ function Sidebar({ open = false, collapsed = false, onToggleCollapse = () => {},
         <div className="flex items-center gap-3">
           <div
             className="
-              flex h-9 w-9 shrink-0
+              flex size-10 shrink-0
               items-center justify-center
               rounded-full
-              bg-slate-200
-              text-xs font-semibold text-slate-700
-              dark:bg-slate-800
-              dark:text-slate-200
+              bg-primary-container text-sm font-medium text-on-primary-container
             "
             aria-hidden="true"
           >
@@ -355,9 +342,7 @@ function Sidebar({ open = false, collapsed = false, onToggleCollapse = () => {},
           <div className="sidebar-profile-text min-w-0 flex-1">
             <p
               className="
-                truncate text-sm font-semibold
-                text-slate-900
-                dark:text-white
+                truncate text-sm font-medium text-foreground
               "
               title={admin.name}
             >
@@ -366,9 +351,7 @@ function Sidebar({ open = false, collapsed = false, onToggleCollapse = () => {},
 
             <p
               className="
-                mt-0.5 truncate text-xs
-                text-slate-500
-                dark:text-slate-400
+                mt-0.5 truncate text-xs text-muted-foreground
               "
               title={admin.email || admin.role}
             >

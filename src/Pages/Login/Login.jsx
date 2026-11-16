@@ -93,26 +93,26 @@ function Login({ onAuthenticated = () => {} }) {
       </section>
 
       <section className="flex items-center px-6 py-12 sm:px-10 lg:px-16">
-        <div className="login-card mx-auto w-full max-w-sm rounded-2xl border border-border bg-card p-7 shadow-[0_20px_50px_rgb(24_32_64/8%)]">
-          <h1 className="text-2xl font-semibold tracking-tight">Welcome back 👋</h1>
+        <div className="login-card mx-auto w-full max-w-sm rounded-card border border-border bg-card p-6">
+          <h1 className="text-2xl font-normal">Welcome back 👋</h1>
           <p className="mt-2 text-sm text-muted-foreground">Sign in with your administrator account.</p>
 
           <form onSubmit={handleLogin} className="login-form mt-7 space-y-4">
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">Email</label>
-              <Input id="email" name="email" type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@company.com" required disabled={loading} className="h-10 rounded-lg shadow-none!" />
+              <Input id="email" name="email" type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@company.com" required disabled={loading} />
             </div>
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium">Password</label>
-              <PasswordInput id="password" name="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Your password" required disabled={loading} className="h-10 rounded-lg shadow-none!" />
+              <PasswordInput id="password" name="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Your password" required disabled={loading} />
             </div>
             {error && (
-              <Alert variant="destructive" role="alert" aria-live="polite" className="bg-destructive/5">
+              <Alert variant="destructive" role="alert" aria-live="polite">
                 <AlertTitle>Unable to sign in</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <Button type="submit" className="h-11 w-full gap-2 rounded-lg text-white" disabled={loading || leaving}>
+            <Button type="submit" className="w-full" disabled={loading || leaving}>
               {(loading || leaving) && <span className="spinner" aria-hidden="true" />}
               {leaving ? "Opening dashboard..." : loading ? "Signing in..." : "Sign in"}
             </Button>

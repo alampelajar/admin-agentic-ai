@@ -14,6 +14,33 @@
   --color-border: var(--border); --color-input: var(--input); --color-ring: var(--ring);
   --radius-sm: calc(var(--radius) - 4px); --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius); --radius-xl: calc(var(--radius) + 4px);
+
+  /* Material 3 roles without a shadcn name. Values come from src/m3-tokens.css. */
+  --color-sidebar: var(--sidebar); --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-surface-high: var(--surface-high);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-tertiary: var(--tertiary); --color-tertiary-container: var(--tertiary-container);
+  --color-on-tertiary-container: var(--on-tertiary-container);
+  --color-error-container: var(--error-container);
+  --color-on-error-container: var(--on-error-container);
+  --color-inverse-surface: var(--inverse-surface);
+  --color-inverse-on-surface: var(--inverse-on-surface);
+  --color-chart-1: var(--chart-1); --color-chart-2: var(--chart-2); --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4); --color-chart-5: var(--chart-5);
+
+  /* Material 3 shape scale. */
+  --radius-field: 4px; --radius-chip: 8px; --radius-card: 12px;
+  --radius-sheet: 16px; --radius-dialog: 28px;
+
+  /* Material 3 elevation, only for floating elements: level 2 (menus), level 3 (dialogs). */
+  --shadow-m3-2: 0 1px 2px 0 oklch(0% 0 0 / 30%), 0 2px 6px 2px oklch(0% 0 0 / 15%);
+  --shadow-m3-3: 0 1px 3px 0 oklch(0% 0 0 / 30%), 0 4px 8px 3px oklch(0% 0 0 / 15%);
+
+  /* Material 3 standard easing, used with duration-200. */
+  --ease-m3: cubic-bezier(0.2, 0, 0, 1);
 }
 
 :root {

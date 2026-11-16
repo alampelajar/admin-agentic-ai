@@ -3,6 +3,18 @@ import { createPortal } from "react-dom"
 import { apiFetch } from "../lib/api"
 import { PasswordInput } from "../components/ui/password-input.jsx"
 
+// Jakarta time without seconds, e.g. "22/9/2026, 15.49 WIB".
+const wibFormat = new Intl.DateTimeFormat("id-ID", {
+  timeZone: "Asia/Jakarta",
+  day: "numeric",
+  month: "numeric",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+})
+
+const formatWib = (value) => `${wibFormat.format(new Date(value))} WIB`
+
 const normalizeUser = (user) => {
   const roleMap = {
     admin: "Admin",
@@ -24,7 +36,7 @@ const normalizeUser = (user) => {
         }))
       : [],
     lastActive: user.updated_at
-      ? new Date(user.updated_at).toLocaleString("id-ID")
+      ? formatWib(user.updated_at)
       : "-",
     avatar: user.avatar || "",
     createdAt: user.created_at || null,
@@ -462,7 +474,7 @@ function Users() {
   // ============================================================
 
   const inputClass =
-    "h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+    "h-14 w-full rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent px-4 text-base outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-50"
 
   // ============================================================
   // RETURN
@@ -515,16 +527,16 @@ function Users() {
   }
 
   const secondaryButton =
-    "h-9 rounded-lg border border-input bg-card px-4 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
+    "h-10 state-layer rounded-full transition-colors duration-200 ease-m3 border border-input bg-transparent px-6 text-sm font-medium disabled:border-foreground/12 disabled:text-foreground/38 text-primary"
   const primaryButton =
-    "h-9 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+    "h-10 state-layer rounded-full transition-colors duration-200 ease-m3 bg-primary px-6 text-sm font-medium text-primary-foreground disabled:bg-foreground/12 disabled:text-foreground/38"
   const fieldLabel = "mb-2 block text-sm font-medium"
 
   return (
     <div className="min-h-screen bg-[var(--app-bg)] p-6">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
+          <h1 className="text-2xl font-normal">Users</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {loading
               ? "Loading users..."
@@ -545,7 +557,7 @@ function Users() {
       </div>
 
       {pageError && (
-        <div role="alert" className="mb-6 flex items-center justify-between gap-4 rounded-lg bg-destructive/10 px-4 py-3">
+        <div role="alert" className="mb-6 flex items-center justify-between gap-4 rounded-card bg-error-container px-4 py-3">
           <p className="text-sm font-medium text-destructive">{pageError}</p>
           <button type="button" onClick={loadUsers} className="text-sm font-medium underline-offset-4 hover:underline">
             Retry
@@ -553,7 +565,7 @@ function Users() {
         </div>
       )}
 
-      <section className="rounded-xl bg-card text-card-foreground">
+      <section className="rounded-card bg-card text-card-foreground">
         <div className="flex flex-wrap items-center gap-3 p-4">
           <input
             type="search"
@@ -561,13 +573,13 @@ function Users() {
             placeholder="Search by name or email"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            className="h-9 min-w-0 flex-1 basis-64 rounded-lg border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-14 min-w-0 flex-1 basis-64 rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent px-4 text-base outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
           />
           <select
             aria-label="Filter by role"
             value={roleFilter}
             onChange={(event) => setRoleFilter(event.target.value)}
-            className="h-9 rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-14 rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent px-4 text-base outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
           >
             <option value="All">All roles</option>
             <option value="Admin">Admin</option>
@@ -587,21 +599,21 @@ function Users() {
           <p className="px-4 py-12 text-center text-sm text-muted-foreground">Loading users...</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
+            <table className="w-full min-w-180 text-left text-sm">
               <thead>
                 <tr className="text-muted-foreground">
-                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">User</th>
-                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Role</th>
-                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Status</th>
-                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Agents</th>
-                  <th className="px-4 py-2.5 text-sm font-normal normal-case tracking-normal">Last active</th>
-                  <th className="w-12 px-4 py-2.5"><span className="sr-only">Actions</span></th>
+                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">User</th>
+                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Role</th>
+                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Status</th>
+                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Agents</th>
+                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Last active</th>
+                  <th className="w-12 px-4 py-0"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.map((user) => (
                   <tr key={user.id} className="transition-colors hover:bg-muted/60">
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2">
                       <div className="flex items-center gap-3">
                         <span
                           aria-hidden="true"
@@ -619,17 +631,17 @@ function Users() {
                         </div>
                       </div>
                     </td>
-                    <td className={`px-4 py-3 ${user.role === "Admin" ? "font-medium" : "text-muted-foreground"}`}>{user.role}</td>
-                    <td className="px-4 py-3">
+                    <td className={`px-4 py-2 ${user.role === "Admin" ? "font-medium" : "text-muted-foreground"}`}>{user.role}</td>
+                    <td className="px-4 py-2">
                       <span className="inline-flex items-center gap-2 whitespace-nowrap">
                         <span
                           aria-hidden="true"
-                          className={`size-2 rounded-full ${user.status === "Active" ? "bg-green-600" : user.status === "Suspended" ? "bg-destructive" : "bg-muted-foreground"}`}
+                          className={`size-2 rounded-full ${user.status === "Active" ? "bg-current text-green-700 dark:text-green-300" : user.status === "Suspended" ? "bg-destructive" : "bg-muted-foreground"}`}
                         />
                         {user.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="px-4 py-2 text-muted-foreground">
                       {user.agents.length === 0 ? (
                         "–"
                       ) : (
@@ -639,15 +651,15 @@ function Users() {
                         </span>
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{user.lastActive}</td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="whitespace-nowrap px-4 py-2 text-muted-foreground">{user.lastActive}</td>
+                    <td className="px-4 py-2 text-right">
                       <button
                         type="button"
                         onClick={(event) => openRowMenu(event, user)}
                         disabled={deletingId === user.id}
                         aria-label={`Actions for ${user.name}`}
                         aria-expanded={openMenu === user.id}
-                        className="size-8 rounded-lg text-lg leading-none text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+                        className="size-10 state-layer rounded-full transition-colors duration-200 ease-m3 text-lg leading-none text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
                       >
                         ⋮
                       </button>
@@ -656,12 +668,12 @@ function Users() {
                           <div
                             role="menu"
                             style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
-                            className="fixed z-50 w-44 rounded-lg border border-border bg-popover p-1 text-sm text-popover-foreground shadow-lg"
+                            className="fixed z-50 w-44 rounded-field bg-popover py-2 text-sm text-popover-foreground shadow-m3-2"
                           >
                             <button
                               type="button"
                               role="menuitem"
-                              className="block w-full rounded-md px-3 py-2 text-left hover:bg-muted"
+                              className="block w-full px-3 min-h-12 text-left hover:bg-accent"
                               onClick={() => {
                                 setSelectedUser(user)
                                 setOpenMenu(null)
@@ -672,7 +684,7 @@ function Users() {
                             <button
                               type="button"
                               role="menuitem"
-                              className="block w-full rounded-md px-3 py-2 text-left hover:bg-muted"
+                              className="block w-full px-3 min-h-12 text-left hover:bg-accent"
                               onClick={() => openEditUser(user)}
                             >
                               Edit user
@@ -680,7 +692,7 @@ function Users() {
                             <button
                               type="button"
                               role="menuitem"
-                              className="block w-full rounded-md px-3 py-2 text-left text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                              className="block w-full px-3 min-h-12 text-left text-destructive hover:bg-destructive/10 disabled:text-foreground/38"
                               onClick={() => handleDelete(user.id)}
                               disabled={deletingId === user.id}
                             >
@@ -706,22 +718,22 @@ function Users() {
 
       {selectedUser && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center m3-scrim p-4"
           onClick={() => setSelectedUser(null)}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="user-details-title"
-            className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-card p-6 text-card-foreground shadow-xl"
+            className="max-h-full w-full max-w-md overflow-y-auto rounded-dialog bg-surface-high p-6 text-card-foreground shadow-m3-3"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <h2 id="user-details-title" className="truncate text-lg font-semibold">{selectedUser.name}</h2>
+                <h2 id="user-details-title" className="truncate text-2xl font-normal">{selectedUser.name}</h2>
                 <p className="truncate text-sm text-muted-foreground">{selectedUser.email}</p>
               </div>
-              <button type="button" aria-label="Close" onClick={() => setSelectedUser(null)} className="size-8 shrink-0 rounded-lg text-xl leading-none text-muted-foreground hover:bg-muted">
+              <button type="button" aria-label="Close" onClick={() => setSelectedUser(null)} className="size-10 shrink-0 state-layer rounded-full transition-colors duration-200 ease-m3 text-xl leading-none text-muted-foreground">
                 ×
               </button>
             </div>
@@ -764,20 +776,20 @@ function Users() {
       )}
 
       {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={closeEditUser}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center m3-scrim p-4" onClick={closeEditUser}>
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="edit-user-title"
-            className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-card p-6 text-card-foreground shadow-xl"
+            className="max-h-full w-full max-w-md overflow-y-auto rounded-dialog bg-surface-high p-6 text-card-foreground shadow-m3-3"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 id="edit-user-title" className="text-lg font-semibold">Edit user</h2>
+                <h2 id="edit-user-title" className="text-2xl font-normal">Edit user</h2>
                 <p className="text-sm text-muted-foreground">User #{editingUser.id}</p>
               </div>
-              <button type="button" aria-label="Close" onClick={closeEditUser} disabled={submitting} className="size-8 rounded-lg text-xl leading-none text-muted-foreground hover:bg-muted">
+              <button type="button" aria-label="Close" onClick={closeEditUser} disabled={submitting} className="size-10 state-layer rounded-full transition-colors duration-200 ease-m3 text-xl leading-none text-muted-foreground">
                 ×
               </button>
             </div>
@@ -798,7 +810,7 @@ function Users() {
                   <option value="Admin">Admin</option>
                 </select>
               </div>
-              {formError && <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{formError}</p>}
+              {formError && <p role="alert" className="state-layer rounded-full transition-colors duration-200 ease-m3 bg-destructive/10 px-3 h-10 text-sm font-medium text-destructive">{formError}</p>}
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" className={secondaryButton} onClick={closeEditUser} disabled={submitting}>Cancel</button>
                 <button type="submit" className={primaryButton} disabled={submitting}>{submitting ? "Saving..." : "Save changes"}</button>
@@ -809,20 +821,20 @@ function Users() {
       )}
 
       {showAddUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={closeAddUser}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center m3-scrim p-4" onClick={closeAddUser}>
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-user-title"
-            className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-card p-6 text-card-foreground shadow-xl"
+            className="max-h-full w-full max-w-md overflow-y-auto rounded-dialog bg-surface-high p-6 text-card-foreground shadow-m3-3"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 id="add-user-title" className="text-lg font-semibold">Add user</h2>
+                <h2 id="add-user-title" className="text-2xl font-normal">Add user</h2>
                 <p className="text-sm text-muted-foreground">Create a new user account.</p>
               </div>
-              <button type="button" aria-label="Close" onClick={closeAddUser} disabled={submitting} className="size-8 rounded-lg text-xl leading-none text-muted-foreground hover:bg-muted">
+              <button type="button" aria-label="Close" onClick={closeAddUser} disabled={submitting} className="size-10 state-layer rounded-full transition-colors duration-200 ease-m3 text-xl leading-none text-muted-foreground">
                 ×
               </button>
             </div>
@@ -852,7 +864,7 @@ function Users() {
                 <label htmlFor="add-confirm" className={fieldLabel}>Confirm password</label>
                 <PasswordInput id="add-confirm" name="confirmPassword" autoComplete="new-password" value={newUser.confirmPassword} onChange={handleNewUserChange} disabled={submitting} placeholder="Repeat the password" className={`${inputClass} shadow-none!`} />
               </div>
-              {formError && <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">{formError}</p>}
+              {formError && <p role="alert" className="state-layer rounded-full transition-colors duration-200 ease-m3 bg-destructive/10 px-3 h-10 text-sm font-medium text-destructive">{formError}</p>}
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" className={secondaryButton} onClick={closeAddUser} disabled={submitting}>Cancel</button>
                 <button type="submit" className={primaryButton} disabled={submitting}>{submitting ? "Creating..." : "Create user"}</button>

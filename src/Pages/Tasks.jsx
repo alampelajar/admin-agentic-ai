@@ -249,38 +249,38 @@ function Tasks() {
 
   const getStatusClass = (status) => {
     if (status === "Completed") {
-      return "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400"
+      return "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300"
     }
 
     if (status === "Running") {
-      return "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400"
+      return "bg-secondary text-primary"
     }
 
     if (status === "Pending") {
-      return "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-400"
+      return "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
     }
 
     if (status === "Failed") {
-      return "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400"
+      return "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300"
     }
 
-    return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+    return "bg-muted text-muted-foreground"
   }
 
   const getPriorityClass = (priority) => {
     if (priority === "High") {
-      return "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400"
+      return "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300"
     }
 
     if (priority === "Medium") {
-      return "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/15 dark:text-yellow-400"
+      return "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
     }
 
     if (priority === "Low") {
-      return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+      return "bg-muted text-muted-foreground"
     }
 
-    return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+    return "bg-muted text-muted-foreground"
   }
 
   // ============================================================
@@ -379,18 +379,18 @@ function Tasks() {
   // ============================================================
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
+    <div className="min-h-screen bg-muted p-6 text-foreground transition-colors duration-200">
 
       {/* ====================================================== */}
       {/* HEADER */}
       {/* ====================================================== */}
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+        <h1 className="text-2xl font-normal text-foreground">
           Tasks
         </h1>
 
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Monitor tasks from all users
         </p>
       </div>
@@ -400,9 +400,9 @@ function Tasks() {
       {/* ====================================================== */}
 
       {pageError && (
-        <div className="mb-5 flex items-center justify-between gap-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-500/30 dark:bg-red-500/10">
+        <div className="mb-5 flex items-center justify-between gap-4 rounded-card border border-transparent bg-error-container px-4 py-3">
 
-          <p className="text-sm font-medium text-red-600 dark:text-red-400">
+          <p className="text-sm font-medium text-destructive">
             {pageError}
           </p>
 
@@ -410,15 +410,15 @@ function Tasks() {
             onClick={loadTasks}
             className="
               shrink-0
-              rounded-lg
-              bg-red-600
-              px-3
-              py-2
+              state-layer rounded-full transition-colors duration-200 ease-m3
+              bg-destructive
+              px-6
+              h-10
               text-sm
-              font-semibold
-              text-white
-              transition
-              hover:bg-red-700
+              font-medium
+              text-destructive-foreground
+             
+             
             "
           >
             Retry
@@ -437,31 +437,31 @@ function Tasks() {
 
         <div
           className="
-            rounded-xl
+            rounded-dialog
             border
-            border-slate-200
-            bg-white
+            border-border
+            bg-surface-high
             p-5
-            shadow-sm
+           
             transition-all
             duration-200
             hover:-translate-y-0.5
-            hover:shadow-lg
-            dark:border-slate-800
-            dark:bg-slate-900
+            hover:shadow-m3-2
+           
+           
             dark:shadow-none
-            dark:hover:bg-slate-900
+           
           "
         >
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-muted-foreground">
             Completed
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">
+          <p className="mt-2 text-3xl font-normal text-green-700 dark:text-green-300">
             {completedTasks}
           </p>
 
-          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             Successfully completed
           </p>
         </div>
@@ -470,31 +470,31 @@ function Tasks() {
 
         <div
           className="
-            rounded-xl
+            rounded-dialog
             border
-            border-slate-200
-            bg-white
+            border-border
+            bg-surface-high
             p-5
-            shadow-sm
+           
             transition-all
             duration-200
             hover:-translate-y-0.5
-            hover:shadow-lg
-            dark:border-slate-800
-            dark:bg-slate-900
+            hover:shadow-m3-2
+           
+           
             dark:shadow-none
-            dark:hover:bg-slate-900
+           
           "
         >
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-muted-foreground">
             Running
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
+          <p className="mt-2 text-3xl font-normal text-primary">
             {runningTasks}
           </p>
 
-          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             Currently processing
           </p>
         </div>
@@ -503,31 +503,31 @@ function Tasks() {
 
         <div
           className="
-            rounded-xl
+            rounded-dialog
             border
-            border-slate-200
-            bg-white
+            border-border
+            bg-surface-high
             p-5
-            shadow-sm
+           
             transition-all
             duration-200
             hover:-translate-y-0.5
-            hover:shadow-lg
-            dark:border-slate-800
-            dark:bg-slate-900
+            hover:shadow-m3-2
+           
+           
             dark:shadow-none
-            dark:hover:bg-slate-900
+           
           "
         >
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-muted-foreground">
             Pending
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+          <p className="mt-2 text-3xl font-normal text-amber-700 dark:text-amber-300">
             {pendingTasks}
           </p>
 
-          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             Waiting to run
           </p>
         </div>
@@ -536,31 +536,31 @@ function Tasks() {
 
         <div
           className="
-            rounded-xl
+            rounded-dialog
             border
-            border-slate-200
-            bg-white
+            border-border
+            bg-surface-high
             p-5
-            shadow-sm
+           
             transition-all
             duration-200
             hover:-translate-y-0.5
-            hover:shadow-lg
-            dark:border-slate-800
-            dark:bg-slate-900
+            hover:shadow-m3-2
+           
+           
             dark:shadow-none
-            dark:hover:bg-slate-900
+           
           "
         >
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-muted-foreground">
             Failed
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">
+          <p className="mt-2 text-3xl font-normal text-destructive">
             {failedTasks}
           </p>
 
-          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             Need attention
           </p>
         </div>
@@ -571,19 +571,19 @@ function Tasks() {
       {/* MAIN CARD */}
       {/* ====================================================== */}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+      <div className="overflow-hidden rounded-card border border-border bg-card dark:shadow-none">
 
         {/* ================================================== */}
         {/* TOOLBAR */}
         {/* ================================================== */}
 
-        <div className="flex flex-col gap-4 border-b border-slate-200 p-5 xl:flex-row xl:items-center xl:justify-between dark:border-slate-800">
+        <div className="flex flex-col gap-4 border-b border-border p-5 xl:flex-row xl:items-center xl:justify-between">
 
           {/* Search */}
 
           <div className="relative w-full xl:max-w-md">
 
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
               ⌕
             </span>
 
@@ -598,29 +598,29 @@ function Tasks() {
               }
               className="
                 w-full
-                rounded-lg
+                rounded-field hover:border-foreground transition-colors duration-200 ease-m3
                 border
-                border-slate-200
-                bg-slate-50
-                py-2.5
+                border-input
+                bg-transparent
+                h-14
                 pl-9
                 pr-4
-                text-sm
-                text-slate-900
+                text-base
+                text-foreground
                 outline-none
-                transition
-                placeholder:text-slate-400
-                focus:border-slate-400
-                focus:bg-white
+               
+                placeholder:text-muted-foreground
+                focus:border-input
+                focus:bg-card
                 focus:ring-2
-                focus:ring-slate-100
-                dark:border-slate-700
-                dark:bg-slate-800
-                dark:text-slate-100
-                dark:placeholder:text-slate-500
-                dark:focus:border-slate-600
-                dark:focus:bg-slate-800
-                dark:focus:ring-slate-700
+                focus:ring-primary
+               
+               
+               
+               
+               
+               
+               
               "
             />
 
@@ -638,20 +638,20 @@ function Tasks() {
                 )
               }
               className="
-                rounded-lg
+                rounded-field hover:border-foreground transition-colors duration-200 ease-m3
                 border
-                border-slate-200
-                bg-white
-                px-3
-                py-2.5
-                text-sm
-                text-slate-700
+                border-input
+                bg-transparent
+                px-4
+                h-14
+                text-base
+                text-foreground
                 outline-none
-                focus:border-slate-400
-                dark:border-slate-700
-                dark:bg-slate-800
-                dark:text-slate-200
-                dark:focus:border-slate-600
+                focus:border-input
+               
+               
+               
+               
               "
             >
               <option value="All">
@@ -683,20 +683,20 @@ function Tasks() {
                 )
               }
               className="
-                rounded-lg
+                rounded-field hover:border-foreground transition-colors duration-200 ease-m3
                 border
-                border-slate-200
-                bg-white
-                px-3
-                py-2.5
-                text-sm
-                text-slate-700
+                border-input
+                bg-transparent
+                px-4
+                h-14
+                text-base
+                text-foreground
                 outline-none
-                focus:border-slate-400
-                dark:border-slate-700
-                dark:bg-slate-800
-                dark:text-slate-200
-                dark:focus:border-slate-600
+                focus:border-input
+               
+               
+               
+               
               "
             >
               <option value="All">
@@ -724,15 +724,15 @@ function Tasks() {
         {/* RESULT INFO */}
         {/* ================================================== */}
 
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3 dark:border-slate-800">
+        <div className="flex items-center justify-between border-b border-border px-5 py-3">
 
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-muted-foreground">
             Showing{" "}
-            <span className="font-semibold text-slate-700 dark:text-slate-200">
+            <span className="font-semibold text-foreground">
               {filteredTasks.length}
             </span>{" "}
             of{" "}
-            <span className="font-semibold text-slate-700 dark:text-slate-200">
+            <span className="font-semibold text-foreground">
               {tasks.length}
             </span>{" "}
             tasks
@@ -746,11 +746,11 @@ function Tasks() {
               className="
                 text-sm
                 font-medium
-                text-slate-500
+                text-muted-foreground
                 transition
-                hover:text-slate-900
-                dark:text-slate-400
-                dark:hover:text-white
+                hover:text-foreground
+               
+               
               "
             >
               Clear filters
@@ -766,9 +766,9 @@ function Tasks() {
         {loading ? (
           <div className="px-5 py-16 text-center">
 
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-slate-800 dark:border-slate-700 dark:border-t-slate-300" />
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary" />
 
-            <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-4 text-sm text-muted-foreground">
               Loading tasks...
             </p>
 
@@ -781,37 +781,37 @@ function Tasks() {
 
             <div className="overflow-x-auto">
 
-              <table className="w-full min-w-[1250px]">
+              <table className="w-full min-w-312">
 
                 <thead>
 
-                  <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/50">
+                  <tr className="border-b border-border bg-muted">
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Task
                     </th>
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       User
                     </th>
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Agent
                     </th>
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Status
                     </th>
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Priority
                     </th>
 
-                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Created
                     </th>
 
-                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th className="px-5 py-0 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       Action
                     </th>
 
@@ -827,25 +827,25 @@ function Tasks() {
                         key={task.id}
                         className="
                           border-b
-                          border-slate-100
+                          border-border
                           transition
-                          hover:bg-slate-50
-                          dark:border-slate-800
-                          dark:hover:bg-slate-800/50
+                          hover:bg-accent
+                         
+                         
                         "
                       >
 
                         {/* Task */}
 
-                        <td className="px-5 py-4">
+                        <td className="px-5 py-2">
 
                           <div>
 
-                            <p className="font-medium text-slate-900 dark:text-slate-100">
+                            <p className="font-medium text-foreground">
                               {task.title}
                             </p>
 
-                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-500">
+                            <p className="mt-0.5 text-xs text-muted-foreground">
                               TASK #{task.id}
                             </p>
 
@@ -855,22 +855,22 @@ function Tasks() {
 
                         {/* User */}
 
-                        <td className="px-5 py-4">
+                        <td className="px-5 py-2">
 
                           {task.user ? (
                             <div>
 
-                              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                              <p className="text-sm font-medium text-foreground">
                                 {task.user.name}
                               </p>
 
-                              <p className="text-xs text-slate-500 dark:text-slate-500">
+                              <p className="text-xs text-muted-foreground">
                                 {task.user.email}
                               </p>
 
                             </div>
                           ) : (
-                            <span className="text-sm text-slate-400 dark:text-slate-500">
+                            <span className="text-sm text-muted-foreground">
                               Unknown User
                             </span>
                           )}
@@ -879,22 +879,22 @@ function Tasks() {
 
                         {/* Agent */}
 
-                        <td className="px-5 py-4">
+                        <td className="px-5 py-2">
 
                           {task.agent ? (
                             <div>
 
-                              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                              <p className="text-sm font-medium text-foreground">
                                 {task.agent.name}
                               </p>
 
-                              <p className="text-xs text-slate-500 dark:text-slate-500">
+                              <p className="text-xs text-muted-foreground">
                                 {task.agent.slug}
                               </p>
 
                             </div>
                           ) : (
-                            <span className="text-sm text-slate-400 dark:text-slate-500">
+                            <span className="text-sm text-muted-foreground">
                               No Agent
                             </span>
                           )}
@@ -903,18 +903,18 @@ function Tasks() {
 
                         {/* Status */}
 
-                        <td className="px-5 py-4">
+                        <td className="px-5 py-2">
 
                           <span
                             className={`
                               inline-flex
                               items-center
                               gap-1.5
-                              rounded-full
-                              px-2.5
-                              py-1
-                              text-xs
-                              font-semibold
+                              rounded-chip
+                              px-3
+                              h-8
+                              text-sm
+                              font-medium
                               ${getStatusClass(
                                 task.status
                               )}
@@ -931,16 +931,16 @@ function Tasks() {
 
                         {/* Priority */}
 
-                        <td className="px-5 py-4">
+                        <td className="px-5 py-2">
 
                           <span
                             className={`
                               inline-flex
-                              rounded-full
-                              px-2.5
-                              py-1
-                              text-xs
-                              font-semibold
+                              inline-flex items-center rounded-chip
+                              px-3
+                              h-8
+                              text-sm
+                              font-medium
                               ${getPriorityClass(
                                 task.priority
                               )}
@@ -953,7 +953,7 @@ function Tasks() {
 
                         {/* Created */}
 
-                        <td className="px-5 py-4 text-sm text-slate-500 dark:text-slate-400">
+                        <td className="px-5 py-2 text-sm text-muted-foreground">
                           {formatDateTime(
                             task.createdAt
                           )}
@@ -961,7 +961,7 @@ function Tasks() {
 
                         {/* Action */}
 
-                        <td className="relative px-5 py-4 text-right">
+                        <td className="relative px-5 py-2 text-right">
 
                           <button
                             onClick={(event) =>
@@ -972,19 +972,19 @@ function Tasks() {
                             }
                             className="
                               inline-flex
-                              h-9
-                              w-9
+                              h-10
+                              w-10
                               items-center
                               justify-center
-                              rounded-lg
+                              state-layer rounded-full transition-colors duration-200 ease-m3
                               text-lg
-                              text-slate-400
-                              transition
-                              hover:bg-slate-100
-                              hover:text-slate-700
-                              dark:text-slate-500
-                              dark:hover:bg-slate-800
-                              dark:hover:text-slate-200
+                              text-muted-foreground
+                             
+                             
+                              hover:text-foreground
+                             
+                             
+                             
                             "
                             aria-label={`Actions for ${task.title}`}
                           >
@@ -999,15 +999,15 @@ function Tasks() {
                                   z-[100]
                                   w-40
                                   overflow-hidden
-                                  rounded-lg
-                                  border
-                                  border-slate-200
-                                  bg-white
-                                  py-1
+                                  rounded-field
+                                 
+                                 
+                                  bg-popover
+                                  py-2
                                   text-left
-                                  shadow-xl
-                                  dark:border-slate-700
-                                  dark:bg-slate-900
+                                  shadow-m3-2
+                                 
+                                 
                                 "
                                 style={{
                                   top: `${menuPosition.top}px`,
@@ -1029,11 +1029,11 @@ function Tasks() {
                                     py-2.5
                                     text-left
                                     text-sm
-                                    text-slate-700
+                                    text-foreground
                                     transition
-                                    hover:bg-slate-50
-                                    dark:text-slate-200
-                                    dark:hover:bg-slate-800
+                                    hover:bg-accent
+                                   
+                                   
                                   "
                                 >
                                   View Details
@@ -1060,15 +1060,15 @@ function Tasks() {
               {filteredTasks.length === 0 && (
                 <div className="px-5 py-16 text-center">
 
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted text-xl text-muted-foreground">
                     ?
                   </div>
 
-                  <h3 className="font-semibold text-slate-800 dark:text-slate-200">
+                  <h3 className="font-semibold text-foreground">
                     No tasks found
                   </h3>
 
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Try changing your search or filters.
                   </p>
 
@@ -1094,9 +1094,9 @@ function Tasks() {
             flex
             items-center
             justify-center
-            bg-slate-900/40
+            m3-scrim
             p-4
-            dark:bg-black/60
+           
           "
           onClick={() =>
             setSelectedTask(null)
@@ -1107,12 +1107,12 @@ function Tasks() {
             className="
               w-full
               max-w-lg
-              rounded-xl
-              bg-white
-              shadow-2xl
+              rounded-dialog
+              bg-surface-high
+              shadow-m3-3
               dark:border
-              dark:border-slate-800
-              dark:bg-slate-900
+             
+             
             "
             onClick={(event) =>
               event.stopPropagation()
@@ -1121,15 +1121,15 @@ function Tasks() {
 
             {/* Header */}
 
-            <div className="flex items-start justify-between border-b border-slate-200 p-6 dark:border-slate-800">
+            <div className="flex items-start justify-between border-b border-border p-6">
 
               <div>
 
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <h2 className="text-2xl font-normal text-foreground">
                   Task Details
                 </h2>
 
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Information from the database
                 </p>
 
@@ -1141,18 +1141,18 @@ function Tasks() {
                 }
                 className="
                   flex
-                  h-8
-                  w-8
+                  h-10
+                  w-10
                   items-center
                   justify-center
-                  rounded-lg
-                  text-slate-400
-                  transition
-                  hover:bg-slate-100
-                  hover:text-slate-700
-                  dark:text-slate-500
-                  dark:hover:bg-slate-800
-                  dark:hover:text-slate-200
+                  state-layer rounded-full transition-colors duration-200 ease-m3
+                  text-muted-foreground
+                 
+                 
+                  hover:text-foreground
+                 
+                 
+                 
                 "
               >
                 ×
@@ -1162,44 +1162,44 @@ function Tasks() {
 
             {/* Content */}
 
-            <div className="max-h-[80vh] overflow-y-auto p-6">
+            <div className="max-h-full overflow-y-auto p-6">
 
-              <h3 className="font-semibold text-slate-900 dark:text-white">
+              <h3 className="font-semibold text-foreground">
                 {selectedTask.title}
               </h3>
 
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 TASK #{selectedTask.id}
               </p>
 
               {selectedTask.description && (
-                <div className="mt-5 rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
+                <div className="mt-5 rounded-card bg-muted p-4">
 
-                  <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  <p className="text-sm leading-6 text-muted-foreground">
                     {selectedTask.description}
                   </p>
 
                 </div>
               )}
 
-              <div className="mt-6 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="mt-6 rounded-card border border-border">
 
                 {/* User */}
 
-                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                <div className="flex items-center justify-between border-b border-border px-4 py-3">
 
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                  <span className="text-sm text-muted-foreground">
                     User
                   </span>
 
                   <div className="text-right">
 
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    <p className="text-sm font-semibold text-foreground">
                       {selectedTask.user?.name ||
                         "Unknown User"}
                     </p>
 
-                    <p className="text-xs text-slate-500 dark:text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       {selectedTask.user?.email ||
                         "-"}
                     </p>
@@ -1210,20 +1210,20 @@ function Tasks() {
 
                 {/* Agent */}
 
-                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                <div className="flex items-center justify-between border-b border-border px-4 py-3">
 
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                  <span className="text-sm text-muted-foreground">
                     Agent
                   </span>
 
                   <div className="text-right">
 
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    <p className="text-sm font-semibold text-foreground">
                       {selectedTask.agent?.name ||
                         "No Agent"}
                     </p>
 
-                    <p className="text-xs text-slate-500 dark:text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       {selectedTask.agent?.slug ||
                         "-"}
                     </p>
@@ -1234,19 +1234,19 @@ function Tasks() {
 
                 {/* Status */}
 
-                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                <div className="flex items-center justify-between border-b border-border px-4 py-3">
 
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                  <span className="text-sm text-muted-foreground">
                     Status
                   </span>
 
                   <span
                     className={`
-                      rounded-full
-                      px-2.5
-                      py-1
-                      text-xs
-                      font-semibold
+                      inline-flex items-center rounded-chip
+                      px-3
+                      h-8
+                      text-sm
+                      font-medium
                       ${getStatusClass(
                         selectedTask.status
                       )}
@@ -1259,19 +1259,19 @@ function Tasks() {
 
                 {/* Priority */}
 
-                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                <div className="flex items-center justify-between border-b border-border px-4 py-3">
 
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                  <span className="text-sm text-muted-foreground">
                     Priority
                   </span>
 
                   <span
                     className={`
-                      rounded-full
-                      px-2.5
-                      py-1
-                      text-xs
-                      font-semibold
+                      inline-flex items-center rounded-chip
+                      px-3
+                      h-8
+                      text-sm
+                      font-medium
                       ${getPriorityClass(
                         selectedTask.priority
                       )}
@@ -1284,13 +1284,13 @@ function Tasks() {
 
                 {/* Label */}
 
-                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                <div className="flex items-center justify-between border-b border-border px-4 py-3">
 
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                  <span className="text-sm text-muted-foreground">
                     Label
                   </span>
 
-                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                  <span className="text-sm font-medium text-foreground">
                     {selectedTask.label}
                   </span>
 
@@ -1298,13 +1298,13 @@ function Tasks() {
 
                 {/* Created */}
 
-                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                <div className="flex items-center justify-between border-b border-border px-4 py-3">
 
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                  <span className="text-sm text-muted-foreground">
                     Created
                   </span>
 
-                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                  <span className="text-sm font-medium text-foreground">
                     {formatDateTime(
                       selectedTask.createdAt
                     )}
@@ -1316,11 +1316,11 @@ function Tasks() {
 
                 <div className="flex items-center justify-between px-4 py-3">
 
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                  <span className="text-sm text-muted-foreground">
                     Updated
                   </span>
 
-                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                  <span className="text-sm font-medium text-foreground">
                     {formatDateTime(
                       selectedTask.updatedAt
                     )}
@@ -1339,18 +1339,18 @@ function Tasks() {
                 className="
                   mt-6
                   w-full
-                  rounded-lg
-                  bg-slate-900
-                  px-4
-                  py-2.5
+                  state-layer rounded-full transition-colors duration-200 ease-m3
+                  bg-primary
+                  px-6
+                  h-10
                   text-sm
-                  font-semibold
-                  text-white
-                  transition
-                  hover:bg-slate-800
-                  dark:bg-white
-                  dark:text-slate-900
-                  dark:hover:bg-slate-200
+                  font-medium
+                  text-primary-foreground
+                 
+                 
+                 
+                 
+                 
                 "
               >
                 Close

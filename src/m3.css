@@ -1,0 +1,691 @@
+/* =========================================================
+   Material 3 helpers for the admin console.
+   The components in src/components/ui use these, and so do the
+   controls the pages build themselves (dialogs, menus, selects,
+   switches, tabs, tooltips, snackbars). They sit in the components
+   layer, so Tailwind utilities on an element still win.
+   Transitions are 200ms with the standard easing; motion.css
+   switches them off for prefers-reduced-motion.
+========================================================= */
+
+@layer components {
+  /* State layer: the content color over the control, 8% on hover, 10% on focus and press. */
+  .state-layer {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .state-layer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms var(--ease-m3);
+  }
+
+  .state-layer:hover::after {
+    opacity: 0.08;
+  }
+
+  .state-layer:focus-visible::after,
+  .state-layer:active::after {
+    opacity: 0.1;
+  }
+
+  .state-layer:disabled::after,
+  .state-layer[aria-disabled="true"]::after {
+    opacity: 0;
+  }
+
+  /* Checkboxes and radio buttons take the primary color. */
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--primary);
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Outlined text field for <select> and <textarea>, matching the Input component. */
+  .m3-field {
+    width: 100%;
+    min-height: 56px;
+    padding: 0 16px;
+    border: 1px solid var(--input);
+    border-radius: var(--radius-field);
+    background: transparent;
+    color: var(--foreground);
+    font-size: 1rem;
+    transition: border-color 200ms var(--ease-m3), box-shadow 200ms var(--ease-m3);
+  }
+
+  textarea.m3-field {
+    padding: 16px;
+    line-height: 1.5;
+  }
+
+  .m3-field:hover {
+    border-color: var(--foreground);
+  }
+
+  .m3-field:focus-visible {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: inset 0 0 0 1px var(--primary);
+  }
+
+  .m3-field[aria-invalid="true"] {
+    border-color: var(--destructive);
+  }
+
+  .m3-field:disabled {
+    cursor: not-allowed;
+    border-color: color-mix(in oklch, var(--foreground) 12%, transparent);
+    color: color-mix(in oklch, var(--foreground) 38%, transparent);
+  }
+
+  /* Basic dialog and its scrim. */
+  .m3-scrim {
+    background: color-mix(in oklch, var(--m3-scrim) 32%, transparent);
+  }
+
+  .m3-dialog {
+    border-radius: var(--radius-dialog);
+    padding: 24px;
+    background: var(--surface-high);
+    color: var(--foreground);
+    box-shadow: var(--shadow-m3-3);
+  }
+
+  .m3-dialog-title {
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: 400;
+  }
+
+  /* Menus, dropdowns and popovers. */
+  .m3-menu {
+    min-width: 112px;
+    padding: 8px 0;
+    border-radius: var(--radius-field);
+    background: var(--popover);
+    color: var(--popover-foreground);
+    box-shadow: var(--shadow-m3-2);
+  }
+
+  .m3-menu-item {
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    align-items: center;
+    gap: 12px;
+    padding: 0 12px;
+    font-size: 0.875rem;
+    text-align: start;
+  }
+
+  /* Side sheet: the 16px radius sits on the edge facing the page. */
+  .m3-side-sheet {
+    background: var(--surface-high);
+    color: var(--foreground);
+    border-start-start-radius: var(--radius-sheet);
+    border-end-start-radius: var(--radius-sheet);
+    box-shadow: var(--shadow-m3-3);
+  }
+
+  /* Primary tabs with a 3px indicator under the active tab. */
+  .m3-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+
+  .m3-tab {
+    position: relative;
+    min-height: 48px;
+    padding: 0 16px;
+    color: var(--muted-foreground);
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .m3-tab[aria-selected="true"] {
+    color: var(--primary);
+  }
+
+  .m3-tab[aria-selected="true"]::before {
+    content: "";
+    position: absolute;
+    inset: auto 16px 0;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: var(--primary);
+  }
+
+  /* Switch, 52x32px. Use on a <button role="switch" aria-checked> with no children. */
+  .m3-switch {
+    position: relative;
+    flex-shrink: 0;
+    width: 52px;
+    height: 32px;
+    border: 2px solid var(--input);
+    border-radius: 9999px;
+    background: var(--muted);
+    transition: background-color 200ms var(--ease-m3), border-color 200ms var(--ease-m3);
+  }
+
+  .m3-switch::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    background: var(--input);
+    transform: translateY(-50%);
+    transition: all 200ms var(--ease-m3);
+  }
+
+  .m3-switch[aria-checked="true"] {
+    border-color: var(--primary);
+    background: var(--primary);
+  }
+
+  .m3-switch[aria-checked="true"]::before {
+    left: 22px;
+    width: 24px;
+    height: 24px;
+    background: var(--primary-foreground);
+  }
+
+  .m3-switch:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  .m3-switch:disabled {
+    cursor: not-allowed;
+    opacity: 0.38;
+  }
+
+  /* Plain tooltip and snackbar: inverse surface, 4px radius. */
+  .m3-tooltip,
+  .m3-snackbar {
+    border-radius: var(--radius-field);
+    background: var(--inverse-surface);
+    color: var(--inverse-on-surface);
+    font-size: 0.75rem;
+  }
+
+  .m3-tooltip {
+    padding: 4px 8px;
+  }
+
+  .m3-snackbar {
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px;
+    font-size: 0.875rem;
+    box-shadow: var(--shadow-m3-3);
+  }
+}
+
+/* =========================================================
+   Material 3 app shell: navigation drawer (rail when collapsed)
+   and small top app bar. Not in a layer, so it overrides the
+   older shell rules in index.css, admin-polish.css and motion.css.
+========================================================= */
+
+:root {
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 80px;
+}
+
+/* ---------- navigation drawer ---------- */
+
+.sidebar {
+  background: var(--sidebar) !important;
+  color: var(--sidebar-foreground);
+  border-right: 0 !important;
+  box-shadow: none;
+  transition:
+    width 200ms var(--ease-m3),
+    transform 200ms var(--ease-m3),
+    background-color 200ms var(--ease-m3);
+}
+
+.main-content {
+  transition: margin-left 200ms var(--ease-m3), width 200ms var(--ease-m3);
+}
+
+.sidebar > div:first-of-type {
+  min-height: 64px;
+  padding: 12px 12px 12px 28px;
+}
+
+.sidebar nav {
+  padding: 12px;
+}
+
+.sidebar nav > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.sidebar-link {
+  min-height: 56px;
+  padding-inline: 16px;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  animation: none;
+  transition: background-color 200ms var(--ease-m3), color 200ms var(--ease-m3);
+}
+
+.sidebar-link:hover .sidebar-link-icon {
+  transform: none;
+}
+
+.sidebar-link-icon {
+  width: 24px;
+  flex-basis: 24px;
+}
+
+.sidebar-link.active,
+html.dark .sidebar-link.active {
+  background: var(--sidebar-accent) !important;
+  color: var(--sidebar-accent-foreground) !important;
+  box-shadow: none;
+}
+
+.sidebar-link.active .sidebar-link-icon,
+html.dark .sidebar-link.active .sidebar-link-icon {
+  color: var(--sidebar-accent-foreground) !important;
+}
+
+.sidebar-link.active::before,
+.sidebar-link.active::after {
+  display: none;
+}
+
+.sidebar > div:last-child {
+  padding: 16px 28px 24px !important;
+}
+
+/* Icon buttons in the drawer: 40px, round, no outline. */
+.sidebar-collapse-button,
+.sidebar-close-button {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  transition: background-color 200ms var(--ease-m3), transform 200ms var(--ease-m3);
+}
+
+.sidebar-collapse-button:hover,
+.sidebar-close-button:hover {
+  background: var(--accent-color);
+  color: var(--foreground);
+  border-color: transparent;
+}
+
+.sidebar-collapse-button:focus-visible,
+.sidebar-close-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ---------- navigation rail (collapsed, from tablet width) ---------- */
+
+@media (min-width: 768px) {
+  .app.sidebar-collapsed .sidebar > div:first-of-type {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 0;
+  }
+
+  .app.sidebar-collapsed .sidebar-brand-text,
+  .app.sidebar-collapsed .sidebar-label,
+  .app.sidebar-collapsed .sidebar-profile-text {
+    display: none;
+  }
+
+  .app.sidebar-collapsed .sidebar-collapse-button {
+    position: static;
+    box-shadow: none;
+    transform: rotate(180deg);
+  }
+
+  .app.sidebar-collapsed .sidebar nav {
+    padding-inline: 12px;
+  }
+
+  .app.sidebar-collapsed .sidebar-link {
+    width: 56px;
+    margin-inline: auto;
+    padding-inline: 0;
+    justify-content: center;
+  }
+
+  .app.sidebar-collapsed .sidebar > div:last-child {
+    padding: 16px 0 24px !important;
+  }
+
+  .app.sidebar-collapsed .sidebar > div:last-child > div {
+    justify-content: center;
+  }
+}
+
+/* ---------- modal drawer on phones ---------- */
+
+@media (max-width: 767px) {
+  .sidebar {
+    width: min(320px, calc(100vw - 56px));
+    border-start-end-radius: var(--radius-sheet);
+    border-end-end-radius: var(--radius-sheet);
+  }
+
+  .sidebar.sidebar-open {
+    box-shadow: var(--shadow-m3-3);
+  }
+
+  .sidebar-backdrop.is-visible {
+    background: color-mix(in oklch, var(--m3-scrim) 32%, transparent);
+  }
+}
+
+/* ---------- small top app bar ---------- */
+
+.app-header {
+  min-height: 64px !important;
+  padding-block: 8px;
+  padding-inline: 16px 24px;
+  background: var(--background);
+  border-bottom: 0;
+  backdrop-filter: none;
+}
+
+.header-greeting,
+.app-header-actions > * {
+  animation: none;
+}
+
+.header-heading {
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5rem;
+  letter-spacing: normal;
+}
+
+.header-subheading {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.mobile-menu-button {
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 1.25rem;
+}
+
+.header-profile-button {
+  min-height: 48px;
+  padding: 4px 12px 4px 4px;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  transition: background-color 200ms var(--ease-m3);
+}
+
+.header-profile-button:hover,
+.header-profile-button[aria-expanded="true"] {
+  background: var(--accent-color);
+  transform: none;
+}
+
+.header-profile-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.sidebar-profile-avatar,
+.header-profile-avatar {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+}
+
+.header-profile-name {
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.header-profile-role {
+  color: var(--muted-foreground);
+}
+
+/* The profile menu is a Material 3 menu. */
+.header-profile-menu {
+  top: calc(100% + 4px);
+  width: 240px;
+  padding: 8px 0;
+  border: 0;
+  border-radius: var(--radius-field);
+  background: var(--popover);
+  box-shadow: var(--shadow-m3-2);
+}
+
+.header-profile-menu-heading {
+  padding: 8px 16px 12px;
+  border-color: var(--border);
+}
+
+.header-profile-menu-heading strong {
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.header-profile-menu-heading span {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.header-logout-button {
+  min-height: 48px;
+  margin-top: 8px;
+  padding: 0 16px;
+  gap: 12px;
+  border-radius: 0;
+  color: var(--destructive);
+  font-size: 0.875rem;
+  transition: background-color 200ms var(--ease-m3);
+}
+
+.header-logout-button:hover {
+  background: color-mix(in oklch, var(--destructive) 8%, transparent);
+}
+
+/* Theme switch as a Material 3 switch, 52x32px. The visible icon shows the mode it switches to. */
+.theme-switch {
+  width: 52px;
+  height: 32px;
+  padding: 0 7px;
+  border: 2px solid var(--input);
+  background: var(--muted);
+  color: var(--muted-foreground);
+  transition: background-color 200ms var(--ease-m3), border-color 200ms var(--ease-m3);
+}
+
+.theme-switch:hover {
+  border-color: var(--input);
+}
+
+.theme-switch:focus-visible {
+  outline: 2px solid var(--ring);
+}
+
+.theme-switch-knob {
+  top: 50%;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  background: var(--input);
+  box-shadow: none;
+  transform: translateY(-50%);
+  transition: all 200ms var(--ease-m3);
+}
+
+.theme-switch[aria-checked="true"] {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.theme-switch[aria-checked="true"] .theme-switch-knob {
+  left: 22px;
+  width: 24px;
+  height: 24px;
+  background: var(--primary-foreground);
+  transform: translateY(-50%);
+}
+
+@media (max-width: 767px) {
+  .app-header {
+    padding-inline: 4px 16px;
+  }
+}
+
+.page-content > div.min-h-screen {
+  min-height: calc(100vh - 64px) !important;
+}
+
+/* =========================================================
+   Material 3 over the older page-wide rules in admin-polish.css
+   and motion.css: tonal surfaces without shadows or lifting,
+   outlined text fields, and no scaling on press.
+========================================================= */
+
+.page-content input:not([type="checkbox"]):not([type="radio"]),
+.page-content select,
+.page-content textarea {
+  border-color: var(--input);
+  border-radius: var(--radius-field);
+  color: var(--foreground);
+  transition: border-color 200ms var(--ease-m3), box-shadow 200ms var(--ease-m3);
+}
+
+.page-content input:not([type="checkbox"]):not([type="radio"]):focus,
+.page-content select:focus,
+.page-content textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: inset 0 0 0 1px var(--primary) !important;
+}
+
+.page-content input::placeholder,
+.page-content textarea::placeholder {
+  color: var(--muted-foreground);
+}
+
+.page-content button:not(:disabled):active,
+.login-form button:not(:disabled):active {
+  transform: none;
+}
+
+.page-content thead th {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.page-content [class~="dashboard-stat-card"],
+.page-content [class~="mt-6"][class~="grid"][class~="xl:grid-cols-3"] > div,
+.page-content > div.min-h-screen > [class~="mt-6"][class~="rounded-card"] {
+  border-color: var(--border) !important;
+  border-radius: var(--radius-card) !important;
+  background: var(--card) !important;
+  box-shadow: none !important;
+}
+
+.page-content [class~="dashboard-stat-card"]:hover,
+html.dark .page-content [class~="dashboard-stat-card"],
+html.dark .page-content [class~="dashboard-stat-card"]:hover,
+html.dark .page-content [class~="mt-6"][class~="grid"][class~="xl:grid-cols-3"] > div,
+html.dark .page-content > div.min-h-screen > [class~="mt-6"][class~="rounded-card"] {
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+}
+
+.page-content [class~="dashboard-stat-card"] h2 {
+  font-weight: 400;
+  letter-spacing: normal;
+}
+
+.page-content [class~="dashboard-stat-card"] > div:first-child > div:last-child {
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--secondary) !important;
+  color: var(--secondary-foreground) !important;
+}
+
+.lift,
+.page-content [class~="hover:-translate-y-1"] {
+  transition: background-color 200ms var(--ease-m3), border-color 200ms var(--ease-m3);
+}
+
+.lift:hover,
+html.dark .lift:hover,
+.page-content [class~="hover:-translate-y-1"]:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.skeleton {
+  border-radius: var(--radius-field);
+}
+
+.page-content input:not([type="checkbox"]):not([type="radio"]):not(:disabled):hover,
+.page-content select:not(:disabled):hover,
+.page-content textarea:not(:disabled):hover {
+  border-color: var(--foreground);
+}
+
+/* Scrolling table wrappers hold their sr-only text, so it never widens the page. */
+.page-content [class~="overflow-x-auto"],
+.page-content [class~="overflow-auto"] {
+  position: relative;
+}
+
+/* admin-polish.css flattens every shadow-* class; floating elements keep their M3 elevation. */
+.page-content [class~="shadow-m3-2"] {
+  box-shadow: var(--shadow-m3-2) !important;
+}
+
+.page-content [class~="shadow-m3-3"] {
+  box-shadow: var(--shadow-m3-3) !important;
+}
+
+/* Dialog scrims cover the whole window, the navigation drawer (z-index 80) included. */
+.m3-scrim[class~="fixed"] {
+  z-index: 90;
+}
+
+/* Tables built by the pages: 56px header, rows at least 52px, outline-variant dividers. */
+.page-content thead th {
+  height: 56px;
+}
+
+.page-content tbody tr {
+  height: 52px;
+  border-color: var(--border);
+}

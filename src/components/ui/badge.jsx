@@ -1,3 +1,12 @@
 import { cn } from "../../lib/utils.js"
-const variants = { default: "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80", secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80", outline: "text-foreground", destructive: "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80", success: "border-transparent bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300", warning: "border-transparent bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300" }
-export function Badge({ className, variant = "default", ...props }) { return <span className={cn("inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors", variants[variant] || variants.default, className)} {...props} /> }
+
+// Looks like a Material 3 assist chip: 32px tall, 8px radius. It is not interactive.
+const variants = {
+  default: "border-transparent bg-secondary text-secondary-foreground",
+  secondary: "border-transparent bg-muted text-foreground",
+  outline: "border-input text-foreground",
+  destructive: "border-transparent bg-error-container text-on-error-container",
+  success: "border-transparent bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300",
+  warning: "border-transparent bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+}
+export function Badge({ className, variant = "default", ...props }) { return <span className={cn("inline-flex h-8 items-center gap-2 rounded-chip border px-4 text-sm font-medium [&_svg]:size-4.5", variants[variant] || variants.default, className)} {...props} /> }
