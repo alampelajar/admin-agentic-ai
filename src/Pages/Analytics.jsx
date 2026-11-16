@@ -361,7 +361,7 @@ function Analytics() {
           agentsResponse,
         ] = await Promise.all([
           apiFetch("/api/admin/tasks"),
-          apiFetch("/api/agents"),
+          apiFetch("/api/admin/agent-catalog"),
         ])
 
         const [

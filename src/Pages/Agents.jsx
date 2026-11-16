@@ -77,7 +77,7 @@ function Agents() {
     setPageError("")
 
     try {
-      const response = await apiFetch("/api/agents")
+      const response = await apiFetch("/api/admin/agent-catalog")
 
       const data = await response.json().catch(() => ({}))
 
