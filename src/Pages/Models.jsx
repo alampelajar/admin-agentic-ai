@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { apiFetch } from "../lib/api"
+import { formatWib } from "../lib/datetime"
+import { useConfirm } from "../components/ui/confirm-dialog.jsx"
 
 const initialForm = {
   provider_name: "",
@@ -21,10 +23,11 @@ const agentTarget = (value) => (value === ALL_AGENTS ? { agent_id: undefined, al
 function formatDate(value) {
   if (!value) return "-"
   const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString("id-ID")
+  return Number.isNaN(date.getTime()) ? "-" : formatWib(date)
 }
 
 function Models() {
+  const [askToConfirm, confirmDialog] = useConfirm()
   const [models, setModels] = useState([])
   const [agents, setAgents] = useState([])
   const [agentsLoading, setAgentsLoading] = useState(true)
@@ -211,7 +214,12 @@ function Models() {
   }
 
   const deleteModel = async (model) => {
-    const confirmed = window.confirm(`Hapus model "${model.name}"? Model akan dihapus dari katalog global dan tidak lagi tersedia bagi pengguna.`)
+    const confirmed = await askToConfirm({
+      title: `Hapus model "${model.name}"?`,
+      description: "Model akan dihapus dari katalog global dan tidak lagi tersedia bagi pengguna.",
+      confirmLabel: "Hapus",
+      cancelLabel: "Batal",
+    })
     if (!confirmed) return
 
     setUpdatingId(model.id)
@@ -257,6 +265,7 @@ function Models() {
 
   return (
     <div className="min-h-screen bg-[var(--app-bg)] p-6">
+      {confirmDialog}
       <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
           <h1 className="text-2xl font-normal">Model AI</h1>

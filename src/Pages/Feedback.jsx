@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { apiFetch } from "../lib/api"
+import { formatWib } from "../lib/datetime"
 
 const statusOptions = [
   { value: "new", label: "New" },
@@ -157,7 +158,7 @@ function Ticket() {
     } finally { setSaving(false) }
   }
 
-  const formatDate = (value) => value ? new Date(value).toLocaleString("id-ID") : "-"
+  const formatDate = (value) => value ? formatWib(value) : "-"
 
   const statusLabel = (value) =>
     statusOptions.find((option) => option.value === value)?.label || value

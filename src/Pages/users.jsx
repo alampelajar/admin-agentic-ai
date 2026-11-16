@@ -1,19 +1,9 @@
 import { useEffect, useMemo, useState } from "react"
 import { createPortal } from "react-dom"
 import { apiFetch } from "../lib/api"
+import { formatWib } from "../lib/datetime"
+import { useConfirm } from "../components/ui/confirm-dialog.jsx"
 import { PasswordInput } from "../components/ui/password-input.jsx"
-
-// Jakarta time without seconds, e.g. "22/9/2026, 15.49 WIB".
-const wibFormat = new Intl.DateTimeFormat("id-ID", {
-  timeZone: "Asia/Jakarta",
-  day: "numeric",
-  month: "numeric",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-})
-
-const formatWib = (value) => `${wibFormat.format(new Date(value))} WIB`
 
 const normalizeUser = (user) => {
   const roleMap = {
@@ -59,6 +49,7 @@ const initialEditForm = {
 }
 
 function Users() {
+  const [askToConfirm, confirmDialog] = useConfirm()
   const [users, setUsers] = useState([])
 
   const [search, setSearch] = useState("")
@@ -403,9 +394,11 @@ function Users() {
       return
     }
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete ${user.name}?`
-    )
+    const confirmed = await askToConfirm({
+      title: `Delete ${user.name}?`,
+      description: "This account will be deleted. This cannot be undone.",
+      confirmLabel: "Delete",
+    })
 
     if (!confirmed) {
       return
@@ -534,6 +527,7 @@ function Users() {
 
   return (
     <div className="min-h-screen bg-[var(--app-bg)] p-6">
+      {confirmDialog}
       <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
           <h1 className="text-2xl font-normal">Users</h1>

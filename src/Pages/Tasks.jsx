@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { createPortal } from "react-dom"
 
 import { apiFetch } from "../lib/api"
+import { formatWib } from "../lib/datetime"
 
 const normalizeStatus = (status) => {
   const value = String(status || "").toLowerCase()
@@ -78,7 +79,7 @@ const formatDateTime = (value) => {
     return String(value)
   }
 
-  return date.toLocaleString("id-ID")
+  return formatWib(date)
 }
 
 const normalizeTask = (task) => {

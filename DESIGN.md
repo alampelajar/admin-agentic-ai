@@ -125,6 +125,10 @@ Reuse before writing anything new. `src/components/ui` holds the Material 3 vers
 | `Table` | (no M3 component) | 52px rows, outline-variant dividers, header `text-sm font-medium` |
 | `Alert` | | `bg-error-container` for errors, `role="alert"` |
 
+- Confirming a destructive action: `useConfirm` from `src/components/ui/confirm-dialog.jsx`,
+  a Material 3 dialog. Never `window.confirm`.
+- Dates and times: `formatWib` from `src/lib/datetime`, which shows Jakarta time without
+  seconds, such as `22/9/2026, 15.49 WIB`.
 - API calls: `apiFetch` from `src/lib/api`.
 - The signed-in admin: `getStoredAdmin` from `src/lib/auth`.
 - Icons: inline SVG with `stroke="currentColor"`, as in `sidebar.jsx`, default 20px (`size-5`).

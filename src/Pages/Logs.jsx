@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 
 import { apiFetch } from "../lib/api"
+import { formatWib } from "../lib/datetime"
 
 const normalizeStatus = (status) => {
   const value = String(status || "").toLowerCase()
@@ -74,7 +75,7 @@ const formatDateTime = (value) => {
     return "-"
   }
 
-  return date.toLocaleString("id-ID")
+  return formatWib(date)
 }
 
 const formatRelativeTime = (value) => {

@@ -8,6 +8,7 @@ const variants = {
   secondary: "bg-secondary text-secondary-foreground disabled:bg-foreground/12",
   outline: "border border-input bg-transparent text-primary disabled:border-foreground/12",
   ghost: "bg-transparent text-primary",
+  "destructive-ghost": "bg-transparent text-destructive",
   link: "bg-transparent text-primary underline-offset-4 hover:underline",
 }
 const sizes = { default: "h-10 px-6", sm: "h-8 px-4", lg: "h-12 px-8", icon: "size-10 px-0" }
