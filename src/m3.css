@@ -689,3 +689,15 @@ html.dark .lift:hover,
   height: 52px;
   border-color: var(--border);
 }
+
+/* The option list of a native <select> follows the theme. Without this the browser
+   draws a white list with the light text of dark mode, which is unreadable. */
+select option,
+select optgroup {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+}
+
+select option:disabled {
+  color: var(--muted-foreground);
+}
