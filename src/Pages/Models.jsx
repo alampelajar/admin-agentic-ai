@@ -158,6 +158,34 @@ function Models() {
     }
   }
 
+  // The builder default is the model people without premium build websites with.
+  const toggleBuilderDefault = async (model) => {
+    setUpdatingId(model.id)
+    setError("")
+    setSuccess("")
+    try {
+      const response = await apiFetch(`/api/admin/ai/models/${model.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_builder_default: !model.is_builder_default }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || data?.message || "Could not change the builder default.")
+      }
+      setSuccess(
+        model.is_builder_default
+          ? `${model.name} is no longer the website builder default.`
+          : `${model.name} is now the website builder default for free accounts.`
+      )
+      await loadModels()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not change the builder default.")
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
   const startEditing = (model) => {
     setEditingModel(model)
     setEditForm({
@@ -320,6 +348,7 @@ function Models() {
                   <th className="px-4 py-0">Provider</th>
                   <th className="px-4 py-0">Agent</th>
                   <th className="px-4 py-0">Status</th>
+                  <th className="px-4 py-0">Builder default</th>
                   <th className="px-4 py-0">Dibuat</th>
                   <th className="px-4 py-0 text-right">Aksi</th>
                 </tr>
@@ -353,6 +382,22 @@ function Models() {
                         />
                         <span className={model.is_active ? "" : "text-muted-foreground"}>
                           {updatingId === model.id ? "Menyimpan..." : model.is_active ? "Aktif" : "Nonaktif"}
+                        </span>
+                      </label>
+                    </td>
+                    <td className="px-4 py-2">
+                      <label className="inline-flex cursor-pointer items-center gap-3 whitespace-nowrap">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={Boolean(model.is_builder_default)}
+                          aria-label={`${model.is_builder_default ? "Stop using" : "Use"} ${model.name} as the website builder default`}
+                          onClick={() => void toggleBuilderDefault(model)}
+                          disabled={updatingId === model.id}
+                          className="m3-switch"
+                        />
+                        <span className={model.is_builder_default ? "" : "text-muted-foreground"}>
+                          {model.is_builder_default ? "Default" : "Premium only"}
                         </span>
                       </label>
                     </td>

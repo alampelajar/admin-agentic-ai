@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 
 import { apiFetch } from "../lib/api"
 import { formatWib } from "../lib/datetime"
+import WebsiteActivity from "../components/WebsiteActivity.jsx"
 
 const normalizeStatus = (status) => {
   const value = String(status || "").toLowerCase()
@@ -598,6 +599,10 @@ function Logs() {
         </div>
 
       </div>
+
+      {/* WEBSITE BUILDER: builds in progress and every website made */}
+
+      <WebsiteActivity />
 
       {/* LOGS CARD */}
 
