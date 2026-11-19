@@ -16,6 +16,10 @@ const normalizeUser = (user) => {
     name: user.name || "Unknown User",
     email: user.email || "-",
     role: roleMap[user.role] || "User",
+    // premium counts now; premiumExpired: switched on but past its end date.
+    premium: Boolean(user.premium_active ?? user.is_premium),
+    premiumExpired: Boolean(user.is_premium) && user.premium_active === false,
+    premiumUntil: user.premium_until || null,
     status: user.status || "Active",
     agents: Array.isArray(user.agents)
       ? user.agents.map((agent) => ({
@@ -46,6 +50,33 @@ const initialEditForm = {
   name: "",
   email: "",
   role: "User",
+  plan: "Free",
+  period: "1",
+  customDate: "",
+}
+
+// How long a premium account lasts, chosen in the edit dialog.
+const PREMIUM_PERIODS = [
+  { value: "keep", label: "Keep the current end" },
+  { value: "1", label: "1 month" },
+  { value: "3", label: "3 months" },
+  { value: "6", label: "6 months" },
+  { value: "12", label: "12 months" },
+  { value: "none", label: "No end" },
+  { value: "date", label: "Until a date" },
+]
+
+// premiumEnd turns the chosen period into an ISO time, null for no end, or undefined when the
+// current end is kept or the date is missing.
+function premiumEnd(form, currentUntil) {
+  if (form.period === "keep") return currentUntil ?? null
+  if (form.period === "none") return null
+  if (form.period === "date") {
+    return form.customDate ? new Date(`${form.customDate}T23:59:59+07:00`).toISOString() : undefined
+  }
+  const end = new Date()
+  end.setMonth(end.getMonth() + Number(form.period))
+  return end.toISOString()
 }
 
 function Users() {
@@ -278,6 +309,9 @@ function Users() {
       name: user.name,
       email: user.email,
       role: user.role,
+      plan: user.premium ? "Premium" : "Free",
+      period: user.premium ? "keep" : "1",
+      customDate: "",
     })
 
     setFormError("")
@@ -326,10 +360,34 @@ function Users() {
       return
     }
 
+    const wantsPremium = editForm.plan === "Premium"
+    const until = wantsPremium ? premiumEnd(editForm, editingUser.premiumUntil) : null
+    if (wantsPremium && until === undefined) {
+      setFormError("Choose the date the premium account ends.")
+      return
+    }
+    if (wantsPremium && until && new Date(until) <= new Date()) {
+      setFormError("The premium account must end in the future.")
+      return
+    }
+    const premiumChanged = wantsPremium !== editingUser.premium || (wantsPremium && editForm.period !== "keep")
+
     setSubmitting(true)
     setFormError("")
 
     try {
+      if (premiumChanged) {
+        const premiumResponse = await apiFetch(`/api/admin/users/${editingUser.id}/premium`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_premium: wantsPremium, premium_until: until }),
+        })
+        const premiumData = await premiumResponse.json().catch(() => ({}))
+        if (!premiumResponse.ok || premiumData?.ok === false) {
+          throw new Error(premiumData?.error || premiumData?.message || "Could not save the premium account.")
+        }
+      }
+
       const backendRole =
         editForm.role === "Admin"
           ? "admin"
@@ -598,6 +656,7 @@ function Users() {
                 <tr className="text-muted-foreground">
                   <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">User</th>
                   <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Role</th>
+                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Plan</th>
                   <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Status</th>
                   <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Agents</th>
                   <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Last active</th>
@@ -626,6 +685,27 @@ function Users() {
                       </div>
                     </td>
                     <td className={`px-4 py-2 ${user.role === "Admin" ? "font-medium" : "text-muted-foreground"}`}>{user.role}</td>
+                    <td className="px-4 py-2">
+                      {user.premium ? (
+                        <div>
+                          <span className="inline-flex h-8 items-center rounded-chip bg-green-100 px-3 text-sm font-medium text-green-700 dark:bg-green-950/50 dark:text-green-300">
+                            Premium
+                          </span>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {user.premiumUntil ? `Until ${formatWib(user.premiumUntil)}` : "No end"}
+                          </p>
+                        </div>
+                      ) : user.premiumExpired ? (
+                        <div>
+                          <span className="inline-flex h-8 items-center rounded-chip bg-amber-100 px-3 text-sm font-medium text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                            Premium ended
+                          </span>
+                          <p className="mt-1 text-xs text-muted-foreground">{formatWib(user.premiumUntil)}</p>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">Free</span>
+                      )}
+                    </td>
                     <td className="px-4 py-2">
                       <span className="inline-flex items-center gap-2 whitespace-nowrap">
                         <span
@@ -682,6 +762,14 @@ function Users() {
                               onClick={() => openEditUser(user)}
                             >
                               Edit user
+                            </button>
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="block w-full px-3 min-h-12 text-left hover:bg-accent disabled:text-foreground/38"
+                              onClick={() => openEditUser(user)}
+                            >
+                              {user.premium ? "Change premium" : "Make premium"}
                             </button>
                             <button
                               type="button"
@@ -804,6 +892,47 @@ function Users() {
                   <option value="Admin">Admin</option>
                 </select>
               </div>
+              <div>
+                <label htmlFor="edit-plan" className={fieldLabel}>Plan</label>
+                <select id="edit-plan" name="plan" value={editForm.plan} onChange={handleEditChange} disabled={submitting} className={inputClass} aria-describedby="edit-plan-hint">
+                  <option value="Free">Free: 2 websites, 200,000 tokens a month</option>
+                  <option value="Premium">Premium: 1,000,000 tokens a month, every active model</option>
+                </select>
+                <p id="edit-plan-hint" className="mt-1.5 text-xs text-muted-foreground">
+                  {editingUser.premium
+                    ? editingUser.premiumUntil
+                      ? `Premium now, until ${formatWib(editingUser.premiumUntil)}.`
+                      : "Premium now, with no end."
+                    : editingUser.premiumExpired
+                      ? `Premium ended on ${formatWib(editingUser.premiumUntil)}.`
+                      : "Free now."}
+                </p>
+              </div>
+              {editForm.plan === "Premium" && (
+                <div>
+                  <label htmlFor="edit-period" className={fieldLabel}>Premium period</label>
+                  <select id="edit-period" name="period" value={editForm.period} onChange={handleEditChange} disabled={submitting} className={inputClass}>
+                    {PREMIUM_PERIODS.filter((option) => option.value !== "keep" || editingUser.premium).map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                  {editForm.period === "date" && (
+                    <div className="mt-3">
+                      <label htmlFor="edit-premium-date" className={fieldLabel}>Ends on (end of the day, WIB)</label>
+                      <input id="edit-premium-date" type="date" name="customDate" value={editForm.customDate} onChange={handleEditChange} disabled={submitting} className={inputClass} />
+                    </div>
+                  )}
+                  {(() => {
+                    const end = premiumEnd(editForm, editingUser.premiumUntil)
+                    if (end === undefined) return null
+                    return (
+                      <p className="mt-1.5 text-xs text-muted-foreground">
+                        {end ? `Premium until ${formatWib(end)}.` : "Premium with no end."}
+                      </p>
+                    )
+                  })()}
+                </div>
+              )}
               {formError && <p role="alert" className="state-layer rounded-full transition-colors duration-200 ease-m3 bg-destructive/10 px-3 h-10 text-sm font-medium text-destructive">{formError}</p>}
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" className={secondaryButton} onClick={closeEditUser} disabled={submitting}>Cancel</button>
