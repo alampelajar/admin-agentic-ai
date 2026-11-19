@@ -148,6 +148,7 @@ function SiteHistory() {
   const [error, setError] = useState("")
   const [search, setSearch] = useState("")
   const [opening, setOpening] = useState(null)
+  const [toggling, setToggling] = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -193,6 +194,24 @@ function SiteHistory() {
     }
   }
 
+  // Puts a published website in the gallery every person sees in the builder, or takes it out.
+  const toggleShowcase = async (site) => {
+    setToggling(site.id)
+    try {
+      const data = await readJson(`/api/admin/sites/${site.id}/showcase`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ showcased: !site.showcased }),
+      })
+      setSites((list) => list.map((item) => (item.id === site.id ? { ...item, showcased: data.showcased } : item)))
+      setError("")
+    } catch (err) {
+      setError(err.message || "Could not change the gallery.")
+    } finally {
+      setToggling(null)
+    }
+  }
+
   return (
     <section className="rounded-card border border-border bg-card p-5" aria-labelledby="site-history-title">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -201,7 +220,8 @@ function SiteHistory() {
             Website history
           </h2>
           <p className="text-xs text-muted-foreground">
-            Every website people have made, newest change first.
+            Every website people have made, newest change first. Published websites can be shown in
+            the gallery that every person sees in the builder, where they can copy the look and pages.
           </p>
         </div>
         <div className="flex gap-2">
@@ -246,6 +266,7 @@ function SiteHistory() {
               <TableHead className="text-right">Versions</TableHead>
               <TableHead>Updated</TableHead>
               <TableHead>Link</TableHead>
+              <TableHead>Gallery</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -293,6 +314,28 @@ function SiteHistory() {
                         !site.live_url && <span className="text-xs text-muted-foreground">Not built yet</span>
                       )}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {site.published ? (
+                      <div className="flex items-center gap-2">
+                        {site.showcased && (
+                          <span className={`${chip} bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300`}>
+                            Shown
+                          </span>
+                        )}
+                        <Button
+                          variant={site.showcased ? "ghost" : "outline"}
+                          size="sm"
+                          onClick={() => toggleShowcase(site)}
+                          disabled={toggling === site.id}
+                          aria-label={site.showcased ? `Remove ${site.name} from the gallery` : `Show ${site.name} in the gallery`}
+                        >
+                          {toggling === site.id ? "Saving..." : site.showcased ? "Remove" : "Show in gallery"}
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Publish first</span>
+                    )}
                   </TableCell>
                 </TableRow>
               )
