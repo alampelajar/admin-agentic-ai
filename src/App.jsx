@@ -19,6 +19,7 @@ import Tasks from "./Pages/Tasks.jsx"
 import Analytics from "./Pages/Analytics.jsx"
 import Reports from "./Pages/Reports.jsx"
 import Logs from "./Pages/Logs.jsx"
+import Websites from "./Pages/Websites.jsx"
 import Settings from "./Pages/Settings.jsx"
 import Login from "./Pages/Login/Login.jsx"
 import { getAccessToken, SESSION_ENDED_EVENT } from "./lib/auth.js"
@@ -61,6 +62,7 @@ function AdminLayout() {
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/websites" element={<Websites />} />
             <Route path="/logs" element={<Logs />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

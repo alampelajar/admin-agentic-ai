@@ -15,6 +15,11 @@ const menuItems = [
     icon: "users",
   },
   {
+    name: "Websites",
+    path: "/websites",
+    icon: "websites",
+  },
+  {
     name: "Ticket",
     path: "/ticket",
     icon: "ticket",
@@ -184,6 +189,12 @@ function MenuIcon({ name, active }) {
       <>
         <path d="M6 3h9l4 4v14H6z" />
         <path d="M14 3v5h5M9 17v-3M12.5 17v-5M16 17v-2" />
+      </>
+    ),
+    websites: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
       </>
     ),
     logs: (
