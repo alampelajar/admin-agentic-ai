@@ -25,7 +25,9 @@ export function useConfirm() {
   return [confirm, dialog]
 }
 
-function ConfirmDialog({ title, description, confirmLabel = "Delete", cancelLabel = "Cancel", onAnswer }) {
+// destructive: false shows the confirm button in the normal colour, for a question that
+// takes nothing away (restoring an account).
+function ConfirmDialog({ title, description, confirmLabel = "Delete", cancelLabel = "Cancel", destructive = true, onAnswer }) {
   const titleId = useId()
   const descriptionId = useId()
   const cancelRef = useRef(null)
@@ -62,7 +64,7 @@ function ConfirmDialog({ title, description, confirmLabel = "Delete", cancelLabe
           <Button ref={cancelRef} variant="ghost" onClick={() => onAnswer(false)}>
             {cancelLabel}
           </Button>
-          <Button variant="destructive-ghost" onClick={() => onAnswer(true)}>
+          <Button variant={destructive ? "destructive-ghost" : "ghost"} onClick={() => onAnswer(true)}>
             {confirmLabel}
           </Button>
         </div>

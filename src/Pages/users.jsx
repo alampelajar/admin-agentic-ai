@@ -20,7 +20,11 @@ const normalizeUser = (user) => {
     premium: Boolean(user.premium_active ?? user.is_premium),
     premiumExpired: Boolean(user.is_premium) && user.premium_active === false,
     premiumUntil: user.premium_until || null,
-    status: user.status || "Active",
+    // An account its owner deleted waits 30 days (deletes_at) before it is removed for good.
+    deletesAt: user.deletes_at || null,
+    // Set once an admin restored the account; it cannot be restored a second time.
+    restoredAt: user.restored_at || null,
+    status: user.deletes_at ? "Being deleted" : user.status || "Active",
     agents: Array.isArray(user.agents)
       ? user.agents.map((agent) => ({
           id: agent.id,
@@ -106,6 +110,7 @@ function Users() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
+  const [restoringId, setRestoringId] = useState(null)
 
   const [pageError, setPageError] = useState("")
 
@@ -454,7 +459,9 @@ function Users() {
 
     const confirmed = await askToConfirm({
       title: `Delete ${user.name}?`,
-      description: "This account will be deleted. This cannot be undone.",
+      description: user.deletesAt
+        ? "This account is waiting to be deleted. Deleting it now removes it and its websites at once. This cannot be undone."
+        : "This account and its websites will be deleted at once. This cannot be undone.",
       confirmLabel: "Delete",
     })
 
@@ -508,6 +515,37 @@ function Users() {
       )
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  // ============================================================
+  // RESTORE AN ACCOUNT WAITING TO BE DELETED
+  // ============================================================
+
+  const handleRestore = async (user) => {
+    setOpenMenu(null)
+    const confirmed = await askToConfirm({
+      title: `Restore ${user.name}?`,
+      description:
+        "The person can sign in again, and their websites come back online. Open restore requests from this account are closed. An account can be restored only once: if they delete it again, it is removed at once.",
+      confirmLabel: "Restore",
+      destructive: false,
+    })
+    if (!confirmed) return
+
+    setRestoringId(user.id)
+    setPageError("")
+    try {
+      const response = await apiFetch(`/api/admin/users/${user.id}/restore`, { method: "PATCH" })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(data?.message || "The account could not be restored.")
+      }
+      await loadUsers()
+    } catch (error) {
+      setPageError(error.message || "The account could not be restored.")
+    } finally {
+      setRestoringId(null)
     }
   }
 
@@ -710,10 +748,23 @@ function Users() {
                       <span className="inline-flex items-center gap-2 whitespace-nowrap">
                         <span
                           aria-hidden="true"
-                          className={`size-2 rounded-full ${user.status === "Active" ? "bg-current text-green-700 dark:text-green-300" : user.status === "Suspended" ? "bg-destructive" : "bg-muted-foreground"}`}
+                          className={`size-2 rounded-full ${user.status === "Active" ? "bg-current text-green-700 dark:text-green-300" : user.deletesAt ? "bg-current text-amber-700 dark:text-amber-300" : user.status === "Suspended" ? "bg-destructive" : "bg-muted-foreground"}`}
                         />
                         {user.status}
                       </span>
+                      {user.deletesAt && (
+                        <p className="mt-1 whitespace-nowrap text-xs text-muted-foreground">
+                          Removed on {formatWib(user.deletesAt)}
+                        </p>
+                      )}
+                      {!user.deletesAt && user.restoredAt && (
+                        <p
+                          className="mt-1 whitespace-nowrap text-xs text-muted-foreground"
+                          title="If this person deletes the account again, it is removed at once."
+                        >
+                          Restored once
+                        </p>
+                      )}
                     </td>
                     <td className="px-4 py-2 text-muted-foreground">
                       {user.agents.length === 0 ? (
@@ -730,7 +781,7 @@ function Users() {
                       <button
                         type="button"
                         onClick={(event) => openRowMenu(event, user)}
-                        disabled={deletingId === user.id}
+                        disabled={deletingId === user.id || restoringId === user.id}
                         aria-label={`Actions for ${user.name}`}
                         aria-expanded={openMenu === user.id}
                         className="size-10 state-layer rounded-full transition-colors duration-200 ease-m3 text-lg leading-none text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
@@ -755,22 +806,35 @@ function Users() {
                             >
                               View details
                             </button>
-                            <button
-                              type="button"
-                              role="menuitem"
-                              className="block w-full px-3 min-h-12 text-left hover:bg-accent"
-                              onClick={() => openEditUser(user)}
-                            >
-                              Edit user
-                            </button>
-                            <button
-                              type="button"
-                              role="menuitem"
-                              className="block w-full px-3 min-h-12 text-left hover:bg-accent disabled:text-foreground/38"
-                              onClick={() => openEditUser(user)}
-                            >
-                              {user.premium ? "Change premium" : "Make premium"}
-                            </button>
+                            {user.deletesAt ? (
+                              <button
+                                type="button"
+                                role="menuitem"
+                                className="block w-full px-3 min-h-12 text-left hover:bg-accent"
+                                onClick={() => handleRestore(user)}
+                              >
+                                Restore account
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="block w-full px-3 min-h-12 text-left hover:bg-accent"
+                                  onClick={() => openEditUser(user)}
+                                >
+                                  Edit user
+                                </button>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="block w-full px-3 min-h-12 text-left hover:bg-accent disabled:text-foreground/38"
+                                  onClick={() => openEditUser(user)}
+                                >
+                                  {user.premium ? "Change premium" : "Make premium"}
+                                </button>
+                              </>
+                            )}
                             <button
                               type="button"
                               role="menuitem"
@@ -778,7 +842,7 @@ function Users() {
                               onClick={() => handleDelete(user.id)}
                               disabled={deletingId === user.id}
                             >
-                              {deletingId === user.id ? "Deleting..." : "Delete user"}
+                              {deletingId === user.id ? "Deleting..." : user.deletesAt ? "Delete now" : "Delete user"}
                             </button>
                           </div>,
                           document.body
