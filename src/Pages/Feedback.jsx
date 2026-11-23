@@ -18,6 +18,16 @@ const ratingReasonLabels = {
   masalah_terselesaikan: "Masalah terselesaikan",
 }
 
+const categoryLabels = {
+  feature: "Feature suggestion",
+  bug: "Bug report",
+  service: "Service complaint",
+  aiExperience: "AI experience rating",
+  help: "Request for help",
+  // Sent from the sign-in page by an account waiting to be deleted.
+  accountRestore: "Account restore request",
+}
+
 const statusDot = {
   new: "bg-foreground",
   processing: "bg-current text-amber-700 dark:text-amber-300",
@@ -158,6 +168,21 @@ function Ticket() {
     } finally { setSaving(false) }
   }
 
+  // Gives back an account waiting to be deleted; its open restore requests are closed.
+  const restoreAccount = async (item) => {
+    setSaving(true)
+    setNotice("")
+    try {
+      const response = await apiFetch(`/api/admin/users/${item.user_id}/restore`, { method: "PATCH" })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data.ok) throw new Error(data.message || "Failed to restore the account.")
+      await loadFeedback()
+      setNotice(`The account of ${item.user_name} was restored. They can sign in again.`)
+    } catch (err) {
+      setNotice(err.message || "Failed to restore the account.")
+    } finally { setSaving(false) }
+  }
+
   const formatDate = (value) => value ? formatWib(value) : "-"
 
   const statusLabel = (value) =>
@@ -264,7 +289,7 @@ function Ticket() {
                     <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
                     <p className="mt-2 text-sm text-muted-foreground">
                       {[
-                        item.category,
+                        categoryLabels[item.category] || item.category,
                         formatDate(item.created_at),
                         `${(item.replies || []).length} ${(item.replies || []).length === 1 ? "reply" : "replies"}`,
                         item.rating > 0 ? `Rated ${item.rating}/5` : null,
@@ -309,9 +334,29 @@ function Ticket() {
                 <dd className="min-w-0 truncate text-right">{selected.user_name} · {selected.user_email}</dd>
                 <dt className="text-muted-foreground">Related page</dt>
                 <dd className="text-right">{selected.related_page || "–"}</dd>
+                <dt className="text-muted-foreground">Category</dt>
+                <dd className="text-right">{categoryLabels[selected.category] || selected.category}</dd>
                 <dt className="text-muted-foreground">Sent</dt>
                 <dd className="text-right">{formatDate(selected.created_at)}</dd>
               </dl>
+
+              {selected.user_deletes_at && (
+                <div className="space-y-3 rounded-field bg-amber-100 p-4 dark:bg-amber-950/50">
+                  <p className="text-sm">
+                    <span className="font-semibold text-amber-700 dark:text-amber-300">This account is being deleted.</span>{" "}
+                    It will be removed for good on {formatDate(selected.user_deletes_at)}.
+                    An account can be restored only once.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => restoreAccount(selected)}
+                    className="state-layer min-h-10 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors disabled:opacity-50"
+                  >
+                    {saving ? "Restoring..." : "Restore account"}
+                  </button>
+                </div>
+              )}
 
               <div>
                 <h3 className="text-sm font-semibold">Description</h3>
