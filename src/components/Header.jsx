@@ -82,7 +82,7 @@ function Header({ onMenuClick = () => {} }) {
           <h1 className="header-heading">
             {greeting()}, {admin.firstName}<span className="header-wave" aria-hidden="true">👋</span>
           </h1>
-          <p className="header-subheading">Here is what is happening on your Agentic AI platform.</p>
+          <p className="header-subheading">Here is what is happening on your THIS MY WEBSITE platform.</p>
         </div>
       </div>
 

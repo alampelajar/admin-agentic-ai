@@ -71,7 +71,7 @@ function BrandLogo() {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         role="img"
-        aria-label="Agentic AI logo"
+        aria-label="THIS MY WEBSITE logo"
       >
         <path
           d="M11 11L20 20L29 11M20 20L11 29M20 20L29 29"
@@ -255,7 +255,7 @@ function Sidebar({ open = false, collapsed = false, onToggleCollapse = () => {},
                 text-base font-medium text-foreground
               "
             >
-              Agentic AI
+              THIS MY WEBSITE
             </h1>
 
             <p className="mt-0.5 text-xs text-muted-foreground">
