@@ -20,6 +20,13 @@ const normalizeUser = (user) => {
     premium: Boolean(user.premium_active ?? user.is_premium),
     premiumExpired: Boolean(user.is_premium) && user.premium_active === false,
     premiumUntil: user.premium_until || null,
+    // Website Builder credits; unlimited is an owner's own account, which uses none.
+    credits: Number(user.credits ?? 0),
+    unlimited: Boolean(user.unlimited),
+    // The new-account promo (10 free credits, 50% off top-ups for 30 days); false when a
+    // second account from the same device or a busy address was found (promoNote).
+    promoEligible: user.promo_eligible !== false,
+    promoNote: user.promo_note || "",
     // An account its owner deleted waits 30 days (deletes_at) before it is removed for good.
     deletesAt: user.deletes_at || null,
     // Set once an admin restored the account; it cannot be restored a second time.
@@ -111,6 +118,11 @@ function Users() {
   const [submitting, setSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
   const [restoringId, setRestoringId] = useState(null)
+  // Adding credits (a top-up) or taking some away.
+  const [creditUser, setCreditUser] = useState(null)
+  const [creditForm, setCreditForm] = useState({ amount: "", note: "" })
+  const [creditError, setCreditError] = useState("")
+  const [savingCredits, setSavingCredits] = useState(false)
 
   const [pageError, setPageError] = useState("")
 
@@ -550,6 +562,78 @@ function Users() {
   }
 
   // ============================================================
+  // CREDITS: A TOP-UP, OR TAKING SOME AWAY
+  // ============================================================
+
+  const openCredits = (user) => {
+    setOpenMenu(null)
+    setCreditUser(user)
+    setCreditForm({ amount: "", note: "" })
+    setCreditError("")
+  }
+
+  const handleCredits = async (event) => {
+    event.preventDefault()
+    const amount = Number(creditForm.amount)
+    if (!Number.isInteger(amount) || amount === 0 || Math.abs(amount) > 10000) {
+      setCreditError("Enter a whole number from -10000 to 10000, not 0.")
+      return
+    }
+    setSavingCredits(true)
+    setCreditError("")
+    try {
+      const response = await apiFetch(`/api/admin/users/${creditUser.id}/credits`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount, note: creditForm.note.trim() }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data?.ok === false) {
+        throw new Error(data?.error || data?.message || "The credits could not be saved.")
+      }
+      setCreditUser(null)
+      await loadUsers()
+    } catch (error) {
+      setCreditError(error.message || "The credits could not be saved.")
+    } finally {
+      setSavingCredits(false)
+    }
+  }
+
+  // ============================================================
+  // NEW-ACCOUNT PROMO
+  // ============================================================
+
+  const togglePromo = async (user) => {
+    setOpenMenu(null)
+    const giving = !user.promoEligible
+    const confirmed = await askToConfirm({
+      title: giving ? `Give the new-account promo to ${user.name}?` : `Take the new-account promo from ${user.name}?`,
+      description: giving
+        ? "They get 50% off top-ups until 30 days after they signed up. The 10 free credits are not added by this: use Add credits if they should have them."
+        : "They pay the full price for top-ups. Their credits stay as they are.",
+      confirmLabel: giving ? "Give promo" : "Take promo",
+      destructive: !giving,
+    })
+    if (!confirmed) return
+    setPageError("")
+    try {
+      const response = await apiFetch(`/api/admin/users/${user.id}/promo`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eligible: giving }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data?.ok === false) {
+        throw new Error(data?.error || data?.message || "The promo could not be saved.")
+      }
+      await loadUsers()
+    } catch (error) {
+      setPageError(error.message || "The promo could not be saved.")
+    }
+  }
+
+  // ============================================================
   // RESET FILTERS
   // ============================================================
 
@@ -695,6 +779,7 @@ function Users() {
                   <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">User</th>
                   <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Role</th>
                   <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Plan</th>
+                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Credits</th>
                   <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Status</th>
                   <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Agents</th>
                   <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Last active</th>
@@ -742,6 +827,20 @@ function Users() {
                         </div>
                       ) : (
                         <span className="text-muted-foreground">Free</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 tabular-nums">
+                      {user.unlimited ? (
+                        <span className="text-muted-foreground">Unlimited</span>
+                      ) : (
+                        <span className={user.credits < 2 ? "font-medium text-amber-700 dark:text-amber-300" : ""}>
+                          {user.credits}
+                        </span>
+                      )}
+                      {!user.unlimited && !user.promoEligible && (
+                        <p className="mt-1 whitespace-nowrap text-xs text-amber-700 dark:text-amber-300" title={user.promoNote}>
+                          No promo
+                        </p>
                       )}
                     </td>
                     <td className="px-4 py-2">
@@ -833,6 +932,22 @@ function Users() {
                                 >
                                   {user.premium ? "Change premium" : "Make premium"}
                                 </button>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="block w-full px-3 min-h-12 text-left hover:bg-accent"
+                                  onClick={() => openCredits(user)}
+                                >
+                                  Add credits
+                                </button>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="block w-full px-3 min-h-12 text-left hover:bg-accent"
+                                  onClick={() => togglePromo(user)}
+                                >
+                                  {user.promoEligible ? "Take promo" : "Give promo"}
+                                </button>
                               </>
                             )}
                             <button
@@ -861,6 +976,63 @@ function Users() {
           </div>
         )}
       </section>
+
+      {creditUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center m3-scrim p-4" onClick={() => setCreditUser(null)}>
+          <form
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="credits-title"
+            onSubmit={handleCredits}
+            className="max-h-full w-full max-w-md overflow-y-auto rounded-dialog bg-surface-high p-6 text-card-foreground shadow-m3-3"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="credits-title" className="text-2xl font-normal">Add credits</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {creditUser.name} has {creditUser.credits} credits. A new website uses 2, a change uses 1. Use a minus
+              number to take credits away; the balance never goes below 0.
+            </p>
+            <label className="mt-6 block text-sm font-medium" htmlFor="credit-amount">Credits to add</label>
+            <input
+              id="credit-amount"
+              type="number"
+              step="1"
+              inputMode="numeric"
+              autoFocus
+              value={creditForm.amount}
+              onChange={(event) => setCreditForm({ ...creditForm, amount: event.target.value })}
+              className="mt-2 h-12 w-full rounded-md border border-input bg-transparent px-3 text-sm placeholder:text-muted-foreground/60"
+              placeholder="20"
+            />
+            <label className="mt-4 block text-sm font-medium" htmlFor="credit-note">Note (optional)</label>
+            <input
+              id="credit-note"
+              type="text"
+              maxLength={200}
+              value={creditForm.note}
+              onChange={(event) => setCreditForm({ ...creditForm, note: event.target.value })}
+              className="mt-2 h-12 w-full rounded-md border border-input bg-transparent px-3 text-sm placeholder:text-muted-foreground/60"
+              placeholder="Transfer 25 Nov"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">The person sees this note in their credit history.</p>
+            {creditError && (
+              <p role="alert" className="mt-4 text-sm text-destructive">{creditError}</p>
+            )}
+            <div className="mt-6 flex justify-end gap-2">
+              <button type="button" onClick={() => setCreditUser(null)} className="h-10 rounded-full px-4 text-sm font-medium state-layer">
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={savingCredits}
+                className="h-10 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground disabled:opacity-60"
+              >
+                {savingCredits ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {selectedUser && (
         <div
@@ -893,6 +1065,8 @@ function Users() {
               <dd className="text-right">{selectedUser.status}</dd>
               <dt className="text-muted-foreground">Last active</dt>
               <dd className="text-right">{selectedUser.lastActive}</dd>
+              <dt className="text-muted-foreground">New-account promo</dt>
+              <dd className="text-right">{selectedUser.promoEligible ? "Yes" : `No: ${selectedUser.promoNote || "taken by an admin"}`}</dd>
             </dl>
 
             <h3 className="mt-6 text-sm font-semibold">Agents ({selectedUser.agents.length})</h3>
