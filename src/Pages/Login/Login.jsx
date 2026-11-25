@@ -70,7 +70,7 @@ function Login({ onAuthenticated = () => {} }) {
               <path d="M11.5 14.3 20.5 9.7M11.5 17.7l9 4.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </span>
-          <span className="text-lg font-semibold tracking-tight">Agentic AI</span>
+          <span className="text-lg font-semibold tracking-tight">THIS MY WEBSITE</span>
         </div>
 
         <div className="space-y-4">

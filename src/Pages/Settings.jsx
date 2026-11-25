@@ -341,7 +341,7 @@ function Settings() {
         </h1>
 
         <p className="mt-1 text-sm text-muted-foreground">
-          Configure your Agentic AI dashboard
+          Configure your THIS MY WEBSITE dashboard
         </p>
 
       </div>
