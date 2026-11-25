@@ -20,6 +20,11 @@ const menuItems = [
     icon: "websites",
   },
   {
+    name: "Top-ups",
+    path: "/topups",
+    icon: "topups",
+  },
+  {
     name: "Ticket",
     path: "/ticket",
     icon: "ticket",
@@ -189,6 +194,12 @@ function MenuIcon({ name, active }) {
       <>
         <path d="M6 3h9l4 4v14H6z" />
         <path d="M14 3v5h5M9 17v-3M12.5 17v-5M16 17v-2" />
+      </>
+    ),
+    topups: (
+      <>
+        <rect x="3" y="6" width="18" height="13" rx="2" />
+        <path d="M3 10h18M7 15h3M16 3v4M13 5h6" />
       </>
     ),
     websites: (
