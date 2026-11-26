@@ -2,11 +2,14 @@ import { useCallback, useEffect, useState } from "react"
 
 import { apiFetch } from "../lib/api"
 import { formatWib } from "../lib/datetime"
+import { Hammer } from "lucide-react"
+import { Badge } from "./ui/badge.jsx"
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card.jsx"
+import { Skeleton } from "./ui/skeleton.jsx"
+import { EmptyState, ErrorState, StatusDot } from "./page.jsx"
 
 // How often the list of builds in progress is refreshed while the page is visible.
 const ACTIVE_REFRESH_MS = 5000
-
-const chip = "inline-flex h-8 items-center gap-2 rounded-chip px-3 text-sm font-medium"
 
 async function readJson(path, options) {
   const response = await apiFetch(path, options)
@@ -54,51 +57,39 @@ export function ActiveRuns() {
   }, [load])
 
   return (
-    <section className="rounded-card border border-border bg-card p-5" aria-labelledby="active-builds-title">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 id="active-builds-title" className="text-base font-medium text-foreground">
-            Building now
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            People building a website and what the agent is doing. Refreshes every 5 seconds.
-          </p>
-        </div>
-        <span className={`${chip} bg-secondary text-secondary-foreground tabular-nums`}>
-          {runs.length} active
-        </span>
-      </div>
-
-      {error && (
-        <p role="alert" className="mb-4 rounded-field bg-error-container px-4 py-3 text-sm text-on-error-container">
-          {error}
-        </p>
-      )}
+    <Card aria-labelledby="active-builds-title">
+      <CardHeader>
+        <CardTitle id="active-builds-title" className="text-base">
+          Building now
+        </CardTitle>
+        <CardDescription>People building a website and what the agent is doing. Refreshes every 5 seconds.</CardDescription>
+        <CardAction>
+          <Badge variant="secondary" className="tabular-nums">
+            {runs.length} active
+          </Badge>
+        </CardAction>
+      </CardHeader>
+      <CardContent className="space-y-4">
+      {error && <ErrorState title="Could not load the builds" message={error} onRetry={load} />}
 
       {loading ? (
-        <div className="space-y-3" aria-label="Loading builds in progress">
-          <div className="skeleton h-24 rounded-card" />
+        <div role="status" aria-label="Loading builds in progress">
+          <Skeleton className="h-24 w-full rounded-xl" />
         </div>
       ) : runs.length === 0 ? (
-        <p className="rounded-card border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+        <EmptyState icon={Hammer} title="Nothing in progress">
           Nobody is building a website right now.
-        </p>
+        </EmptyState>
       ) : (
         <ul className="grid gap-4 lg:grid-cols-2">
           {runs.map((run) => (
-            <li key={run.id} className="rounded-card border border-border bg-background p-4">
+            <li key={run.id} className="rounded-lg border p-4">
               <div className="flex items-start justify-between gap-3">
                 <Owner user={run.user} />
-                <span
-                  className={`${chip} shrink-0 ${
-                    run.status === "running"
-                      ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300"
-                      : "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
-                  }`}
-                >
-                  <span className={`status-dot ${run.status === "running" ? "is-running" : ""}`} aria-hidden="true" />
+                <Badge variant={run.status === "running" ? "success" : "warning"}>
+                  <StatusDot tone={run.status === "running" ? "success" : "warning"} running={run.status === "running"} />
                   {run.status === "running" ? "Agent running" : "Queued"}
-                </span>
+                </Badge>
               </div>
 
               <p className="mt-3 text-sm text-foreground">
@@ -129,6 +120,7 @@ export function ActiveRuns() {
           ))}
         </ul>
       )}
-    </section>
+      </CardContent>
+    </Card>
   )
 }

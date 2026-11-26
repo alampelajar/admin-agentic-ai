@@ -22,17 +22,20 @@ const CONFIG = {
   include: /^src\/.*\.(jsx|js)$/,
   skip: [/\.test\.jsx?$/, /^src\/components\/ui\//],
   hexAllowed: [/^src\/assets\//],
-  // Status colors from DESIGN.md, the only palette colors allowed.
-  allowedPalette: new Set(
-    ['green', 'amber', 'red'].flatMap((color) => [
-      `bg-${color}-100`,
-      `text-${color}-700`,
-      `dark:bg-${color}-950/50`,
-      `dark:text-${color}-300`,
-    ])
-  ),
-  // White text and see-through white sit on the blue brand surfaces (.hero-card, the login panel).
-  allowedPattern: /^(?:[a-z-]+:)*(?:text|bg|ring|border)-white(?:\/\d+)?$/,
+  // Status colors from DESIGN.md (the same pairs as the main app), the only palette colors
+  // allowed: success in emerald, warning in amber, and their dots.
+  allowedPalette: new Set([
+    'text-emerald-600',
+    'dark:text-emerald-400',
+    'bg-emerald-500/10',
+    'bg-emerald-500',
+    'text-amber-700',
+    'dark:text-amber-400',
+    'bg-amber-500/10',
+    'bg-amber-500',
+  ]),
+  // White text sits on the destructive button, as in shadcn/ui.
+  allowedPattern: /^(?:[a-z-]+:)*text-white$/,
   // The console is English only, so there are no language files to check.
   locales: {},
   textFiles: null,

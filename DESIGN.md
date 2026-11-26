@@ -1,177 +1,122 @@
-# Design system: Agentic AI admin console
+# Design system: THIS MY WEBSITE admin console
 
 Follow these rules for every screen, component and style change in this repository.
-The console follows [Material Design 3](https://m3.material.io), built with our own
-tokens and components (no MUI or `@material/web`). If a request conflicts with a rule,
-follow the request and point out the conflict.
+The console is built with [shadcn/ui](https://ui.shadcn.com) and uses the same tokens and
+components as the main app (`agentic-ai-fe`), so both feel like one product. If a request
+conflicts with a rule, follow the request and point out the conflict.
 
 ## Character
 
-Calm and clear, in the Material 3 way: tonal surfaces instead of shadows, one blue
-seed color, rounded shapes, and short motion that explains what changed.
+Clean, calm and professional. Plenty of white space, one accent color, and hierarchy
+made with size and weight instead of decoration. Function comes before ornament.
 
 ## Colors
 
-The scheme is generated from the seed color `#455bd5` with
-`@material/material-color-utilities` (`scripts/m3-theme.mjs`) and written to
-`src/index.css` as `oklch` values, for light mode (`:root`) and dark mode (`html.dark`).
-To change the brand, change the seed and run the script again; do not edit the values by hand.
+Colors live in `src/index.css` as CSS variables, for light mode (`:root`) and dark mode
+(`.dark` on `<html>`). They are copied from `agentic-ai-fe/src/styles/theme.css`: when the
+main app's theme changes, copy the new values here too. Always use their Tailwind names, so
+both modes work automatically.
 
-Always use the Tailwind names below, so both modes work automatically.
-
-| Material 3 role | Class | Use |
-|---|---|---|
-| surface / on-surface | `bg-background`, `text-foreground` | Page background and text |
-| surface-container-low | `bg-card`, `bg-sidebar` | Cards, navigation drawer |
-| surface-container | `bg-popover` | Menus, dropdowns |
-| surface-container-high | `bg-surface-high` | Dialogs |
-| surface-container-highest | `bg-muted` | Quiet surfaces, filled areas |
-| on-surface-variant | `text-muted-foreground` | Secondary text, icons |
-| primary / on-primary | `bg-primary`, `text-primary-foreground` | Filled buttons, main action |
-| primary-container | `bg-primary-container`, `text-on-primary-container` | Highlighted cards |
-| secondary-container | `bg-secondary`, `text-secondary-foreground` | Tonal buttons, active navigation item |
-| tertiary, tertiary-container | `text-tertiary`, `bg-tertiary-container`, `text-on-tertiary-container` | Contrasting accents |
-| error / on-error | `bg-destructive`, `text-destructive`, `text-destructive-foreground` | Errors, destructive actions |
-| error-container | `bg-error-container`, `text-on-error-container` | Error banners |
-| outline-variant | `border-border` | Dividers, card outlines |
-| outline | `border-input` | Text field outlines |
-| secondary | `ring-ring` | Focus indicator |
-| inverse-surface | `bg-inverse-surface`, `text-inverse-on-surface` | Tooltips, snackbars |
-| on-surface at 8% over surface | `bg-accent`, `text-accent-foreground` | Hover state layer |
-| — | `chart-1` to `chart-5` | Charts |
-
-- Do not use hex values, or palette colors such as `bg-slate-800`, for interface colors.
-- The one exception is status, which has no Material role. Use these pairs, with both modes:
-  - Success: `bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300`
-  - Warning: `bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300`
-  - Danger: `bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300`
-- Never let color carry meaning alone: add an icon or a word.
-- Text has a contrast of at least 4.5:1 against its surface in both modes.
-
-## State layers
-
-Interactive controls show their state with a layer of their content color, not with a
-new color or a shadow:
-
-| State | Layer |
+| Use | Class |
 |---|---|
-| Hover | 8% |
-| Focus | 10%, plus the `ring-ring` focus indicator |
-| Pressed | 10% |
-| Disabled | content at 38%, container at 12% |
+| Page background and text | `bg-background`, `text-foreground` |
+| Cards and panels | `bg-card`, `text-card-foreground` |
+| Menus, dialogs, tooltips | `bg-popover`, `text-popover-foreground` |
+| Main action | `bg-primary`, `text-primary-foreground` |
+| Quiet surface and secondary text | `bg-muted`, `text-muted-foreground` |
+| Hover and the active menu item | `bg-accent`, `text-accent-foreground` |
+| Errors and destructive actions | `bg-destructive`, `text-destructive` |
+| Borders and inputs | `border-border`, `border-input` |
+| Focus ring | `ring-ring` |
+| Charts | `var(--chart-1)` to `var(--chart-5)`, `var(--primary)` |
 
-Use the `.state-layer` helper from `src/m3.css`. There is no JavaScript ripple.
-
-## Elevation
-
-Surfaces are told apart by their surface color, not by shadows. Only floating
-elements get a shadow:
-
-| Level | Class | Use |
-|---|---|---|
-| 0 | none | Cards, drawer, app bar, page |
-| 2 | `shadow-m3-2` | Menus, dropdowns, popovers |
-| 3 | `shadow-m3-3` | Dialogs |
+- Do not use hex values, or palette colors such as `bg-blue-500`, for interface colors.
+- The one exception is status, which has no token yet. Use these pairs, with both modes:
+  - Success: `text-emerald-600 dark:text-emerald-400`, background `bg-emerald-500/10`, dot `bg-emerald-500`
+  - Warning: `text-amber-700 dark:text-amber-400`, background `bg-amber-500/10`, dot `bg-amber-500`
+  - Prefer `Badge variant="success"` / `"warning"` / `"destructive"` and `StatusDot` over writing them out.
+- Never let color carry meaning alone: add an icon or a word.
 
 ## Typography
 
-Inter is the interface font (Material 3 allows a brand typeface). Do not add other fonts.
+Inter (`@fontsource-variable/inter`, bundled with the app) is the interface font. Do not add other fonts.
 
-| Use | Material 3 scale | Classes |
-|---|---|---|
-| Page title | Headline small, 24/32 | `text-2xl font-normal` |
-| Section title | Title medium, 16/24 | `text-base font-medium` |
-| Body | Body medium, 14/20 | `text-sm` |
-| Helper text and metadata | Body small, 12/16 | `text-xs text-muted-foreground` |
-| Button label | Label large, 14/20 | `text-sm font-medium` |
-| Figures | | add `tabular-nums` |
+| Use | Classes |
+|---|---|
+| Page title | `text-2xl font-semibold tracking-tight` (use `PageHeader`) |
+| Section title | `text-base font-semibold` (`CardTitle className="text-base"`) |
+| Body | `text-sm` |
+| Helper text and metadata | `text-xs text-muted-foreground` |
+| Figures | add `tabular-nums` |
 
-## Shape
-
-| Token | Radius | Use |
-|---|---|---|
-| `rounded-field` | 4px | Text fields, menus, tooltips, snackbars |
-| `rounded-chip` | 8px | Chips, badges |
-| `rounded-card` | 12px | Cards, panels |
-| `rounded-sheet` | 16px | Side sheets (inner edge) |
-| `rounded-dialog` | 28px | Dialogs |
-| `rounded-full` | full | Buttons, icon buttons, active navigation item |
-
-## Spacing and layout
+## Spacing and shape
 
 - Use the Tailwind spacing scale only, not values like `p-[13px]`.
-- A page root is `<div className="min-h-screen bg-background p-6">`.
-- Panels: `rounded-card border border-border bg-card p-5`.
-- Gaps: `gap-4` between cards, `gap-6` or `mt-6` between sections.
-- Navigation drawer: `bg-sidebar`, the active item is a 56px pill in `bg-secondary`.
-  Collapsed, it becomes a navigation rail.
-- Top app bar: 64px tall, `bg-background`.
+- Page content goes in `Page` from `src/components/page.jsx`, with `PageHeader` first.
+- Common gaps: `gap-2` inside a control, `gap-4` between cards, `space-y-6` between sections (`Page` does this).
+- Radius comes from `--radius`: `rounded-md` for controls, `rounded-lg` or `rounded-xl` for cards.
+- Prefer borders to shadows. Only floating things (dialogs, menus, popovers) get a shadow.
 
 ## Components
 
-Reuse before writing anything new. `src/components/ui` holds the Material 3 versions:
+Reuse before writing anything new.
 
-| Component | Material 3 | Notes |
-|---|---|---|
-| `Button` default | Filled button | 40px tall, `rounded-full`, 24px padding |
-| `Button` secondary | Filled tonal button | secondary-container |
-| `Button` outline | Outlined button | `border-input` outline |
-| `Button` ghost, link | Text button | |
-| `Button` destructive | Filled, error colors | |
-| `Button` icon | Icon button | 40px, round, needs `aria-label` |
-| `Card` | Outlined card | `rounded-card`, outline-variant, no shadow |
-| `Input`, `PasswordInput` | Outlined text field | 56px, `rounded-field`, 2px primary outline on focus, error outline when `aria-invalid` |
-| `Badge` | Assist chip (look only) | 32px, `rounded-chip` |
-| `Table` | (no M3 component) | 52px rows, outline-variant dividers, header `text-sm font-medium` |
-| `Alert` | | `bg-error-container` for errors, `role="alert"` |
-
-- Confirming a destructive action: `useConfirm` from `src/components/ui/confirm-dialog.jsx`,
-  a Material 3 dialog. Never `window.confirm`.
+- Controls: `src/components/ui` holds the shadcn/ui components (JavaScript versions of the
+  ones in `agentic-ai-fe`): `Button`, `Input`, `PasswordInput`, `Textarea`, `Label`, `Select`,
+  `NativeSelect`, `Checkbox`, `Switch`, `Dialog`, `AlertDialog`, `Sheet`, `DropdownMenu`,
+  `Tabs`, `Tooltip`, `Card`, `Table`, `Badge`, `Avatar`, `Alert`, `Separator`, `Skeleton`, `Toaster`.
+  Add a new one from shadcn/ui (`components.json` is set up) rather than writing your own.
+- `Select` for a choice that sets state directly (filters); `NativeSelect` inside forms whose
+  handler reads `event.target.name`/`value`.
+- Page building blocks in `src/components/page.jsx`: `Page`, `PageHeader`, `StatCard`,
+  `EmptyState`, `ErrorState`, `SuccessNotice`, `LoadingRows`, `LoadingText`, `StatusDot`.
+  They copy the main app's Overview page (stat cards, the red error box with Retry, the
+  dashed empty box).
+- Dialogs with a form: `FormDialog` from `src/components/dialogs.jsx`. A row's actions:
+  `RowMenu` from the same file.
+- Confirming a destructive action: `useConfirm` from `src/components/ui/confirm-dialog.jsx`
+  (an `AlertDialog`). Never `window.confirm`.
+- Messages after an action: `SuccessNotice` on the page, or `toast` from `sonner`.
+- Icons: `lucide-react`, default size `size-4`. Icon-only buttons need an `aria-label`.
+- Merge class names with `cn` from `src/lib/utils`.
 - Dates and times: `formatWib` from `src/lib/datetime`, which shows Jakarta time without
   seconds, such as `22/9/2026, 15.49 WIB`.
-- API calls: `apiFetch` from `src/lib/api`.
-- The signed-in admin: `getStoredAdmin` from `src/lib/auth`.
-- Icons: inline SVG with `stroke="currentColor"`, as in `sidebar.jsx`, default 20px (`size-5`).
-  This repo has no icon library.
-- Charts: `recharts`, using `var(--chart-1)` to `var(--chart-5)` instead of fixed colors.
-
-## Motion
-
-- Transitions take 200ms with the Material standard easing `cubic-bezier(0.2, 0, 0, 1)`
-  (`duration-200 ease-m3`).
-- Use the helpers in `src/motion.css` (`.page-enter`, `.kpi-card`, `.activity-item`,
-  `.skeleton`, `.status-dot.is-running`) instead of writing new keyframes. Keep them under 700ms.
-- Finished animations must not leave a `transform` behind, or fixed dialogs inside the page
-  break. Use `animation-fill-mode: backwards`.
-- `prefers-reduced-motion` is handled globally in `motion.css`. Any motion started from
-  JavaScript must check it too.
+- API calls: `apiFetch` from `src/lib/api`. The signed-in admin: `getStoredAdmin` from `src/lib/auth`.
+- Charts: `recharts`, using the CSS variables above instead of fixed colors.
 
 ## States
 
 Every screen that loads data handles all of these:
 
-- **Loading:** `.skeleton` shapes matching the final layout, or short text.
-- **Empty:** a short sentence saying what will appear.
-- **Error:** a readable message with `role="alert"`.
+- **Loading:** `LoadingRows` (skeletons) or `LoadingText` (a spinner with text).
+- **Empty:** `EmptyState`: a dashed box with an icon, a short explanation and, where it helps, the next action.
+- **Error:** `ErrorState`: a readable message with `role="alert"`, and a retry where it helps.
 
-Buttons that start work are disabled and say what is happening. Destructive actions ask for confirmation first.
+Buttons that start work are disabled and show progress (`Loader2` and a word such as
+"Saving...") until it finishes. Destructive actions ask for confirmation first.
 
 ## Layout and accessibility
 
-- Works from phone width up, with no horizontal page scroll.
-- Check every change in both light and dark mode.
-- Everything works by keyboard, with a visible focus indicator. Icon-only buttons need an
-  `aria-label`, and inputs need labels.
+- Works from phone width up, with no horizontal page scroll; wide tables scroll inside their card.
+  Start with the small layout and add `sm:`, `md:`, `lg:`.
+- The shell is the main app's: `SidebarProvider`, `AppSidebar` (shadcn `Sidebar`, groups with
+  labels, the account menu at the bottom, shrinks to icons and is a sheet on phones) and
+  `SidebarInset` with `Header` (sidebar button, Search with Ctrl+K, theme menu, profile menu),
+  in `src/components/layout`. Pages sit in `Page`, which is the main app's `Main`: `px-4 py-6`,
+  at most `max-w-7xl` on wide screens.
+- Check every change in both light and dark mode (the theme menu in the header: light, dark or system).
+- Everything works by keyboard, with a visible focus ring. Inputs have labels.
+
+## Motion
+
+Keep it short and purposeful: `transition-colors` on hover, the components' own open and
+close animations, and nothing that delays the user. `prefers-reduced-motion` is handled
+globally in `src/index.css`; motion started from JavaScript (charts, `CountUp`) checks it too.
 
 ## Text
 
-The console is in English, with some older Indonesian text. New text is in English. There is no translation system here.
-
-## Existing code
-
-Some older pages still use raw `slate` colors and their own radius and shadow classes.
-Restyle them only when the work is about their look; otherwise follow the rules in what
-you touch, and mention the rest.
+The console is in English, with some older Indonesian text (Models). New text is in English.
+There is no translation system here.
 
 ## Automatic checks
 
@@ -183,10 +128,9 @@ you touch, and mention the rest.
   `node scripts/check-design.mjs --all` lists what older code still breaks.
 - **On pull requests:** the CI workflow runs the same check and fails when new lines break a rule.
 
-It checks hex colors, palette colors (except the status pairs above, and white on the blue
-brand surfaces), arbitrary values like `p-[13px]` (`var(...)` values are fine), and
-`window.confirm` and `alert`. Only new and changed lines are checked, so older pages pass
-until someone touches them.
+It checks hex colors, palette colors (except the status pairs above), arbitrary values like
+`p-[13px]` (`var(...)` values are fine), and `window.confirm` and `alert`. Only new and changed
+lines are checked. `src/components/ui` is skipped, because it holds shadcn/ui's own code.
 
 When a line must break a rule on purpose, put a comment containing `design-system-ignore` and
 the reason on that line or the line above it. Spacing, wording and visual polish still need a

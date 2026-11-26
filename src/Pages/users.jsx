@@ -1,9 +1,22 @@
 import { useEffect, useMemo, useState } from "react"
-import { createPortal } from "react-dom"
+import { Loader2, Search, UserPlus, Users as UsersIcon } from "lucide-react"
 import { apiFetch } from "../lib/api"
 import { formatWib } from "../lib/datetime"
 import { useConfirm } from "../components/ui/confirm-dialog.jsx"
 import { PasswordInput } from "../components/ui/password-input.jsx"
+import { Avatar, AvatarFallback } from "../components/ui/avatar.jsx"
+import { Badge } from "../components/ui/badge.jsx"
+import { Button } from "../components/ui/button.jsx"
+import { Card } from "../components/ui/card.jsx"
+import { DialogFooter } from "../components/ui/dialog.jsx"
+import { Input } from "../components/ui/input.jsx"
+import { Label } from "../components/ui/label.jsx"
+import { NativeSelect, NativeSelectOption } from "../components/ui/native-select.jsx"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select.jsx"
+import { Separator } from "../components/ui/separator.jsx"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table.jsx"
+import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatusDot } from "../components/page.jsx"
+import { FormDialog, RowMenu } from "../components/dialogs.jsx"
 
 const normalizeUser = (user) => {
   const roleMap = {
@@ -96,12 +109,6 @@ function Users() {
 
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState("All")
-
-  const [openMenu, setOpenMenu] = useState(null)
-  const [menuPosition, setMenuPosition] = useState({
-    top: 0,
-    left: 0,
-  })
 
   const [selectedUser, setSelectedUser] = useState(null)
   const [editingUser, setEditingUser] = useState(null)
@@ -332,7 +339,6 @@ function Users() {
     })
 
     setFormError("")
-    setOpenMenu(null)
   }
 
   const handleEditChange = (event) => {
@@ -482,7 +488,6 @@ function Users() {
     }
 
     setDeletingId(id)
-    setOpenMenu(null)
     setPageError("")
 
     try {
@@ -535,7 +540,6 @@ function Users() {
   // ============================================================
 
   const handleRestore = async (user) => {
-    setOpenMenu(null)
     const confirmed = await askToConfirm({
       title: `Restore ${user.name}?`,
       description:
@@ -566,7 +570,6 @@ function Users() {
   // ============================================================
 
   const openCredits = (user) => {
-    setOpenMenu(null)
     setCreditUser(user)
     setCreditForm({ amount: "", note: "" })
     setCreditError("")
@@ -605,7 +608,6 @@ function Users() {
   // ============================================================
 
   const togglePromo = async (user) => {
-    setOpenMenu(null)
     const giving = !user.promoEligible
     const confirmed = await askToConfirm({
       title: giving ? `Give the new-account promo to ${user.name}?` : `Take the new-account promo from ${user.name}?`,
@@ -643,53 +645,10 @@ function Users() {
   }
 
   // ============================================================
-  // SHARED INPUT CLASS
-  // ============================================================
-
-  const inputClass =
-    "h-14 w-full rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent px-4 text-base outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-50"
-
-  // ============================================================
   // RETURN
   // ============================================================
 
   const adminCount = users.filter((user) => user.role === "Admin").length
-
-  const openRowMenu = (event, user) => {
-    if (openMenu === user.id) {
-      setOpenMenu(null)
-      return
-    }
-
-    const buttonRect = event.currentTarget.getBoundingClientRect()
-    const menuWidth = 176
-    const menuHeight = 132
-    const gap = 8
-    const viewportPadding = 12
-
-    let left = buttonRect.right - menuWidth
-    if (left < viewportPadding) left = viewportPadding
-    if (left + menuWidth > window.innerWidth - viewportPadding) {
-      left = window.innerWidth - menuWidth - viewportPadding
-    }
-
-    const spaceBelow = window.innerHeight - buttonRect.bottom
-    const spaceAbove = buttonRect.top
-    let top
-    if (spaceBelow >= menuHeight + gap) {
-      top = buttonRect.bottom + gap
-    } else if (spaceAbove >= menuHeight + gap) {
-      top = buttonRect.top - menuHeight - gap
-    } else {
-      top = Math.max(
-        viewportPadding,
-        Math.min(buttonRect.bottom + gap, window.innerHeight - menuHeight - viewportPadding)
-      )
-    }
-
-    setMenuPosition({ top, left })
-    setOpenMenu(user.id)
-  }
 
   const closeAddUser = () => {
     if (!submitting) setShowAddUser(false)
@@ -699,542 +658,407 @@ function Users() {
     if (!submitting) setEditingUser(null)
   }
 
-  const secondaryButton =
-    "h-10 state-layer rounded-full transition-colors duration-200 ease-m3 border border-input bg-transparent px-6 text-sm font-medium disabled:border-foreground/12 disabled:text-foreground/38 text-primary"
-  const primaryButton =
-    "h-10 state-layer rounded-full transition-colors duration-200 ease-m3 bg-primary px-6 text-sm font-medium text-primary-foreground disabled:bg-foreground/12 disabled:text-foreground/38"
-  const fieldLabel = "mb-2 block text-sm font-medium"
+  const statusDot = (user) =>
+    user.status === "Active" ? "success" : user.deletesAt ? "warning" : user.status === "Suspended" ? "danger" : "muted"
+
+  const formErrorBox = formError && (
+    <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+      {formError}
+    </p>
+  )
 
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] p-6">
+    <Page>
       {confirmDialog}
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div>
-          <h1 className="text-2xl font-normal">Users</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {loading
-              ? "Loading users..."
-              : `${users.length} ${users.length === 1 ? "user" : "users"}, ${adminCount} ${adminCount === 1 ? "admin" : "admins"}.`}
-          </p>
-        </div>
-        <button
-          type="button"
-          className={primaryButton}
-          onClick={() => {
-            setFormError("")
-            setNewUser(initialNewUser)
-            setShowAddUser(true)
-          }}
-        >
-          Add user
-        </button>
-      </div>
-
-      {pageError && (
-        <div role="alert" className="mb-6 flex items-center justify-between gap-4 rounded-card bg-error-container px-4 py-3">
-          <p className="text-sm font-medium text-destructive">{pageError}</p>
-          <button type="button" onClick={loadUsers} className="text-sm font-medium underline-offset-4 hover:underline">
-            Retry
-          </button>
-        </div>
-      )}
-
-      <section className="rounded-card bg-card text-card-foreground">
-        <div className="flex flex-wrap items-center gap-3 p-4">
-          <input
-            type="search"
-            aria-label="Search users"
-            placeholder="Search by name or email"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            className="h-14 min-w-0 flex-1 basis-64 rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent px-4 text-base outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
-          />
-          <select
-            aria-label="Filter by role"
-            value={roleFilter}
-            onChange={(event) => setRoleFilter(event.target.value)}
-            className="h-14 rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent px-4 text-base outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
+      <PageHeader
+        title="Users"
+        description={
+          loading
+            ? "Loading users..."
+            : `${users.length} ${users.length === 1 ? "user" : "users"}, ${adminCount} ${adminCount === 1 ? "admin" : "admins"}.`
+        }
+        actions={
+          <Button
+            onClick={() => {
+              setFormError("")
+              setNewUser(initialNewUser)
+              setShowAddUser(true)
+            }}
           >
-            <option value="All">All roles</option>
-            <option value="Admin">Admin</option>
-            <option value="User">User</option>
-          </select>
-          <p className="ml-auto text-sm text-muted-foreground">
+            <UserPlus aria-hidden="true" />
+            Add user
+          </Button>
+        }
+      />
+
+      {pageError && <ErrorState message={pageError} onRetry={loadUsers} busy={loading} />}
+
+      <Card className="gap-0 py-0">
+        <div className="flex flex-wrap items-center gap-3 border-b p-4">
+          <div className="relative min-w-0 flex-1 basis-64">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input
+              type="search"
+              aria-label="Search users"
+              placeholder="Search by name or email"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger aria-label="Filter by role" className="w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All roles</SelectItem>
+              <SelectItem value="Admin">Admin</SelectItem>
+              <SelectItem value="User">User</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
             {filteredUsers.length} of {users.length}
             {(search || roleFilter !== "All") && (
-              <button type="button" onClick={clearFilters} className="ml-3 font-medium text-foreground underline-offset-4 hover:underline">
+              <Button variant="link" size="sm" className="h-auto px-0" onClick={clearFilters}>
                 Clear filters
-              </button>
+              </Button>
             )}
           </p>
         </div>
 
         {loading ? (
-          <p className="px-4 py-12 text-center text-sm text-muted-foreground">Loading users...</p>
+          <LoadingRows rows={5} label="Loading users" className="p-4" />
+        ) : filteredUsers.length === 0 ? (
+          <EmptyState icon={UsersIcon} title="No users found" className="m-4">
+            {users.length === 0 ? "People appear here once they sign up." : "Try changing your search or filters."}
+          </EmptyState>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-180 text-left text-sm">
-              <thead>
-                <tr className="text-muted-foreground">
-                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">User</th>
-                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Role</th>
-                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Plan</th>
-                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Credits</th>
-                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Status</th>
-                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Agents</th>
-                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Last active</th>
-                  <th className="w-12 px-4 py-0"><span className="sr-only">Actions</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="transition-colors hover:bg-muted/60">
-                    <td className="px-4 py-2">
-                      <div className="flex items-center gap-3">
-                        <span
-                          aria-hidden="true"
-                          style={{
-                            background: `hsl(${((Number(user.id) || 0) * 67) % 360} 60% 90%)`,
-                            color: `hsl(${((Number(user.id) || 0) * 67) % 360} 45% 28%)`,
-                          }}
-                          className="flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
-                        >
-                          {user.name.charAt(0).toUpperCase()}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="truncate font-medium">{user.name}</p>
-                          <p className="truncate text-muted-foreground">{user.email}</p>
-                        </div>
+          <Table className="min-w-180">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-4">User</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Plan</TableHead>
+                <TableHead>Credits</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Agents</TableHead>
+                <TableHead>Last active</TableHead>
+                <TableHead className="w-12 pr-4">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="max-w-64 pl-4">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar className="size-8">
+                        <AvatarFallback className="text-xs font-medium">{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{user.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                       </div>
-                    </td>
-                    <td className={`px-4 py-2 ${user.role === "Admin" ? "font-medium" : "text-muted-foreground"}`}>{user.role}</td>
-                    <td className="px-4 py-2">
-                      {user.premium ? (
-                        <div>
-                          <span className="inline-flex h-8 items-center rounded-chip bg-green-100 px-3 text-sm font-medium text-green-700 dark:bg-green-950/50 dark:text-green-300">
-                            Premium
-                          </span>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {user.premiumUntil ? `Until ${formatWib(user.premiumUntil)}` : "No end"}
-                          </p>
-                        </div>
-                      ) : user.premiumExpired ? (
-                        <div>
-                          <span className="inline-flex h-8 items-center rounded-chip bg-amber-100 px-3 text-sm font-medium text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
-                            Premium ended
-                          </span>
-                          <p className="mt-1 text-xs text-muted-foreground">{formatWib(user.premiumUntil)}</p>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">Free</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2 tabular-nums">
-                      {user.unlimited ? (
-                        <span className="text-muted-foreground">Unlimited</span>
-                      ) : (
-                        <span className={user.credits < 2 ? "font-medium text-amber-700 dark:text-amber-300" : ""}>
-                          {user.credits}
-                        </span>
-                      )}
-                      {!user.unlimited && !user.promoEligible && (
-                        <p className="mt-1 whitespace-nowrap text-xs text-amber-700 dark:text-amber-300" title={user.promoNote}>
-                          No promo
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={user.role === "Admin" ? "default" : "outline"}>{user.role}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {user.premium ? (
+                      <div>
+                        <Badge variant="success">Premium</Badge>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {user.premiumUntil ? `Until ${formatWib(user.premiumUntil)}` : "No end"}
                         </p>
-                      )}
-                    </td>
-                    <td className="px-4 py-2">
-                      <span className="inline-flex items-center gap-2 whitespace-nowrap">
-                        <span
-                          aria-hidden="true"
-                          className={`size-2 rounded-full ${user.status === "Active" ? "bg-current text-green-700 dark:text-green-300" : user.deletesAt ? "bg-current text-amber-700 dark:text-amber-300" : user.status === "Suspended" ? "bg-destructive" : "bg-muted-foreground"}`}
-                        />
-                        {user.status}
+                      </div>
+                    ) : user.premiumExpired ? (
+                      <div>
+                        <Badge variant="warning">Premium ended</Badge>
+                        <p className="mt-1 text-xs text-muted-foreground">{formatWib(user.premiumUntil)}</p>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">Free</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {user.unlimited ? (
+                      <span className="text-muted-foreground">Unlimited</span>
+                    ) : (
+                      <span className={user.credits < 2 ? "font-medium text-amber-700 dark:text-amber-400" : ""}>
+                        {user.credits}
                       </span>
-                      {user.deletesAt && (
-                        <p className="mt-1 whitespace-nowrap text-xs text-muted-foreground">
-                          Removed on {formatWib(user.deletesAt)}
-                        </p>
-                      )}
-                      {!user.deletesAt && user.restoredAt && (
-                        <p
-                          className="mt-1 whitespace-nowrap text-xs text-muted-foreground"
-                          title="If this person deletes the account again, it is removed at once."
-                        >
-                          Restored once
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-4 py-2 text-muted-foreground">
-                      {user.agents.length === 0 ? (
-                        "–"
-                      ) : (
-                        <span title={user.agents.map((agent) => `${agent.name} · ${agent.taskCount} tasks`).join("\n")}>
-                          {user.agents.slice(0, 3).map((agent) => agent.name).join(", ")}
-                          {user.agents.length > 3 && ` +${user.agents.length - 3}`}
-                        </span>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-muted-foreground">{user.lastActive}</td>
-                    <td className="px-4 py-2 text-right">
-                      <button
-                        type="button"
-                        onClick={(event) => openRowMenu(event, user)}
-                        disabled={deletingId === user.id || restoringId === user.id}
-                        aria-label={`Actions for ${user.name}`}
-                        aria-expanded={openMenu === user.id}
-                        className="size-10 state-layer rounded-full transition-colors duration-200 ease-m3 text-lg leading-none text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-                      >
-                        ⋮
-                      </button>
-                      {openMenu === user.id &&
-                        createPortal(
-                          <div
-                            role="menu"
-                            style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
-                            className="fixed z-50 w-44 rounded-field bg-popover py-2 text-sm text-popover-foreground shadow-m3-2"
-                          >
-                            <button
-                              type="button"
-                              role="menuitem"
-                              className="block w-full px-3 min-h-12 text-left hover:bg-accent"
-                              onClick={() => {
-                                setSelectedUser(user)
-                                setOpenMenu(null)
-                              }}
-                            >
-                              View details
-                            </button>
-                            {user.deletesAt ? (
-                              <button
-                                type="button"
-                                role="menuitem"
-                                className="block w-full px-3 min-h-12 text-left hover:bg-accent"
-                                onClick={() => handleRestore(user)}
-                              >
-                                Restore account
-                              </button>
-                            ) : (
-                              <>
-                                <button
-                                  type="button"
-                                  role="menuitem"
-                                  className="block w-full px-3 min-h-12 text-left hover:bg-accent"
-                                  onClick={() => openEditUser(user)}
-                                >
-                                  Edit user
-                                </button>
-                                <button
-                                  type="button"
-                                  role="menuitem"
-                                  className="block w-full px-3 min-h-12 text-left hover:bg-accent disabled:text-foreground/38"
-                                  onClick={() => openEditUser(user)}
-                                >
-                                  {user.premium ? "Change premium" : "Make premium"}
-                                </button>
-                                <button
-                                  type="button"
-                                  role="menuitem"
-                                  className="block w-full px-3 min-h-12 text-left hover:bg-accent"
-                                  onClick={() => openCredits(user)}
-                                >
-                                  Add credits
-                                </button>
-                                <button
-                                  type="button"
-                                  role="menuitem"
-                                  className="block w-full px-3 min-h-12 text-left hover:bg-accent"
-                                  onClick={() => togglePromo(user)}
-                                >
-                                  {user.promoEligible ? "Take promo" : "Give promo"}
-                                </button>
-                              </>
-                            )}
-                            <button
-                              type="button"
-                              role="menuitem"
-                              className="block w-full px-3 min-h-12 text-left text-destructive hover:bg-destructive/10 disabled:text-foreground/38"
-                              onClick={() => handleDelete(user.id)}
-                              disabled={deletingId === user.id}
-                            >
-                              {deletingId === user.id ? "Deleting..." : user.deletesAt ? "Delete now" : "Delete user"}
-                            </button>
-                          </div>,
-                          document.body
-                        )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filteredUsers.length === 0 && (
-              <div className="px-4 py-12 text-center">
-                <h2 className="text-base font-semibold">No users found</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Try changing your search or filters.</p>
-              </div>
-            )}
-          </div>
+                    )}
+                    {!user.unlimited && !user.promoEligible && (
+                      <p className="mt-1 text-xs text-amber-700 dark:text-amber-400" title={user.promoNote}>
+                        No promo
+                      </p>
+                    )}
+                  </TableCell>
+                  <TableCell className="min-w-28 whitespace-normal">
+                    <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                      <StatusDot tone={statusDot(user)} />
+                      {user.status}
+                    </span>
+                    {user.deletesAt && (
+                      <p className="mt-1 text-xs text-muted-foreground">Removed on {formatWib(user.deletesAt)}</p>
+                    )}
+                    {!user.deletesAt && user.restoredAt && (
+                      <p className="mt-1 text-xs text-muted-foreground" title="If this person deletes the account again, it is removed at once.">
+                        Restored once
+                      </p>
+                    )}
+                  </TableCell>
+                  <TableCell className="max-w-36 text-muted-foreground">
+                    {user.agents.length === 0 ? (
+                      "–"
+                    ) : (
+                      <span className="block truncate" title={user.agents.map((agent) => `${agent.name} · ${agent.taskCount} tasks`).join("\n")}>
+                        {user.agents.slice(0, 3).map((agent) => agent.name).join(", ")}
+                        {user.agents.length > 3 && ` +${user.agents.length - 3}`}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{user.lastActive}</TableCell>
+                  <TableCell className="pr-4 text-right">
+                    <RowMenu
+                      icon
+                      label={`Actions for ${user.name}`}
+                      disabled={deletingId === user.id || restoringId === user.id}
+                      items={[
+                        { label: "View details", onSelect: () => setSelectedUser(user) },
+                        ...(user.deletesAt
+                          ? [{ label: "Restore account", onSelect: () => handleRestore(user) }]
+                          : [
+                              { label: "Edit user", onSelect: () => openEditUser(user) },
+                              { label: user.premium ? "Change premium" : "Make premium", onSelect: () => openEditUser(user) },
+                              { label: "Add credits", onSelect: () => openCredits(user) },
+                              { label: user.promoEligible ? "Take promo" : "Give promo", onSelect: () => togglePromo(user) },
+                            ]),
+                        {
+                          label: deletingId === user.id ? "Deleting..." : user.deletesAt ? "Delete now" : "Delete user",
+                          destructive: true,
+                          separatorBefore: true,
+                          disabled: deletingId === user.id,
+                          onSelect: () => handleDelete(user.id),
+                        },
+                      ]}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
-      </section>
+      </Card>
 
       {creditUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center m3-scrim p-4" onClick={() => setCreditUser(null)}>
-          <form
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="credits-title"
-            onSubmit={handleCredits}
-            className="max-h-full w-full max-w-md overflow-y-auto rounded-dialog bg-surface-high p-6 text-card-foreground shadow-m3-3"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 id="credits-title" className="text-2xl font-normal">Add credits</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {creditUser.name} has {creditUser.credits} credits. A new website uses 2, a change uses 1. Use a minus
-              number to take credits away; the balance never goes below 0.
-            </p>
-            <label className="mt-6 block text-sm font-medium" htmlFor="credit-amount">Credits to add</label>
-            <input
-              id="credit-amount"
-              type="number"
-              step="1"
-              inputMode="numeric"
-              autoFocus
-              value={creditForm.amount}
-              onChange={(event) => setCreditForm({ ...creditForm, amount: event.target.value })}
-              className="mt-2 h-12 w-full rounded-md border border-input bg-transparent px-3 text-sm placeholder:text-muted-foreground/60"
-              placeholder="20"
-            />
-            <label className="mt-4 block text-sm font-medium" htmlFor="credit-note">Note (optional)</label>
-            <input
-              id="credit-note"
-              type="text"
-              maxLength={200}
-              value={creditForm.note}
-              onChange={(event) => setCreditForm({ ...creditForm, note: event.target.value })}
-              className="mt-2 h-12 w-full rounded-md border border-input bg-transparent px-3 text-sm placeholder:text-muted-foreground/60"
-              placeholder="Transfer 25 Nov"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">The person sees this note in their credit history.</p>
-            {creditError && (
-              <p role="alert" className="mt-4 text-sm text-destructive">{creditError}</p>
-            )}
-            <div className="mt-6 flex justify-end gap-2">
-              <button type="button" onClick={() => setCreditUser(null)} className="h-10 rounded-full px-4 text-sm font-medium state-layer">
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={savingCredits}
-                className="h-10 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground disabled:opacity-60"
-              >
-                {savingCredits ? "Saving..." : "Save"}
-              </button>
+        <FormDialog
+          title="Add credits"
+          subtitle={`${creditUser.name} has ${creditUser.credits} credits. A new website uses 2, a change uses 1. Use a minus number to take credits away; the balance never goes below 0.`}
+          onClose={() => setCreditUser(null)}
+          busy={savingCredits}
+        >
+          <form onSubmit={handleCredits} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="credit-amount">Credits to add</Label>
+              <Input
+                id="credit-amount"
+                type="number"
+                step="1"
+                inputMode="numeric"
+                autoFocus
+                value={creditForm.amount}
+                onChange={(event) => setCreditForm({ ...creditForm, amount: event.target.value })}
+                placeholder="20"
+                aria-invalid={creditError ? true : undefined}
+              />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="credit-note">Note (optional)</Label>
+              <Input
+                id="credit-note"
+                type="text"
+                maxLength={200}
+                value={creditForm.note}
+                onChange={(event) => setCreditForm({ ...creditForm, note: event.target.value })}
+                placeholder="Transfer 25 Nov"
+                aria-describedby="credit-note-hint"
+              />
+              <p id="credit-note-hint" className="text-xs text-muted-foreground">The person sees this note in their credit history.</p>
+            </div>
+            {creditError && <p role="alert" className="text-sm text-destructive">{creditError}</p>}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreditUser(null)} disabled={savingCredits}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={savingCredits}>
+                {savingCredits && <Loader2 className="animate-spin" aria-hidden="true" />}
+                {savingCredits ? "Saving..." : "Save"}
+              </Button>
+            </DialogFooter>
           </form>
-        </div>
+        </FormDialog>
       )}
 
       {selectedUser && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center m3-scrim p-4"
-          onClick={() => setSelectedUser(null)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="user-details-title"
-            className="max-h-full w-full max-w-md overflow-y-auto rounded-dialog bg-surface-high p-6 text-card-foreground shadow-m3-3"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <h2 id="user-details-title" className="truncate text-2xl font-normal">{selectedUser.name}</h2>
-                <p className="truncate text-sm text-muted-foreground">{selectedUser.email}</p>
-              </div>
-              <button type="button" aria-label="Close" onClick={() => setSelectedUser(null)} className="size-10 shrink-0 state-layer rounded-full transition-colors duration-200 ease-m3 text-xl leading-none text-muted-foreground">
-                ×
-              </button>
-            </div>
+        <FormDialog title={selectedUser.name} subtitle={selectedUser.email} onClose={() => setSelectedUser(null)}>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
+            <dt className="text-muted-foreground">User ID</dt>
+            <dd className="text-right tabular-nums">#{selectedUser.id}</dd>
+            <dt className="text-muted-foreground">Role</dt>
+            <dd className="text-right">{selectedUser.role}</dd>
+            <dt className="text-muted-foreground">Status</dt>
+            <dd className="text-right">{selectedUser.status}</dd>
+            <dt className="text-muted-foreground">Last active</dt>
+            <dd className="text-right">{selectedUser.lastActive}</dd>
+            <dt className="text-muted-foreground">New-account promo</dt>
+            <dd className="text-right">{selectedUser.promoEligible ? "Yes" : `No: ${selectedUser.promoNote || "taken by an admin"}`}</dd>
+          </dl>
 
-            <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
-              <dt className="text-muted-foreground">User ID</dt>
-              <dd className="text-right tabular-nums">#{selectedUser.id}</dd>
-              <dt className="text-muted-foreground">Role</dt>
-              <dd className="text-right">{selectedUser.role}</dd>
-              <dt className="text-muted-foreground">Status</dt>
-              <dd className="text-right">{selectedUser.status}</dd>
-              <dt className="text-muted-foreground">Last active</dt>
-              <dd className="text-right">{selectedUser.lastActive}</dd>
-              <dt className="text-muted-foreground">New-account promo</dt>
-              <dd className="text-right">{selectedUser.promoEligible ? "Yes" : `No: ${selectedUser.promoNote || "taken by an admin"}`}</dd>
-            </dl>
+          <Separator />
+          <h3 className="text-sm font-semibold">Agents ({selectedUser.agents.length})</h3>
+          {selectedUser.agents.length === 0 ? (
+            <p className="text-sm text-muted-foreground">This user has not used any agent yet.</p>
+          ) : (
+            <ul className="divide-y">
+              {selectedUser.agents.map((agent) => (
+                <li key={agent.id} className="flex items-center justify-between gap-4 py-2 text-sm">
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{agent.name}</span>
+                    <span className="block truncate text-muted-foreground">{agent.slug}</span>
+                  </span>
+                  <span className="shrink-0 tabular-nums text-muted-foreground">{agent.taskCount} tasks</span>
+                </li>
+              ))}
+            </ul>
+          )}
 
-            <h3 className="mt-6 text-sm font-semibold">Agents ({selectedUser.agents.length})</h3>
-            {selectedUser.agents.length === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">This user has not used any agent yet.</p>
-            ) : (
-              <ul className="mt-2 divide-y divide-border">
-                {selectedUser.agents.map((agent) => (
-                  <li key={agent.id} className="flex items-center justify-between gap-4 py-2.5 text-sm">
-                    <span className="min-w-0">
-                      <span className="block truncate font-medium">{agent.name}</span>
-                      <span className="block truncate text-muted-foreground">{agent.slug}</span>
-                    </span>
-                    <span className="shrink-0 tabular-nums text-muted-foreground">{agent.taskCount} tasks</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <div className="mt-6 flex justify-end">
-              <button type="button" className={secondaryButton} onClick={() => setSelectedUser(null)}>
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedUser(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </FormDialog>
       )}
 
       {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center m3-scrim p-4" onClick={closeEditUser}>
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="edit-user-title"
-            className="max-h-full w-full max-w-md overflow-y-auto rounded-dialog bg-surface-high p-6 text-card-foreground shadow-m3-3"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 id="edit-user-title" className="text-2xl font-normal">Edit user</h2>
-                <p className="text-sm text-muted-foreground">User #{editingUser.id}</p>
-              </div>
-              <button type="button" aria-label="Close" onClick={closeEditUser} disabled={submitting} className="size-10 state-layer rounded-full transition-colors duration-200 ease-m3 text-xl leading-none text-muted-foreground">
-                ×
-              </button>
+        <FormDialog title="Edit user" subtitle={`User #${editingUser.id}`} onClose={closeEditUser} busy={submitting}>
+          <form onSubmit={handleEditUser} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Full name</Label>
+              <Input id="edit-name" type="text" name="name" value={editForm.name} onChange={handleEditChange} disabled={submitting} />
             </div>
-
-            <form onSubmit={handleEditUser} className="mt-6 space-y-4">
-              <div>
-                <label htmlFor="edit-name" className={fieldLabel}>Full name</label>
-                <input id="edit-name" type="text" name="name" value={editForm.name} onChange={handleEditChange} disabled={submitting} className={inputClass} />
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input id="edit-email" type="email" name="email" value={editForm.email} onChange={handleEditChange} disabled={submitting} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-role">Role</Label>
+              <NativeSelect id="edit-role" name="role" value={editForm.role} onChange={handleEditChange} disabled={submitting}>
+                <NativeSelectOption value="User">User</NativeSelectOption>
+                <NativeSelectOption value="Admin">Admin</NativeSelectOption>
+              </NativeSelect>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-plan">Plan</Label>
+              <NativeSelect id="edit-plan" name="plan" value={editForm.plan} onChange={handleEditChange} disabled={submitting} aria-describedby="edit-plan-hint">
+                <NativeSelectOption value="Free">Free: 2 websites, 200,000 tokens a month</NativeSelectOption>
+                <NativeSelectOption value="Premium">Premium: 1,000,000 tokens a month, every active model</NativeSelectOption>
+              </NativeSelect>
+              <p id="edit-plan-hint" className="text-xs text-muted-foreground">
+                {editingUser.premium
+                  ? editingUser.premiumUntil
+                    ? `Premium now, until ${formatWib(editingUser.premiumUntil)}.`
+                    : "Premium now, with no end."
+                  : editingUser.premiumExpired
+                    ? `Premium ended on ${formatWib(editingUser.premiumUntil)}.`
+                    : "Free now."}
+              </p>
+            </div>
+            {editForm.plan === "Premium" && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-period">Premium period</Label>
+                <NativeSelect id="edit-period" name="period" value={editForm.period} onChange={handleEditChange} disabled={submitting}>
+                  {PREMIUM_PERIODS.filter((option) => option.value !== "keep" || editingUser.premium).map((option) => (
+                    <NativeSelectOption key={option.value} value={option.value}>
+                      {option.label}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+                {editForm.period === "date" && (
+                  <div className="space-y-2 pt-1">
+                    <Label htmlFor="edit-premium-date">Ends on (end of the day, WIB)</Label>
+                    <Input id="edit-premium-date" type="date" name="customDate" value={editForm.customDate} onChange={handleEditChange} disabled={submitting} />
+                  </div>
+                )}
+                {(() => {
+                  const end = premiumEnd(editForm, editingUser.premiumUntil)
+                  if (end === undefined) return null
+                  return (
+                    <p className="text-xs text-muted-foreground">
+                      {end ? `Premium until ${formatWib(end)}.` : "Premium with no end."}
+                    </p>
+                  )
+                })()}
               </div>
-              <div>
-                <label htmlFor="edit-email" className={fieldLabel}>Email</label>
-                <input id="edit-email" type="email" name="email" value={editForm.email} onChange={handleEditChange} disabled={submitting} className={inputClass} />
-              </div>
-              <div>
-                <label htmlFor="edit-role" className={fieldLabel}>Role</label>
-                <select id="edit-role" name="role" value={editForm.role} onChange={handleEditChange} disabled={submitting} className={inputClass}>
-                  <option value="User">User</option>
-                  <option value="Admin">Admin</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="edit-plan" className={fieldLabel}>Plan</label>
-                <select id="edit-plan" name="plan" value={editForm.plan} onChange={handleEditChange} disabled={submitting} className={inputClass} aria-describedby="edit-plan-hint">
-                  <option value="Free">Free: 2 websites, 200,000 tokens a month</option>
-                  <option value="Premium">Premium: 1,000,000 tokens a month, every active model</option>
-                </select>
-                <p id="edit-plan-hint" className="mt-1.5 text-xs text-muted-foreground">
-                  {editingUser.premium
-                    ? editingUser.premiumUntil
-                      ? `Premium now, until ${formatWib(editingUser.premiumUntil)}.`
-                      : "Premium now, with no end."
-                    : editingUser.premiumExpired
-                      ? `Premium ended on ${formatWib(editingUser.premiumUntil)}.`
-                      : "Free now."}
-                </p>
-              </div>
-              {editForm.plan === "Premium" && (
-                <div>
-                  <label htmlFor="edit-period" className={fieldLabel}>Premium period</label>
-                  <select id="edit-period" name="period" value={editForm.period} onChange={handleEditChange} disabled={submitting} className={inputClass}>
-                    {PREMIUM_PERIODS.filter((option) => option.value !== "keep" || editingUser.premium).map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                  {editForm.period === "date" && (
-                    <div className="mt-3">
-                      <label htmlFor="edit-premium-date" className={fieldLabel}>Ends on (end of the day, WIB)</label>
-                      <input id="edit-premium-date" type="date" name="customDate" value={editForm.customDate} onChange={handleEditChange} disabled={submitting} className={inputClass} />
-                    </div>
-                  )}
-                  {(() => {
-                    const end = premiumEnd(editForm, editingUser.premiumUntil)
-                    if (end === undefined) return null
-                    return (
-                      <p className="mt-1.5 text-xs text-muted-foreground">
-                        {end ? `Premium until ${formatWib(end)}.` : "Premium with no end."}
-                      </p>
-                    )
-                  })()}
-                </div>
-              )}
-              {formError && <p role="alert" className="state-layer rounded-full transition-colors duration-200 ease-m3 bg-destructive/10 px-3 h-10 text-sm font-medium text-destructive">{formError}</p>}
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" className={secondaryButton} onClick={closeEditUser} disabled={submitting}>Cancel</button>
-                <button type="submit" className={primaryButton} disabled={submitting}>{submitting ? "Saving..." : "Save changes"}</button>
-              </div>
-            </form>
-          </div>
-        </div>
+            )}
+            {formErrorBox}
+            <DialogFooter>
+              <Button variant="outline" onClick={closeEditUser} disabled={submitting}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting && <Loader2 className="animate-spin" aria-hidden="true" />}
+                {submitting ? "Saving..." : "Save changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </FormDialog>
       )}
 
       {showAddUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center m3-scrim p-4" onClick={closeAddUser}>
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="add-user-title"
-            className="max-h-full w-full max-w-md overflow-y-auto rounded-dialog bg-surface-high p-6 text-card-foreground shadow-m3-3"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 id="add-user-title" className="text-2xl font-normal">Add user</h2>
-                <p className="text-sm text-muted-foreground">Create a new user account.</p>
-              </div>
-              <button type="button" aria-label="Close" onClick={closeAddUser} disabled={submitting} className="size-10 state-layer rounded-full transition-colors duration-200 ease-m3 text-xl leading-none text-muted-foreground">
-                ×
-              </button>
+        <FormDialog title="Add user" subtitle="Create a new user account." onClose={closeAddUser} busy={submitting}>
+          <form onSubmit={handleAddUser} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="add-name">Full name</Label>
+              <Input id="add-name" type="text" name="name" value={newUser.name} onChange={handleNewUserChange} disabled={submitting} placeholder="Enter full name" />
             </div>
-
-            <form onSubmit={handleAddUser} className="mt-6 space-y-4">
-              <div>
-                <label htmlFor="add-name" className={fieldLabel}>Full name</label>
-                <input id="add-name" type="text" name="name" value={newUser.name} onChange={handleNewUserChange} disabled={submitting} placeholder="Enter full name" className={inputClass} />
-              </div>
-              <div>
-                <label htmlFor="add-email" className={fieldLabel}>Email</label>
-                <input id="add-email" type="email" name="email" value={newUser.email} onChange={handleNewUserChange} disabled={submitting} placeholder="Enter email address" className={inputClass} />
-              </div>
-              <div>
-                <label htmlFor="add-role" className={fieldLabel}>Role</label>
-                <select id="add-role" name="role" value={newUser.role} onChange={handleNewUserChange} disabled={submitting} className={inputClass}>
-                  <option value="User">User</option>
-                  <option value="Admin">Admin</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="add-password" className={fieldLabel}>Password</label>
-                <PasswordInput id="add-password" name="password" autoComplete="new-password" value={newUser.password} onChange={handleNewUserChange} disabled={submitting} placeholder="Enter password" aria-describedby="add-password-hint" className={`${inputClass} shadow-none!`} />
-                <p id="add-password-hint" className="mt-1.5 text-sm text-muted-foreground">At least 8 characters.</p>
-              </div>
-              <div>
-                <label htmlFor="add-confirm" className={fieldLabel}>Confirm password</label>
-                <PasswordInput id="add-confirm" name="confirmPassword" autoComplete="new-password" value={newUser.confirmPassword} onChange={handleNewUserChange} disabled={submitting} placeholder="Repeat the password" className={`${inputClass} shadow-none!`} />
-              </div>
-              {formError && <p role="alert" className="state-layer rounded-full transition-colors duration-200 ease-m3 bg-destructive/10 px-3 h-10 text-sm font-medium text-destructive">{formError}</p>}
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" className={secondaryButton} onClick={closeAddUser} disabled={submitting}>Cancel</button>
-                <button type="submit" className={primaryButton} disabled={submitting}>{submitting ? "Creating..." : "Create user"}</button>
-              </div>
-            </form>
-          </div>
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="add-email">Email</Label>
+              <Input id="add-email" type="email" name="email" value={newUser.email} onChange={handleNewUserChange} disabled={submitting} placeholder="Enter email address" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="add-role">Role</Label>
+              <NativeSelect id="add-role" name="role" value={newUser.role} onChange={handleNewUserChange} disabled={submitting}>
+                <NativeSelectOption value="User">User</NativeSelectOption>
+                <NativeSelectOption value="Admin">Admin</NativeSelectOption>
+              </NativeSelect>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="add-password">Password</Label>
+              <PasswordInput id="add-password" name="password" autoComplete="new-password" value={newUser.password} onChange={handleNewUserChange} disabled={submitting} placeholder="Enter password" aria-describedby="add-password-hint" />
+              <p id="add-password-hint" className="text-xs text-muted-foreground">At least 8 characters.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="add-confirm">Confirm password</Label>
+              <PasswordInput id="add-confirm" name="confirmPassword" autoComplete="new-password" value={newUser.confirmPassword} onChange={handleNewUserChange} disabled={submitting} placeholder="Repeat the password" />
+            </div>
+            {formErrorBox}
+            <DialogFooter>
+              <Button variant="outline" onClick={closeAddUser} disabled={submitting}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting && <Loader2 className="animate-spin" aria-hidden="true" />}
+                {submitting ? "Creating..." : "Create user"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </FormDialog>
       )}
-    </div>
+    </Page>
   )
 }
 

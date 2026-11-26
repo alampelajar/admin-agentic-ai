@@ -1,5 +1,7 @@
-import { cn } from "../../lib/utils.js"
-export function Separator({ className, orientation = "horizontal", decorative = true, ...props }) {
-  const horizontal = orientation === "horizontal"
-  return <div role={decorative ? "none" : "separator"} aria-orientation={decorative ? undefined : orientation} className={cn("shrink-0 bg-border", horizontal ? "h-px w-full" : "h-full w-px", className)} {...props} />
+import * as React from 'react';
+import * as SeparatorPrimitive from '@radix-ui/react-separator';
+import { cn } from '@/lib/utils';
+function Separator({ className, orientation = 'horizontal', decorative = true, ...props }) {
+    return (<SeparatorPrimitive.Root data-slot='separator' decorative={decorative} orientation={orientation} className={cn('shrink-0 bg-border data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:w-px', className)} {...props}/>);
 }
+export { Separator };

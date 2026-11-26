@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react"
 
+import { CheckCircle2, RotateCw, TriangleAlert } from "lucide-react"
+
 import { apiFetch } from "../lib/api"
+import { Button } from "../components/ui/button.jsx"
+import { Card, CardDescription, CardHeader, CardTitle } from "../components/ui/card.jsx"
+import { Label } from "../components/ui/label.jsx"
+import { Switch } from "../components/ui/switch.jsx"
+import { ErrorState, Page, PageHeader, StatusDot } from "../components/page.jsx"
 
 const DEFAULT_SETTINGS = {
   autoRefresh: true,
@@ -328,440 +335,139 @@ function Settings() {
   // ============================================================
 
   return (
-    <div className="min-h-screen bg-muted p-6 text-foreground transition-colors duration-200">
-
-      {/* ====================================================== */}
-      {/* HEADER */}
-      {/* ====================================================== */}
-
-      <div className="mb-6">
-
-        <h1 className="text-2xl font-normal text-foreground">
-          Settings
-        </h1>
-
-        <p className="mt-1 text-sm text-muted-foreground">
-          Configure your THIS MY WEBSITE dashboard
-        </p>
-
-      </div>
-
-      {/* ====================================================== */}
-      {/* MAIN GRID */}
-      {/* ====================================================== */}
+    <Page>
+      <PageHeader title="Settings" description="Configure your THIS MY WEBSITE dashboard" />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div className="space-y-4 xl:col-span-2">
+          <Card className="gap-0 py-0">
+            <CardHeader className="border-b py-5">
+              <CardTitle className="text-base">General Settings</CardTitle>
+              <CardDescription>Manage dashboard preferences</CardDescription>
+            </CardHeader>
 
-        {/* ==================================================== */}
-        {/* GENERAL SETTINGS */}
-        {/* ==================================================== */}
-
-        <div className="xl:col-span-2">
-
-          <div className="rounded-card border border-border bg-card transition-colors duration-200">
-
-            {/* HEADER */}
-
-            <div className="border-b border-border p-5">
-
-              <h2 className="text-lg font-semibold text-foreground">
-                General Settings
-              </h2>
-
-              <p className="mt-1 text-sm text-muted-foreground">
-                Manage dashboard preferences
-              </p>
-
-            </div>
-
-            {/* SETTINGS */}
-
-            <div className="divide-y divide-border">
-
-              {/* ================================================== */}
-              {/* AUTO REFRESH */}
-              {/* ================================================== */}
-
+            <div className="divide-y">
               <div className="flex items-center justify-between gap-6 p-5">
-
                 <div>
-
-                  <p className="font-medium text-foreground">
+                  <Label htmlFor="auto-refresh" className="text-sm font-medium">
                     Auto Refresh
-                  </p>
-
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Automatically refresh system information every 30 seconds
-                  </p>
-
+                  </Label>
+                  <p className="mt-1 text-sm text-muted-foreground">Automatically refresh system information every 30 seconds</p>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateSetting("autoRefresh")
-                  }
-                  role="switch"
-                  aria-checked={settings.autoRefresh}
-                  aria-label="Auto refresh"
-                  className="m3-switch"
-                />
-
+                <Switch id="auto-refresh" checked={settings.autoRefresh} onCheckedChange={() => updateSetting("autoRefresh")} />
               </div>
 
-              {/* ================================================== */}
-              {/* MAINTENANCE MODE */}
-              {/* ================================================== */}
-
               <div className="flex items-center justify-between gap-6 p-5">
-
                 <div>
-
-                  <p className="font-medium text-foreground">
+                  <Label htmlFor="maintenance-mode" className="text-sm font-medium">
                     Maintenance Mode
-                  </p>
-
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Disable access to the normal website while maintenance is active
-                  </p>
-
+                  </Label>
+                  <p className="mt-1 text-sm text-muted-foreground">Disable access to the normal website while maintenance is active</p>
                   {settings.maintenanceMode && (
-                    <p className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-300">
+                    <p className="mt-2 flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+                      <TriangleAlert className="size-3" aria-hidden="true" />
                       Website sedang dalam maintenance.
                     </p>
                   )}
-
                   {maintenanceError && (
-                    <p className="mt-2 text-xs font-medium text-destructive">
+                    <p role="alert" className="mt-2 text-xs font-medium text-destructive">
                       {maintenanceError}
                     </p>
                   )}
-
                 </div>
-
-                <button
-                  type="button"
-                  onClick={updateMaintenanceMode}
-                  disabled={
-                    maintenanceLoading ||
-                    maintenanceSaving
-                  }
-                  role="switch"
-                  aria-checked={settings.maintenanceMode}
-                  aria-label="Maintenance mode"
-                  className="m3-switch"
+                <Switch
+                  id="maintenance-mode"
+                  checked={settings.maintenanceMode}
+                  onCheckedChange={updateMaintenanceMode}
+                  disabled={maintenanceLoading || maintenanceSaving}
                 />
-
               </div>
-
             </div>
+          </Card>
 
-          </div>
-
-          {/* ================================================== */}
-          {/* SAVE BUTTON */}
-          {/* ================================================== */}
-
-          <div className="mt-6 flex items-center justify-end gap-3">
-
+          <div className="flex items-center justify-end gap-3">
             {saved && (
-              <span className="text-sm font-medium text-green-700 dark:text-green-300">
+              <span role="status" className="flex items-center gap-1 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 className="size-4" aria-hidden="true" />
                 Settings saved successfully
               </span>
             )}
-
-            <button
-              type="button"
-              onClick={handleSave}
-              className="
-                state-layer rounded-full transition-colors duration-200 ease-m3
-                bg-primary
-                px-6
-                h-10
-                text-sm
-                font-medium
-                text-primary-foreground
-               
-               
-               
-               
-               
-               
-               
-              "
-            >
-              Save Changes
-            </button>
-
+            <Button onClick={handleSave}>Save Changes</Button>
           </div>
-
         </div>
 
-        {/* ==================================================== */}
-        {/* SYSTEM INFORMATION */}
-        {/* ==================================================== */}
+        <div className="space-y-4">
+          <Card className="gap-0 py-0">
+            <CardHeader className="border-b py-5">
+              <CardTitle className="text-base">System Information</CardTitle>
+              <CardDescription>Current system information</CardDescription>
+            </CardHeader>
 
-        <div>
+            <dl className="divide-y">
+              <InfoRow label="Version">{systemInfo.version}</InfoRow>
+              <InfoRow label="Environment">{systemInfo.environment}</InfoRow>
+              <InfoRow label="API Status">
+                <StatusText
+                  tone={systemInfo.apiStatus === "Operational" ? "success" : systemInfo.apiStatus === "Checking" || loadingInfo ? "warning" : "danger"}
+                  text={loadingInfo ? "Checking" : systemInfo.apiStatus}
+                />
+              </InfoRow>
+              <InfoRow label="Database">
+                <StatusText
+                  tone={systemInfo.databaseStatus === "Connected" ? "success" : systemInfo.databaseStatus === "Checking" || loadingInfo ? "warning" : "danger"}
+                  text={loadingInfo ? "Checking" : systemInfo.databaseStatus}
+                />
+              </InfoRow>
+              <InfoRow label="Active Agents">{loadingInfo ? "Loading..." : `${systemInfo.activeAgents} agents`}</InfoRow>
+              <InfoRow label="Maintenance">
+                <StatusText
+                  tone={maintenanceLoading || settings.maintenanceMode ? "warning" : "success"}
+                  text={maintenanceLoading ? "Checking" : settings.maintenanceMode ? "Active" : "Off"}
+                />
+              </InfoRow>
+            </dl>
+          </Card>
 
-          <div className="rounded-card border border-border bg-card transition-colors duration-200">
-
-            {/* HEADER */}
-
-            <div className="border-b border-border p-5">
-
-              <h2 className="text-lg font-semibold text-foreground">
-                System Information
-              </h2>
-
-              <p className="mt-1 text-sm text-muted-foreground">
-                Current system information
-              </p>
-
-            </div>
-
-            <div className="space-y-4 p-5">
-
-              {/* ================================================== */}
-              {/* VERSION */}
-              {/* ================================================== */}
-
-              <div className="rounded-card bg-muted p-4">
-
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Version
-                </p>
-
-                <p className="mt-1 font-semibold text-foreground">
-                  {systemInfo.version}
-                </p>
-
-              </div>
-
-              {/* ================================================== */}
-              {/* ENVIRONMENT */}
-              {/* ================================================== */}
-
-              <div className="rounded-card bg-muted p-4">
-
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Environment
-                </p>
-
-                <p className="mt-1 font-semibold text-foreground">
-                  {systemInfo.environment}
-                </p>
-
-              </div>
-
-              {/* ================================================== */}
-              {/* API STATUS */}
-              {/* ================================================== */}
-
-              <div className="rounded-card bg-muted p-4">
-
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  API Status
-                </p>
-
-                <div className="mt-1 flex items-center gap-2">
-
-                  <span
-                    className={`h-2 w-2 rounded-full ${
-                      systemInfo.apiStatus ===
-                      "Operational"
-                        ? "bg-current text-green-700 dark:text-green-300"
-                        : systemInfo.apiStatus ===
-                            "Checking"
-                          ? "bg-current text-amber-700 dark:text-amber-300"
-                          : "bg-current text-destructive dark:text-red-300"
-                    }`}
-                  />
-
-                  <p
-                    className={`font-semibold ${
-                      systemInfo.apiStatus ===
-                      "Operational"
-                        ? "text-green-700 dark:text-green-300"
-                        : systemInfo.apiStatus ===
-                            "Checking"
-                          ? "text-amber-700 dark:text-amber-300"
-                          : "text-destructive"
-                    }`}
-                  >
-                    {loadingInfo
-                      ? "Checking"
-                      : systemInfo.apiStatus}
-                  </p>
-
-                </div>
-
-              </div>
-
-              {/* ================================================== */}
-              {/* DATABASE */}
-              {/* ================================================== */}
-
-              <div className="rounded-card bg-muted p-4">
-
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Database
-                </p>
-
-                <div className="mt-1 flex items-center gap-2">
-
-                  <span
-                    className={`h-2 w-2 rounded-full ${
-                      systemInfo.databaseStatus ===
-                      "Connected"
-                        ? "bg-current text-green-700 dark:text-green-300"
-                        : systemInfo.databaseStatus ===
-                            "Checking"
-                          ? "bg-current text-amber-700 dark:text-amber-300"
-                          : "bg-current text-destructive dark:text-red-300"
-                    }`}
-                  />
-
-                  <p
-                    className={`font-semibold ${
-                      systemInfo.databaseStatus ===
-                      "Connected"
-                        ? "text-green-700 dark:text-green-300"
-                        : systemInfo.databaseStatus ===
-                            "Checking"
-                          ? "text-amber-700 dark:text-amber-300"
-                          : "text-destructive"
-                    }`}
-                  >
-                    {loadingInfo
-                      ? "Checking"
-                      : systemInfo.databaseStatus}
-                  </p>
-
-                </div>
-
-              </div>
-
-              {/* ================================================== */}
-              {/* ACTIVE AGENTS */}
-              {/* ================================================== */}
-
-              <div className="rounded-card bg-muted p-4">
-
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Active Agents
-                </p>
-
-                <p className="mt-1 font-semibold text-foreground">
-                  {loadingInfo
-                    ? "Loading..."
-                    : `${systemInfo.activeAgents} agents`}
-                </p>
-
-              </div>
-
-              {/* ================================================== */}
-              {/* MAINTENANCE STATUS */}
-              {/* ================================================== */}
-
-              <div className="rounded-card bg-muted p-4">
-
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Maintenance
-                </p>
-
-                <div className="mt-1 flex items-center gap-2">
-
-                  <span
-                    className={`h-2 w-2 rounded-full ${
-                      maintenanceLoading
-                        ? "bg-current text-amber-700 dark:text-amber-300"
-                        : settings.maintenanceMode
-                          ? "bg-current text-amber-700 dark:text-amber-300"
-                          : "bg-current text-green-700 dark:text-green-300"
-                    }`}
-                  />
-
-                  <p
-                    className={`font-semibold ${
-                      maintenanceLoading
-                        ? "text-amber-700 dark:text-amber-300"
-                        : settings.maintenanceMode
-                          ? "text-amber-700 dark:text-amber-300"
-                          : "text-green-700 dark:text-green-300"
-                    }`}
-                  >
-                    {maintenanceLoading
-                      ? "Checking"
-                      : settings.maintenanceMode
-                        ? "Active"
-                        : "Off"}
-                  </p>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* ================================================== */}
-          {/* REFRESH SYSTEM INFORMATION */}
-          {/* ================================================== */}
-
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            className="w-full"
             onClick={() => {
               loadSystemInfo()
               loadMaintenanceStatus()
             }}
-            disabled={
-              loadingInfo ||
-              maintenanceLoading
-            }
-            className="
-              mt-4
-              w-full
-              state-layer rounded-full transition-colors duration-200 ease-m3
-              border
-              border-input
-              bg-transparent
-              px-6
-              h-10
-              text-sm
-              font-medium
-              text-primary
-             
-             
-              disabled:cursor-not-allowed
-              disabled:border-foreground/12 disabled:text-foreground/38
-             
-             
-             
-             
-            "
+            disabled={loadingInfo || maintenanceLoading}
           >
-            {loadingInfo ||
-            maintenanceLoading
-              ? "Refreshing..."
-              : "Refresh System Information"}
-          </button>
+            <RotateCw className={loadingInfo || maintenanceLoading ? "animate-spin" : undefined} aria-hidden="true" />
+            {loadingInfo || maintenanceLoading ? "Refreshing..." : "Refresh System Information"}
+          </Button>
 
-          {/* ================================================== */}
-          {/* ERROR */}
-          {/* ================================================== */}
-
-          {infoError && (
-            <p className="mt-3 text-xs leading-5 text-destructive">
-              {infoError}
-            </p>
-          )}
-
+          {infoError && <ErrorState title="Could not load system information" message={infoError} />}
         </div>
-
       </div>
+    </Page>
+  )
+}
 
+function InfoRow({ label, children }) {
+  return (
+    <div className="flex items-center justify-between gap-4 px-5 py-3 text-sm">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="text-right font-medium">{children}</dd>
     </div>
+  )
+}
+
+function StatusText({ tone, text }) {
+  const color = {
+    success: "text-emerald-600 dark:text-emerald-400",
+    warning: "text-amber-700 dark:text-amber-400",
+    danger: "text-destructive",
+  }[tone]
+  return (
+    <span className={`inline-flex items-center gap-2 ${color}`}>
+      <StatusDot tone={tone} />
+      {text}
+    </span>
   )
 }
 
