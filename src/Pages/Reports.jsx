@@ -264,10 +264,10 @@ function Reports() {
               <Card key={item.label} className="gap-1 px-5 py-5">
                 <p className="text-sm text-muted-foreground">{item.label}</p>
                 <p className="mt-2 text-3xl font-semibold tabular-nums">
-                  {loading ? <Skeleton className="inline-block h-8 w-16" /> : item.value.toLocaleString(LOCALE)}
+                  {loading ? <Skeleton as="span" className="inline-block h-8 w-16" /> : item.value.toLocaleString(LOCALE)}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {loading ? <Skeleton className="inline-block h-3 w-32" /> : item.note}
+                  {loading ? <Skeleton as="span" className="inline-block h-3 w-32" /> : item.note}
                 </p>
               </Card>
             ))}
@@ -344,7 +344,7 @@ function Reports() {
                   <TableBody>
                     {latestTasks.map((task) => (
                       <TableRow key={task.id}>
-                        <TableCell className="min-w-40 font-medium">{task.title}</TableCell>
+                        <TableCell className="max-w-72 font-medium"><span className="block truncate" title={task.title}>{task.title}</span></TableCell>
                         <TableCell className="whitespace-nowrap text-muted-foreground">{task.userName}</TableCell>
                         <TableCell><StatusBadge status={task.status} /></TableCell>
                         <TableCell className="whitespace-nowrap text-muted-foreground tabular-nums">{formatDate(task.createdAt)}</TableCell>

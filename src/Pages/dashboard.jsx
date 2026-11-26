@@ -392,7 +392,7 @@ function Dashboard() {
               <div>
                 <p className="text-sm text-muted-foreground">Success rate</p>
                 <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight">
-                  {loading ? <Skeleton className="inline-block h-9 w-24" /> : <CountUp value={Number(successRate)} decimals={1} suffix="%" />}
+                  {loading ? <Skeleton as="span" className="inline-block h-9 w-24" /> : <CountUp value={Number(successRate)} decimals={1} suffix="%" />}
                 </p>
               </div>
               <span className="grid size-9 place-items-center rounded-md bg-primary text-primary-foreground">
@@ -427,9 +427,9 @@ function Dashboard() {
                   <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
                 </div>
                 <p className="mt-3 text-3xl font-semibold tabular-nums tracking-tight">
-                  {loading ? <Skeleton className="inline-block h-8 w-16" /> : <CountUp value={kpi.value} />}
+                  {loading ? <Skeleton as="span" className="inline-block h-8 w-16" /> : <CountUp value={kpi.value} />}
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">{loading ? <Skeleton className="inline-block h-4 w-32" /> : kpi.note}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{loading ? <Skeleton as="span" className="inline-block h-4 w-32" /> : kpi.note}</p>
               </CardContent>
             </Card>
           )

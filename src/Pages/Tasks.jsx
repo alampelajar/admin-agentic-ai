@@ -355,7 +355,7 @@ function Tasks() {
             {tasks.length === 0 ? "Tasks that agents run appear here." : "Try changing your search or filters."}
           </EmptyState>
         ) : (
-          <Table className="min-w-312">
+          <Table className="min-w-240">
             <TableHeader>
               <TableRow>
                 <TableHead className="pl-4">Task</TableHead>
@@ -370,8 +370,8 @@ function Tasks() {
             <TableBody>
               {filteredTasks.map((task) => (
                 <TableRow key={task.id}>
-                  <TableCell className="pl-4">
-                    <p className="font-medium">{task.title}</p>
+                  <TableCell className="max-w-72 pl-4">
+                    <p className="truncate font-medium" title={task.title}>{task.title}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">TASK #{task.id}</p>
                   </TableCell>
                   <TableCell>
