@@ -5,7 +5,7 @@ import {
   Bot,
   Boxes,
   ChevronsUpDown,
-  ClipboardCheck,
+  ChartColumn,
   FileText,
   Globe,
   LayoutDashboard,
@@ -57,6 +57,7 @@ export const navGroups = [
     title: "Website",
     items: [
       { title: "Websites", url: "/websites", icon: Globe },
+      { title: "Website stats", url: "/statistics", icon: ChartColumn },
       { title: "Users", url: "/users", icon: Users },
       { title: "Top-ups", url: "/topups", icon: Wallet },
       { title: "Ticket", url: "/ticket", icon: Ticket },
@@ -67,7 +68,6 @@ export const navGroups = [
     items: [
       { title: "Agents", url: "/agents", icon: Bot },
       { title: "Models", url: "/models", icon: Boxes },
-      { title: "Tasks", url: "/tasks", icon: ClipboardCheck },
     ],
   },
   {

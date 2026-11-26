@@ -16,7 +16,7 @@ import Users from "./Pages/users.jsx"
 import Feedback from "./Pages/Feedback.jsx"
 import Agents from "./Pages/Agents.jsx"
 import Models from "./Pages/Models.jsx"
-import Tasks from "./Pages/Tasks.jsx"
+import Statistics from "./Pages/Statistics.jsx"
 import Analytics from "./Pages/Analytics.jsx"
 import Reports from "./Pages/Reports.jsx"
 import Logs from "./Pages/Logs.jsx"
@@ -56,7 +56,8 @@ function AdminLayout() {
             <Route path="/feedback" element={<Navigate to="/ticket" replace />} />
             <Route path="/agents" element={<Agents />} />
             <Route path="/models" element={<Models />} />
-            <Route path="/tasks" element={<Tasks />} />
+            <Route path="/statistics" element={<Statistics />} />
+            <Route path="/tasks" element={<Navigate to="/statistics" replace />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/websites" element={<Websites />} />
