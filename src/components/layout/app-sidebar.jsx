@@ -5,7 +5,6 @@ import {
   Bot,
   Boxes,
   ChevronsUpDown,
-  ChartColumn,
   FileText,
   Globe,
   LayoutDashboard,
@@ -57,7 +56,6 @@ export const navGroups = [
     title: "Website",
     items: [
       { title: "Websites", url: "/websites", icon: Globe },
-      { title: "Website stats", url: "/statistics", icon: ChartColumn },
       { title: "Users", url: "/users", icon: Users },
       { title: "Top-ups", url: "/topups", icon: Wallet },
       { title: "Ticket", url: "/ticket", icon: Ticket },

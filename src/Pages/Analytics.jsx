@@ -1,931 +1,377 @@
-import { useEffect, useMemo, useState } from "react"
-import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from "recharts"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { Link } from "react-router-dom"
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { BarChart3, CircleAlert, Globe, Hammer, Layers, RotateCw, Sparkles, Users as UsersIcon } from "lucide-react"
 
-import { BarChart3 } from "lucide-react"
 import { apiFetch } from "../lib/api"
 import { Badge } from "../components/ui/badge.jsx"
-import { Card } from "../components/ui/card.jsx"
-import { EmptyState, ErrorState, LoadingText, Page, PageHeader, StatCard, StatusDot } from "../components/page.jsx"
+import { Button } from "../components/ui/button.jsx"
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card.jsx"
+import { Skeleton } from "../components/ui/skeleton.jsx"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table.jsx"
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs.jsx"
+import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatCard } from "../components/page.jsx"
 
-const CHART_COLORS = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-4)",
-  "var(--chart-5)",
-  "var(--chart-3)",
-  "var(--destructive)",
-  "var(--muted-foreground)",
-  "var(--primary)",
-]
+// Analytics: how many websites people make, publish and keep, built from the same
+// admin data as the Websites and Logs pages (no new backend route).
 
-const normalizeStatus = (status) => {
-  const value = String(status || "").toLowerCase()
+const DAY_MS = 24 * 60 * 60 * 1000
+const LOCALE = "en-GB"
+const TOP_OWNERS = 8
 
-  if (
-    value === "completed" ||
-    value === "complete" ||
-    value === "done" ||
-    value === "success"
-  ) {
-    return "Completed"
+async function readJson(path) {
+  const response = await apiFetch(path)
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok || data?.ok === false) {
+    throw new Error(data?.message || data?.error || "Request failed.")
   }
-
-  if (
-    value === "running" ||
-    value === "in_progress" ||
-    value === "processing"
-  ) {
-    return "Running"
-  }
-
-  if (
-    value === "pending" ||
-    value === "todo" ||
-    value === "queued"
-  ) {
-    return "Pending"
-  }
-
-  if (
-    value === "failed" ||
-    value === "error"
-  ) {
-    return "Failed"
-  }
-
-  return (
-    String(status || "Unknown")
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (char) => char.toUpperCase())
-  )
+  return data
 }
 
-const parseDate = (value) => {
-  if (!value) {
-    return null
-  }
+const startOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
+const dayKey = (date) => startOfDay(date).getTime()
 
-  if (value instanceof Date) {
-    return Number.isNaN(value.getTime())
-      ? null
-      : value
-  }
-
-  const normalized = String(value).replace(
-    " ",
-    "T"
-  )
-
-  const date = new Date(normalized)
-
-  return Number.isNaN(date.getTime())
-    ? null
-    : date
+// Plain words for the stored keys ("tech-precise" becomes "Tech precise").
+const words = (value) => {
+  const text = String(value || "").replace(/[-_]+/g, " ").trim()
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : "Not set"
 }
 
-const normalizeTask = (task) => {
-  return {
-    id: task?.id,
-    title: task?.title || "Untitled Task",
-    status: normalizeStatus(task?.status),
-    priority: task?.priority || "-",
-    createdAt: task?.created_at || null,
-    updatedAt: task?.updated_at || null,
-
-    user: task?.user
-      ? {
-          id: task.user.id,
-          name: task.user.name || "Unknown User",
-          email: task.user.email || "-",
-        }
-      : null,
-
-    agent: task?.agent
-      ? {
-          id: task.agent.id,
-          name: task.agent.name || "Unknown Agent",
-          slug: task.agent.slug || "-",
-        }
-      : null,
-  }
-}
-
-const normalizeAgent = (agent) => {
-  return {
-    id: agent?.id,
-    name: agent?.name || "Unknown Agent",
-    slug: agent?.slug || "-",
-    status: normalizeStatus(agent?.status),
-    isActive: Boolean(agent?.is_active),
-  }
-}
-
-const buildDailyTaskData = (tasks) => {
-  const result = []
-
-  for (let offset = 6; offset >= 0; offset -= 1) {
-    const dayStart = new Date()
-
-    dayStart.setHours(0, 0, 0, 0)
-    dayStart.setDate(
-      dayStart.getDate() - offset
-    )
-
-    const dayEnd = new Date(dayStart)
-
-    dayEnd.setDate(
-      dayEnd.getDate() + 1
-    )
-
-    let completed = 0
-    let failed = 0
-
-    for (const task of tasks) {
-      const date = parseDate(
-        task.updatedAt || task.createdAt
-      )
-
-      if (!date) {
-        continue
-      }
-
-      if (
-        date < dayStart ||
-        date >= dayEnd
-      ) {
-        continue
-      }
-
-      if (task.status === "Completed") {
-        completed += 1
-      }
-
-      if (task.status === "Failed") {
-        failed += 1
-      }
-    }
-
-    result.push({
-      name: dayStart.toLocaleDateString(
-        "en-US",
-        {
-          weekday: "short",
-        }
-      ),
-      completed,
-      failed,
-      success:
-        completed + failed > 0
-          ? Number(
-              (
-                (completed /
-                  (completed + failed)) *
-                100
-              ).toFixed(1)
-            )
-          : null,
-    })
-  }
-
-  return result
-}
-
-const buildAgentUsageData = (tasks) => {
+function countBy(items, pick) {
   const counts = new Map()
-
-  for (const task of tasks) {
-    if (!task.agent) {
-      continue
-    }
-
-    const key = task.agent.id
-
-    if (!counts.has(key)) {
-      counts.set(key, {
-        name: task.agent.name,
-        value: 0,
-      })
-    }
-
-    counts.get(key).value += 1
-  }
-
-  return Array.from(counts.values())
-    .sort((a, b) => b.value - a.value)
-    .map((item, index) => ({
-      ...item,
-      color:
-        CHART_COLORS[
-          index % CHART_COLORS.length
-        ],
-    }))
+  items.forEach((item) => {
+    const key = pick(item)
+    counts.set(key, (counts.get(key) || 0) + 1)
+  })
+  return [...counts.entries()].map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count)
 }
 
-const buildAgentPerformance = (tasks) => {
-  const stats = new Map()
-
-  for (const task of tasks) {
-    if (!task.agent) {
-      continue
-    }
-
-    const key = task.agent.id
-
-    if (!stats.has(key)) {
-      stats.set(key, {
-        id: task.agent.id,
-        name: task.agent.name,
-        completed: 0,
-        failed: 0,
-        total: 0,
-      })
-    }
-
-    const item = stats.get(key)
-
-    item.total += 1
-
-    if (task.status === "Completed") {
-      item.completed += 1
-    }
-
-    if (task.status === "Failed") {
-      item.failed += 1
-    }
-  }
-
-  return Array.from(stats.values()).map(
-    (item) => ({
-      ...item,
-      successRate:
-        item.completed + item.failed > 0
-          ? Number(
-              (
-                (item.completed /
-                  (item.completed +
-                    item.failed)) *
-                100
-              ).toFixed(1)
-            )
-          : null,
-    })
+// One row of a breakdown: the name, the count and a bar of its share.
+function ShareList({ rows, total, limit = 6, label = (key) => words(key) }) {
+  if (rows.length === 0) return <EmptyState icon={BarChart3} title="Nothing to count yet" />
+  const shown = rows.slice(0, limit)
+  const rest = rows.slice(limit).reduce((sum, row) => sum + row.count, 0)
+  return (
+    <ul className="space-y-3">
+      {[...shown, ...(rest ? [{ key: "__rest", count: rest }] : [])].map((row) => {
+        const percent = total ? Math.round((row.count / total) * 100) : 0
+        return (
+          <li key={row.key} className="space-y-1.5">
+            <div className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="truncate">{row.key === "__rest" ? "Other" : label(row.key)}</span>
+              <span className="shrink-0 tabular-nums text-muted-foreground">
+                {row.count} · {percent}%
+              </span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+              <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
+            </div>
+          </li>
+        )
+      })}
+    </ul>
   )
-}
-
-const formatPercent = (value) => {
-  if (
-    value === null ||
-    value === undefined
-  ) {
-    return "-"
-  }
-
-  return `${value}%`
 }
 
 function Analytics() {
-  const [tasks, setTasks] = useState([])
-  const [agents, setAgents] = useState([])
-
+  const [sites, setSites] = useState([])
+  const [logs, setLogs] = useState([])
+  const [months, setMonths] = useState([])
   const [loading, setLoading] = useState(true)
-  const [pageError, setPageError] = useState("")
+  const [error, setError] = useState("")
+  const [range, setRange] = useState("14")
 
-
-  const chartTextColor = "var(--muted-foreground)"
-
-  const chartGridColor = "var(--border)"
-
-  const chartTooltipBg = "var(--popover)"
-
-  const chartTooltipBorder = "var(--border)"
-
-  // ============================================================
-  // LOAD ANALYTICS DATA
-  // ============================================================
-
-  useEffect(() => {
-    const loadAnalytics = async () => {
-      setLoading(true)
-      setPageError("")
-
-      try {
-        const [
-          tasksResponse,
-          agentsResponse,
-        ] = await Promise.all([
-          apiFetch("/api/admin/tasks"),
-          apiFetch("/api/admin/agent-catalog"),
-        ])
-
-        const [
-          tasksData,
-          agentsData,
-        ] = await Promise.all([
-          tasksResponse
-            .json()
-            .catch(() => ({})),
-          agentsResponse
-            .json()
-            .catch(() => ({})),
-        ])
-
-        if (!tasksResponse.ok) {
-          throw new Error(
-            tasksData?.error ||
-              tasksData?.message ||
-              "Gagal mengambil data tasks."
-          )
-        }
-
-        if (!agentsResponse.ok) {
-          throw new Error(
-            agentsData?.error ||
-              agentsData?.message ||
-              "Gagal mengambil data agents."
-          )
-        }
-
-        const tasksList = Array.isArray(
-          tasksData?.tasks
-        )
-          ? tasksData.tasks
-          : []
-
-        const agentsList = Array.isArray(
-          agentsData?.agents
-        )
-          ? agentsData.agents
-          : []
-
-        setTasks(
-          tasksList.map(normalizeTask)
-        )
-
-        setAgents(
-          agentsList.map(normalizeAgent)
-        )
-      } catch (error) {
-        console.error(
-          "Gagal mengambil analytics:",
-          error
-        )
-
-        setPageError(
-          error.message ||
-            "Gagal mengambil data analytics."
-        )
-      } finally {
-        setLoading(false)
-      }
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [siteData, logData, usageData] = await Promise.all([
+        readJson("/api/admin/sites"),
+        readJson("/api/admin/site-logs"),
+        readJson("/api/admin/usage"),
+      ])
+      setSites(Array.isArray(siteData.sites) ? siteData.sites : [])
+      setLogs(Array.isArray(logData.logs) ? logData.logs : [])
+      setMonths(Array.isArray(usageData.months) ? usageData.months : [])
+      setError("")
+    } catch (err) {
+      setError(err.message || "Could not load the website statistics.")
+    } finally {
+      setLoading(false)
     }
-
-    loadAnalytics()
   }, [])
 
-  // ============================================================
-  // SUMMARY
-  // ============================================================
+  useEffect(() => {
+    load()
+  }, [load])
 
-  const completedTasks = tasks.filter(
-    (task) => task.status === "Completed"
-  ).length
+  const totals = useMemo(() => {
+    const live = sites.filter((site) => site.published).length
+    const built = sites.filter((site) => site.has_version).length
+    const versions = sites.reduce((sum, site) => sum + (Number(site.versions) || 0), 0)
+    return {
+      all: sites.length,
+      live,
+      notPublished: sites.filter((site) => site.has_version && !site.published).length,
+      notBuilt: sites.length - built,
+      failed: sites.filter((site) => site.status === "failed").length,
+      showcased: sites.filter((site) => site.showcased).length,
+      owners: new Set(sites.map((site) => site.user?.id ?? "deleted")).size,
+      versionsPerSite: built ? (versions / built).toFixed(1) : "0",
+      liveShare: sites.length ? Math.round((live / sites.length) * 100) : 0,
+    }
+  }, [sites])
 
-  const failedTasks = tasks.filter(
-    (task) => task.status === "Failed"
-  ).length
-
-  const activeAgents = agents.filter(
-    (agent) => agent.isActive
-  ).length
-
-  const outcomeTasks =
-    completedTasks + failedTasks
-
-  const overallSuccessRate =
-    outcomeTasks > 0
-      ? Number(
-          (
-            (completedTasks /
-              outcomeTasks) *
-            100
-          ).toFixed(1)
-        )
-      : null
-
-  // ============================================================
-  // CHART DATA
-  // ============================================================
-
-  const taskData = useMemo(
-    () => buildDailyTaskData(tasks),
-    [tasks]
-  )
-
-  const performanceData = taskData.map(
-    (item) => ({
-      name: item.name,
-      success: item.success,
+  // Websites made (from the website itself) and published (from the log) per day.
+  const daily = useMemo(() => {
+    const days = Number(range)
+    const today = startOfDay(new Date())
+    const rows = new Map()
+    for (let index = days - 1; index >= 0; index -= 1) {
+      const date = new Date(today.getTime() - index * DAY_MS)
+      rows.set(dayKey(date), {
+        name: date.toLocaleDateString(LOCALE, { day: "numeric", month: "short" }),
+        made: 0,
+        published: 0,
+      })
+    }
+    sites.forEach((site) => {
+      const row = rows.get(dayKey(new Date(site.created_at)))
+      if (row) row.made += 1
     })
+    logs
+      .filter((log) => log.action === "site.publish")
+      .forEach((log) => {
+        const row = rows.get(dayKey(new Date(log.time)))
+        if (row) row.published += 1
+      })
+    return [...rows.values()]
+  }, [sites, logs, range])
+
+  const madeInRange = daily.reduce((sum, row) => sum + row.made, 0)
+  const publishedInRange = daily.reduce((sum, row) => sum + row.published, 0)
+
+  const byKind = useMemo(() => countBy(sites, (site) => site.kind || "general"), [sites])
+  const byLook = useMemo(() => countBy(sites, (site) => site.design_direction || ""), [sites])
+  const byStatus = useMemo(
+    () => countBy(sites, (site) => (site.published ? "live" : site.has_version ? "built" : site.status || "draft")),
+    [sites]
   )
+  const statusLabel = (key) =>
+    ({ live: "Live", built: "Made, not published", failed: "Failed", building: "Being made", draft: "Draft", ready: "Ready" })[key] ||
+    words(key)
 
-  const agentData = useMemo(
-    () => buildAgentUsageData(tasks),
-    [tasks]
-  )
+  const owners = useMemo(() => {
+    const map = new Map()
+    sites.forEach((site) => {
+      const id = site.user?.id ?? "deleted"
+      const row = map.get(id) || { id, name: site.user?.name || "Deleted user", email: site.user?.email || "", total: 0, live: 0, versions: 0 }
+      row.total += 1
+      row.live += site.published ? 1 : 0
+      row.versions += Number(site.versions) || 0
+      map.set(id, row)
+    })
+    return [...map.values()].sort((a, b) => b.total - a.total || b.live - a.live).slice(0, TOP_OWNERS)
+  }, [sites])
 
-  const agentPerformance = useMemo(
-    () => buildAgentPerformance(tasks),
-    [tasks]
-  )
-
-  const topSuccessAgent =
-    agentPerformance
-      .filter(
-        (agent) =>
-          agent.successRate !== null
-      )
-      .sort((a, b) => {
-        if (
-          b.successRate !==
-          a.successRate
-        ) {
-          return (
-            b.successRate -
-            a.successRate
-          )
-        }
-
-        return b.total - a.total
-      })[0] || null
-
-  const mostActiveAgent =
-    [...agentPerformance].sort(
-      (a, b) => b.total - a.total
-    )[0] || null
-
-  // ============================================================
-  // RETURN
-  // ============================================================
+  // Recharts animates from JavaScript, so the global CSS rule does not reach it.
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  const empty = !loading && sites.length === 0
 
   return (
     <Page>
-
-      {/* ====================================================== */}
-      {/* HEADER */}
-      {/* ====================================================== */}
-
       <PageHeader
         title="Analytics"
-        description="Monitor system performance and task analytics"
+        description="How many websites people make, publish and keep. Manage them on the Websites page."
         actions={
-          !loading &&
-          !pageError && (
-            <Badge variant="success">
-              <StatusDot tone="success" running />
-              Live data
-            </Badge>
-          )
+          <>
+            <Button variant="outline" onClick={load} disabled={loading}>
+              <RotateCw className={loading ? "animate-spin" : undefined} aria-hidden="true" />
+              {loading ? "Loading..." : "Refresh"}
+            </Button>
+            <Button asChild>
+              <Link to="/websites">
+                <Globe aria-hidden="true" />
+                Websites
+              </Link>
+            </Button>
+          </>
         }
       />
 
-      {/* ====================================================== */}
-      {/* ERROR */}
-      {/* ====================================================== */}
+      {error && <ErrorState title="Could not load the statistics" message={error} onRetry={load} busy={loading} />}
 
-      {pageError && <ErrorState title="Could not load analytics" message={pageError} />}
-
-      {/* ====================================================== */}
-      {/* SUMMARY CARDS */}
-      {/* ====================================================== */}
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-
-        {/* Total Tasks */}
-
-        <StatCard label="Total Tasks" value={tasks.length.toLocaleString()} note="From all users" loading={loading} />
-
-        {/* Success Rate */}
-
-        <StatCard label="Success Rate" value={formatPercent( overallSuccessRate )} note="Completed vs failed" loading={loading} />
-
-        {/* Failed Tasks */}
-
-        <StatCard label="Failed Tasks" value={failedTasks.toLocaleString()} note="Need attention" loading={loading} valueClassName="text-destructive" />
-
-        {/* Active Agents */}
-
-        <StatCard label="Active Agents" value={activeAgents.toLocaleString()} note="Currently active" loading={loading} />
-
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="All websites" icon={<Layers className="size-4" aria-hidden="true" />} value={totals.all} note={`Made by ${totals.owners} ${totals.owners === 1 ? "person" : "people"}`} loading={loading} />
+        <StatCard
+          label="Live"
+          icon={<Globe className="size-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />}
+          value={totals.live}
+          note={`${totals.liveShare}% of all websites`}
+          loading={loading}
+        />
+        <StatCard label="Made, not published" icon={<Hammer className="size-4" aria-hidden="true" />} value={totals.notPublished} note={`${totals.versionsPerSite} versions per website on average`} loading={loading} />
+        <StatCard
+          label="Not made"
+          icon={<CircleAlert className="size-4 text-destructive" aria-hidden="true" />}
+          value={totals.notBuilt}
+          note={`${totals.failed} failed, the rest still drafts`}
+          loading={loading}
+        />
       </div>
 
-      {/* ====================================================== */}
-      {/* TASK PERFORMANCE + AGENT USAGE */}
-      {/* ====================================================== */}
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-
-        {/* Task Performance */}
-
-        <Card className="gap-0 px-5 py-5 xl:col-span-2">
-
-          <div className="mb-5">
-
-            <h2 className="text-base font-semibold">
-              Task Performance
-            </h2>
-
-            <p className="text-sm text-muted-foreground">
-              Completed and failed tasks over the last 7 days
-            </p>
-
-          </div>
-
-          <div className="h-80 w-full">
-
-            {taskData.length === 0 ? (
-              loading ? (
-                <LoadingText className="h-full justify-center">Loading the chart...</LoadingText>
+      {empty ? (
+        <EmptyState icon={Globe} title="No websites yet" action={<Button asChild variant="outline"><Link to="/websites">Open Websites</Link></Button>}>
+          Statistics appear here once people make websites.
+        </EmptyState>
+      ) : (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Made and published per day</CardTitle>
+              <CardDescription>
+                {loading ? "Loading..." : `${madeInRange} made and ${publishedInRange} published in the last ${range} days.`}
+              </CardDescription>
+              <CardAction>
+                <Tabs value={range} onValueChange={setRange}>
+                  <TabsList aria-label="Period">
+                    <TabsTrigger value="7">7 days</TabsTrigger>
+                    <TabsTrigger value="14">14 days</TabsTrigger>
+                    <TabsTrigger value="30">30 days</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="h-72">
+              {loading ? (
+                <div className="flex h-full items-end gap-2 pb-6" role="status" aria-label="Loading the chart">
+                  {[40, 65, 30, 80, 55, 70, 45, 60, 35, 75].map((height, index) => (
+                    <Skeleton key={index} className="flex-1 rounded-b-none" style={{ height: `${height}%` }} />
+                  ))}
+                </div>
               ) : (
-                <EmptyState icon={BarChart3} title="No task data available" className="h-full justify-center">
-                  Numbers appear here once agents have run tasks.
-                </EmptyState>
-              )
-            ) : (
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-              >
+                <>
+                  <p className="sr-only">{daily.map((row) => `${row.name}: ${row.made} made, ${row.published} published`).join("; ")}</p>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={daily} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+                      <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} interval="preserveStartEnd" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
+                      <YAxis axisLine={false} tickLine={false} allowDecimals={false} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
+                      <Tooltip
+                        cursor={{ fill: "var(--muted)", radius: 6 }}
+                        contentStyle={{ background: "var(--popover)", color: "var(--popover-foreground)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }}
+                      />
+                      <Legend wrapperStyle={{ fontSize: 12, color: "var(--muted-foreground)" }} />
+                      <Bar dataKey="made" name="Made" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={24} isAnimationActive={!reduceMotion} />
+                      <Bar dataKey="published" name="Published" fill="var(--chart-2)" radius={[4, 4, 0, 0]} maxBarSize={24} isAnimationActive={!reduceMotion} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </>
+              )}
+            </CardContent>
+          </Card>
 
-                <BarChart data={taskData}>
-
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke={chartGridColor}
-                  />
-
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{
-                      fill: chartTextColor,
-                      fontSize: 12,
-                    }}
-                  />
-
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    allowDecimals={false}
-                    tick={{
-                      fill: chartTextColor,
-                      fontSize: 12,
-                    }}
-                  />
-
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor:
-                        chartTooltipBg,
-                      borderColor:
-                        chartTooltipBorder,
-                      borderRadius: "8px",
-                      color: "var(--popover-foreground)",
-                    }}
-                    labelStyle={{
-                      color: "var(--popover-foreground)",
-                    }}
-                  />
-
-                  <Legend
-                    wrapperStyle={{
-                      color: chartTextColor,
-                    }}
-                  />
-
-                  <Bar
-                    dataKey="completed"
-                    name="Completed"
-                    radius={[
-                      5,
-                      5,
-                      0,
-                      0,
-                    ]}
-                    fill="var(--chart-4)"
-                  />
-
-                  <Bar
-                    dataKey="failed"
-                    name="Failed"
-                    radius={[
-                      5,
-                      5,
-                      0,
-                      0,
-                    ]}
-                    fill="var(--destructive)"
-                  />
-
-                </BarChart>
-
-              </ResponsiveContainer>
-            )}
-
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Where websites are</CardTitle>
+                <CardDescription>Live, made but not published, or not made.</CardDescription>
+              </CardHeader>
+              <CardContent>{loading ? <LoadingRows rows={3} /> : <ShareList rows={byStatus} total={totals.all} label={statusLabel} />}</CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Kinds of website</CardTitle>
+                <CardDescription>What people make websites for.</CardDescription>
+              </CardHeader>
+              <CardContent>{loading ? <LoadingRows rows={3} /> : <ShareList rows={byKind} total={totals.all} />}</CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Looks chosen</CardTitle>
+                <CardDescription>The design people picked.</CardDescription>
+                <CardAction>
+                  <Badge variant="secondary">
+                    <Sparkles aria-hidden="true" />
+                    {totals.showcased} in gallery
+                  </Badge>
+                </CardAction>
+              </CardHeader>
+              <CardContent>{loading ? <LoadingRows rows={3} /> : <ShareList rows={byLook} total={totals.all} />}</CardContent>
+            </Card>
           </div>
 
-        </Card>
-
-        {/* Agent Distribution */}
-
-        <Card className="gap-0 px-5 py-5">
-
-          <div className="mb-3">
-
-            <h2 className="text-base font-semibold">
-              Agent Usage
-            </h2>
-
-            <p className="text-sm text-muted-foreground">
-              Task distribution by agent
-            </p>
-
-          </div>
-
-          <div className="h-80 w-full">
-
-            {agentData.length === 0 ? (
-              loading ? (
-                <LoadingText className="h-full justify-center">Loading the chart...</LoadingText>
+          <div className="grid gap-4 xl:grid-cols-2">
+            <Card className="min-w-0 gap-0 pb-0">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base">Most websites per person</CardTitle>
+                <CardDescription>The {TOP_OWNERS} people with the most websites.</CardDescription>
+              </CardHeader>
+              {loading ? (
+                <LoadingRows rows={4} className="px-6 pb-6" />
+              ) : owners.length === 0 ? (
+                <EmptyState icon={UsersIcon} title="Nobody yet" className="mx-6 mb-6" />
               ) : (
-                <EmptyState icon={BarChart3} title="No agent usage data available" className="h-full justify-center">
-                  Numbers appear here once agents have run tasks.
-                </EmptyState>
-              )
-            ) : (
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-              >
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="pl-6">Person</TableHead>
+                      <TableHead className="text-right">Websites</TableHead>
+                      <TableHead className="text-right">Live</TableHead>
+                      <TableHead className="pr-6 text-right">Versions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {owners.map((owner) => (
+                      <TableRow key={owner.id}>
+                        <TableCell className="max-w-56 pl-6">
+                          <p className="truncate font-medium">{owner.name}</p>
+                          <p className="truncate text-xs text-muted-foreground">{owner.email}</p>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">{owner.total}</TableCell>
+                        <TableCell className="text-right tabular-nums">{owner.live}</TableCell>
+                        <TableCell className="pr-6 text-right tabular-nums">{owner.versions}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Card>
 
-                <PieChart>
-
-                  <Pie
-                    data={agentData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="45%"
-                    outerRadius={95}
-                    innerRadius={55}
-                    paddingAngle={3}
-                  >
-
-                    {agentData.map(
-                      (entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={entry.color}
-                        />
-                      )
-                    )}
-
-                  </Pie>
-
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor:
-                        chartTooltipBg,
-                      borderColor:
-                        chartTooltipBorder,
-                      borderRadius: "8px",
-                      color: "var(--popover-foreground)",
-                    }}
-                    labelStyle={{
-                      color: "var(--popover-foreground)",
-                    }}
-                  />
-
-                  <Legend
-                    wrapperStyle={{
-                      color: chartTextColor,
-                    }}
-                  />
-
-                </PieChart>
-
-              </ResponsiveContainer>
-            )}
-
-          </div>
-
-        </Card>
-
-      </div>
-
-      {/* ====================================================== */}
-      {/* SUCCESS RATE */}
-      {/* ====================================================== */}
-
-      <Card className="gap-0 px-5 py-5">
-
-        <div className="mb-5">
-
-          <h2 className="text-base font-semibold">
-            Success Rate
-          </h2>
-
-          <p className="text-sm text-muted-foreground">
-            Completed vs failed task rate over the last 7 days
-          </p>
-
-        </div>
-
-        <div className="h-75 w-full">
-
-          {performanceData.length === 0 ? (
-            loading ? (
-                <LoadingText className="h-full justify-center">Loading the chart...</LoadingText>
+            <Card className="min-w-0 gap-0 pb-0">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base">Per month</CardTitle>
+                <CardDescription>New websites and changes asked for, from the usage report.</CardDescription>
+              </CardHeader>
+              {loading ? (
+                <LoadingRows rows={4} className="px-6 pb-6" />
+              ) : months.length === 0 ? (
+                <EmptyState icon={BarChart3} title="No months yet" className="mx-6 mb-6" />
               ) : (
-                <EmptyState icon={BarChart3} title="No performance data available" className="h-full justify-center">
-                  Numbers appear here once agents have run tasks.
-                </EmptyState>
-              )
-          ) : (
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-            >
-
-              <LineChart data={performanceData}>
-
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke={chartGridColor}
-                />
-
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{
-                    fill: chartTextColor,
-                    fontSize: 12,
-                  }}
-                />
-
-                <YAxis
-                  domain={[0, 100]}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{
-                    fill: chartTextColor,
-                    fontSize: 12,
-                  }}
-                />
-
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor:
-                      chartTooltipBg,
-                    borderColor:
-                      chartTooltipBorder,
-                    borderRadius: "8px",
-                    color: "var(--popover-foreground)",
-                  }}
-                  labelStyle={{
-                    color: "var(--popover-foreground)",
-                  }}
-                  formatter={(value) => [
-                    value === null ||
-                    value === undefined
-                      ? "-"
-                      : `${value}%`,
-                    "Success Rate",
-                  ]}
-                />
-
-                <Line
-                  type="monotone"
-                  dataKey="success"
-                  name="Success Rate"
-                  stroke="var(--chart-1)"
-                  strokeWidth={3}
-                  connectNulls={false}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-
-              </LineChart>
-
-            </ResponsiveContainer>
-          )}
-
-        </div>
-
-      </Card>
-
-      {/* ====================================================== */}
-      {/* PERFORMANCE OVERVIEW */}
-      {/* ====================================================== */}
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-
-        {/* Top Success Agent */}
-
-        <Card className="gap-0 px-5 py-5">
-
-          <p className="text-sm font-medium text-muted-foreground">
-            Top Success Rate
-          </p>
-
-          <h3 className="mt-2 text-xl font-semibold">
-            {topSuccessAgent?.name ||
-              "No data"}
-          </h3>
-
-          <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">
-            {topSuccessAgent
-              ? `${topSuccessAgent.successRate}% success rate`
-              : "No completed or failed tasks yet"}
-          </p>
-
-        </Card>
-
-        {/* Most Active Agent */}
-
-        <Card className="gap-0 px-5 py-5">
-
-          <p className="text-sm font-medium text-muted-foreground">
-            Most Active Agent
-          </p>
-
-          <h3 className="mt-2 text-xl font-semibold">
-            {mostActiveAgent?.name ||
-              "No data"}
-          </h3>
-
-          <p className="mt-2 text-sm text-muted-foreground">
-            {mostActiveAgent
-              ? `${mostActiveAgent.total.toLocaleString()} tasks`
-              : "No task usage yet"}
-          </p>
-
-        </Card>
-
-        {/* Agent Coverage */}
-
-        <Card className="gap-0 px-5 py-5">
-
-          <p className="text-sm font-medium text-muted-foreground">
-            Agent Coverage
-          </p>
-
-          <h3 className="mt-2 text-xl font-semibold">
-            {agents.length > 0
-              ? `${agentData.length}/${agents.length}`
-              : "0"}
-          </h3>
-
-          <p className="mt-2 text-sm text-muted-foreground">
-            Agents used by at least one task
-          </p>
-
-        </Card>
-
-      </div>
-
-      {/* ====================================================== */}
-      {/* DATA LIMITATION NOTE */}
-      {/* ====================================================== */}
-
-      <Card className="gap-0 px-5 py-5">
-
-        <p className="text-xs leading-5 text-muted-foreground">
-          Analytics are calculated from the task and agent data available
-          through the admin API. Completion-time and response-time metrics
-          are not shown because the current task data does not expose a
-          dedicated completion-duration or response-time field.
-        </p>
-
-      </Card>
-
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="pl-6">Month</TableHead>
+                      <TableHead className="text-right">Websites</TableHead>
+                      <TableHead className="text-right">Changes</TableHead>
+                      <TableHead className="pr-6 text-right">Credits used</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {months.map((month) => (
+                      <TableRow key={month.month} className="tabular-nums">
+                        <TableCell className="pl-6 font-medium">{month.month}</TableCell>
+                        <TableCell className="text-right">{month.websites}</TableCell>
+                        <TableCell className="text-right">{month.changes}</TableCell>
+                        <TableCell className="pr-6 text-right">{month.credits_used}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Card>
+          </div>
+        </>
+      )}
     </Page>
   )
 }

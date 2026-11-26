@@ -1,575 +1,246 @@
-import { useEffect, useMemo, useState } from "react"
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { Link } from "react-router-dom"
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { Activity, ArrowRight, Globe, Hammer, Layers, RotateCw, Users as UsersIcon } from "lucide-react"
 
-import { Activity, Bot, CheckCircle2, UserRound, Zap } from "lucide-react"
-import { apiFetch } from "../lib/api"
+import {
+  axisTick,
+  chartTooltip,
+  DAY_MS,
+  EVENTS,
+  listOf,
+  parseDate,
+  perDay,
+  readJson,
+  reduceMotion,
+  relativeTime,
+} from "../lib/websites"
 import { Badge } from "../components/ui/badge.jsx"
+import { Button } from "../components/ui/button.jsx"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card.jsx"
 import { Skeleton } from "../components/ui/skeleton.jsx"
 import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatCard, StatusDot } from "../components/page.jsx"
 
-const normalizeStatus = (status) => {
-  const value = String(status || "").toLowerCase()
+const RECENT_EVENTS = 8
+const RUNS_SHOWN = 4
 
-  if (
-    value === "completed" ||
-    value === "complete" ||
-    value === "done" ||
-    value === "success"
-  ) {
-    return "Completed"
-  }
-
-  if (
-    value === "running" ||
-    value === "in_progress" ||
-    value === "processing"
-  ) {
-    return "Running"
-  }
-
-  if (
-    value === "pending" ||
-    value === "todo" ||
-    value === "queued"
-  ) {
-    return "Pending"
-  }
-
-  if (
-    value === "failed" ||
-    value === "error"
-  ) {
-    return "Failed"
-  }
-
-  return (
-    String(status || "Unknown")
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (char) => char.toUpperCase())
-  )
-}
-
-const normalizeUser = (user) => ({
-  id: user?.id,
-  name: user?.name || "Unknown User",
-  email: user?.email || "-",
-  role: user?.role || "user",
-  createdAt: user?.created_at || null,
-})
-
-const normalizeAgent = (agent) => ({
-  id: agent?.id,
-  name: agent?.name || "Unknown Agent",
-  status: normalizeStatus(agent?.status),
-  isActive: Boolean(agent?.is_active),
-})
-
-const normalizeTask = (task) => ({
-  id: task?.id,
-  title: task?.title || "Untitled Task",
-  status: normalizeStatus(task?.status),
-  createdAt: task?.created_at || null,
-  updatedAt: task?.updated_at || null,
-  user: task?.user
-    ? {
-        id: task.user.id,
-        name: task.user.name || "Unknown User",
-        email: task.user.email || "-",
-      }
-    : null,
-  agent: task?.agent
-    ? {
-        id: task.agent.id,
-        name: task.agent.name || "Unknown Agent",
-      }
-    : null,
-})
-
-const formatRelativeTime = (value) => {
-  if (!value) {
-    return "-"
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return String(value)
-  }
-
-  const diffMs = Date.now() - date.getTime()
-  const diffMinutes = Math.floor(diffMs / 60000)
-
-  if (diffMinutes < 1) {
-    return "just now"
-  }
-
-  if (diffMinutes < 60) {
-    return `${diffMinutes} min ago`
-  }
-
-  const diffHours = Math.floor(diffMinutes / 60)
-
-  if (diffHours < 24) {
-    return `${diffHours} hour${
-      diffHours > 1 ? "s" : ""
-    } ago`
-  }
-
-  const diffDays = Math.floor(diffHours / 24)
-
-  return `${diffDays} day${
-    diffDays > 1 ? "s" : ""
-  } ago`
-}
-
-const buildActivityData = (tasks) => {
-  const result = []
-
-  for (let offset = 6; offset >= 0; offset -= 1) {
-    const date = new Date()
-
-    date.setHours(0, 0, 0, 0)
-    date.setDate(date.getDate() - offset)
-
-    const nextDate = new Date(date)
-    nextDate.setDate(nextDate.getDate() + 1)
-
-    const completedCount = tasks.filter((task) => {
-      if (task.status !== "Completed") {
-        return false
-      }
-
-      if (!task.updatedAt) {
-        return false
-      }
-
-      const updatedAt = new Date(task.updatedAt)
-
-      if (Number.isNaN(updatedAt.getTime())) {
-        return false
-      }
-
-      return (
-        updatedAt >= date &&
-        updatedAt < nextDate
-      )
-    }).length
-
-    result.push({
-      name: date.toLocaleDateString("en-US", {
-        weekday: "short",
-      }),
-      tasks: completedCount,
-    })
-  }
-
-  return result
-}
-
+// The first page after signing in: how the website builder is doing today.
 function Dashboard() {
+  const [sites, setSites] = useState([])
+  const [logs, setLogs] = useState([])
   const [users, setUsers] = useState([])
-  const [agents, setAgents] = useState([])
-  const [tasks, setTasks] = useState([])
-
+  const [runs, setRuns] = useState([])
   const [loading, setLoading] = useState(true)
-  const [pageError, setPageError] = useState("")
+  const [error, setError] = useState("")
 
-  useEffect(() => {
-    const loadDashboard = async () => {
-      setLoading(true)
-      setPageError("")
-
-      try {
-        const [
-          usersResponse,
-          agentsResponse,
-          tasksResponse,
-        ] = await Promise.all([
-          apiFetch("/api/admin/users"),
-          apiFetch("/api/admin/agent-catalog"),
-          apiFetch("/api/admin/tasks"),
-        ])
-
-        const [
-          usersData,
-          agentsData,
-          tasksData,
-        ] = await Promise.all([
-          usersResponse.json().catch(() => ({})),
-          agentsResponse.json().catch(() => ({})),
-          tasksResponse.json().catch(() => ({})),
-        ])
-
-        if (!usersResponse.ok) {
-          throw new Error(
-            usersData?.error ||
-              usersData?.message ||
-              "Gagal mengambil data users."
-          )
-        }
-
-        if (!agentsResponse.ok) {
-          throw new Error(
-            agentsData?.error ||
-              agentsData?.message ||
-              "Gagal mengambil data agents."
-          )
-        }
-
-        if (!tasksResponse.ok) {
-          throw new Error(
-            tasksData?.error ||
-              tasksData?.message ||
-              "Gagal mengambil data tasks."
-          )
-        }
-
-        const usersList = Array.isArray(usersData?.users)
-          ? usersData.users
-          : []
-
-        const agentsList = Array.isArray(agentsData?.agents)
-          ? agentsData.agents
-          : []
-
-        const tasksList = Array.isArray(tasksData?.tasks)
-          ? tasksData.tasks
-          : []
-
-        setUsers(usersList.map(normalizeUser))
-        setAgents(agentsList.map(normalizeAgent))
-        setTasks(tasksList.map(normalizeTask))
-      } catch (error) {
-        console.error(
-          "Gagal mengambil data dashboard:",
-          error
-        )
-
-        setPageError(
-          error.message ||
-            "Gagal mengambil data dashboard."
-        )
-      } finally {
-        setLoading(false)
-      }
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [siteData, logData, userData, runData] = await Promise.all([
+        readJson("/api/admin/sites"),
+        readJson("/api/admin/site-logs"),
+        readJson("/api/admin/users"),
+        readJson("/api/admin/site-runs/active"),
+      ])
+      setSites(listOf(siteData, "sites"))
+      setLogs(listOf(logData, "logs"))
+      setUsers(listOf(userData, "users"))
+      setRuns(listOf(runData, "runs"))
+      setError("")
+    } catch (err) {
+      setError(err.message || "Could not load the dashboard.")
+    } finally {
+      setLoading(false)
     }
-
-    loadDashboard()
   }, [])
 
-  const totalUsers = users.length
+  useEffect(() => {
+    load()
+  }, [load])
 
-  const activeAgents = agents.filter(
-    (agent) => agent.isActive
-  ).length
+  const weekAgo = Date.now() - 7 * DAY_MS
+  const live = sites.filter((site) => site.published).length
+  const madeThisWeek = sites.filter((site) => new Date(site.created_at).getTime() >= weekAgo).length
+  const newUsers = users.filter((user) => parseDate(user.created_at).getTime() >= weekAgo).length
+  const running = runs.filter((run) => run.status === "running").length
+  const outdated = sites.filter((site) => site.published && site.current_version > site.published_version).length
 
-  const runningAgents = agents.filter(
-    (agent) => agent.status === "Running"
-  ).length
+  const daily = useMemo(() => perDay(sites, logs, 7), [sites, logs])
+  const recent = logs.slice(0, RECENT_EVENTS)
 
-  const completedTasks = tasks.filter(
-    (task) => task.status === "Completed"
-  ).length
-
-  const failedTasks = tasks.filter(
-    (task) => task.status === "Failed"
-  ).length
-
-  const pendingTasks = tasks.filter(
-    (task) => task.status === "Pending"
-  ).length
-
-  const processedTasks =
-    completedTasks + failedTasks
-
-  const successRate =
-    processedTasks > 0
-      ? (
-          (completedTasks / processedTasks) *
-          100
-        ).toFixed(1)
-      : "0.0"
-
-  const activityData = useMemo(
-    () => buildActivityData(tasks),
-    [tasks]
-  )
-
-  const recentActivity = useMemo(() => {
-    const activity = []
-
-    for (const task of tasks) {
-      activity.push({
-        type: "task",
-        date: task.updatedAt || task.createdAt,
-        title:
-          task.status === "Completed"
-            ? "Task completed"
-            : task.status === "Failed"
-              ? "Task failed"
-              : task.status === "Running"
-                ? "Task running"
-                : "Task created",
-        description:
-          task.agent?.name
-            ? `${task.title} • ${task.agent.name}`
-            : task.title,
-      })
-    }
-
-    for (const user of users) {
-      activity.push({
-        type: "user",
-        date: user.createdAt,
-        title: "New user registered",
-        description: user.email,
-      })
-    }
-
-    return activity
-      .filter((item) => item.date)
-      .sort(
-        (a, b) =>
-          new Date(b.date) -
-          new Date(a.date)
-      )
-      .slice(0, 5)
-  }, [tasks, users])
-
-  const finding =
-    failedTasks > 0
-      ? `${failedTasks} failed task${failedTasks > 1 ? "s" : ""} to look at, ${pendingTasks} waiting in the queue.`
-      : `No failed tasks. ${pendingTasks} waiting in the queue.`
-
-  const weekTotal = activityData.reduce(
-    (sum, day) => sum + day.tasks,
-    0
-  )
-
-  const kpis = [
-    {
-      label: "Tasks completed",
-      value: completedTasks,
-      note: `${weekTotal.toLocaleString()} in the last 7 days`,
-      icon: "check",
-    },
-    {
-      label: "Active agents",
-      value: activeAgents,
-      note: `${runningAgents.toLocaleString()} running now`,
-      icon: "agent",
-    },
-    {
-      label: "Users",
-      value: totalUsers,
-      note: "Registered accounts",
-      icon: "user",
-    },
-  ]
+  const finding = loading
+    ? "Loading the latest numbers..."
+    : error
+      ? "The latest numbers could not be loaded."
+      : [
+          runs.length > 0 ? `${runs.length} website${runs.length > 1 ? "s" : ""} being made now` : "Nothing being made right now",
+          `${madeThisWeek} made this week`,
+          outdated > 0 ? `${outdated} live website${outdated > 1 ? "s have" : " has"} a newer version to publish` : null,
+        ]
+          .filter(Boolean)
+          .join(". ") + "."
 
   return (
     <Page>
       <PageHeader
         title="Dashboard"
-        description={loading ? "Loading the latest numbers..." : pageError ? "The latest numbers could not be loaded." : finding}
+        description={finding}
+        actions={
+          <Button variant="outline" onClick={load} disabled={loading}>
+            <RotateCw className={loading ? "animate-spin" : undefined} aria-hidden="true" />
+            {loading ? "Loading..." : "Refresh"}
+          </Button>
+        }
       />
 
-      {pageError && <ErrorState title="Could not load the dashboard" message={pageError} />}
+      {error && <ErrorState title="Could not load the dashboard" message={error} onRetry={load} busy={loading} />}
 
-      <section aria-label="Key figures" className="grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.35fr)_repeat(3,minmax(0,1fr))]">
-        <Card className="justify-between gap-5 py-5 md:col-span-2 xl:col-span-1">
-          <CardContent className="space-y-5 px-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm text-muted-foreground">Success rate</p>
-                <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight">
-                  {loading ? <Skeleton as="span" className="inline-block h-9 w-24" /> : <CountUp value={Number(successRate)} decimals={1} suffix="%" />}
-                </p>
-              </div>
-              <span className="grid size-9 place-items-center rounded-md bg-primary text-primary-foreground">
-                <Zap className="size-4" aria-hidden="true" />
-              </span>
-            </div>
-            <div className="space-y-2">
-              <div
-                className="h-2 overflow-hidden rounded-full bg-muted"
-                role="progressbar"
-                aria-label="Success rate"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={loading ? undefined : Math.min(100, Number(successRate))}
-              >
-                {!loading && <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${Math.min(100, Number(successRate))}%` }} />}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {loading ? "Loading..." : `${completedTasks.toLocaleString()} of ${processedTasks.toLocaleString()} finished tasks succeeded`}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="All websites" icon={<Layers className="size-4" aria-hidden="true" />} value={sites.length} note={`${madeThisWeek} made in the last 7 days`} loading={loading} />
+        <StatCard
+          label="Live"
+          icon={<Globe className="size-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />}
+          value={live}
+          note={sites.length ? `${Math.round((live / sites.length) * 100)}% of all websites` : "None yet"}
+          loading={loading}
+        />
+        <StatCard
+          label="Being made now"
+          icon={<Hammer className="size-4" aria-hidden="true" />}
+          value={runs.length}
+          note={`${running} running, ${runs.length - running} waiting`}
+          loading={loading}
+        />
+        <StatCard label="People" icon={<UsersIcon className="size-4" aria-hidden="true" />} value={users.length} note={`${newUsers} joined in the last 7 days`} loading={loading} />
+      </div>
 
-        {kpis.map((kpi) => {
-          const Icon = KPI_ICONS[kpi.icon] || CheckCircle2
-          return (
-            <StatCard
-              key={kpi.label}
-              label={kpi.label}
-              icon={<Icon className="size-4" aria-hidden="true" />}
-              value={<CountUp value={kpi.value} />}
-              note={loading ? null : kpi.note}
-              loading={loading}
-            />
-          )
-        })}
-      </section>
-
-      <div className="grid items-stretch gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <Card>
+      <div className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <Card className="min-w-0">
           <CardHeader>
-            <CardTitle className="text-base">Tasks completed per day</CardTitle>
+            <CardTitle className="text-base">Websites made and published</CardTitle>
+            <CardDescription>Each day of the last 7 days.</CardDescription>
             <CardAction>
-              <Badge variant="secondary">Last 7 days</Badge>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/analytics">
+                  More
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+              </Button>
             </CardAction>
           </CardHeader>
           <CardContent className="h-64">
             {loading ? (
-              <div className="flex h-full items-end gap-3 px-2 pb-6" role="status" aria-label="Loading the chart">
+              <div className="flex h-full items-end gap-3 pb-6" role="status" aria-label="Loading the chart">
                 {[45, 70, 35, 85, 60, 75, 50].map((height, index) => (
                   <Skeleton key={index} className="flex-1 rounded-b-none" style={{ height: `${height}%` }} />
                 ))}
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={activityData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                  <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
-                  <YAxis axisLine={false} tickLine={false} allowDecimals={false} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
-                  <Tooltip
-                    cursor={{ fill: "var(--muted)", radius: 6 }}
-                    contentStyle={{ background: "var(--popover)", color: "var(--popover-foreground)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }}
-                  />
-                  <Bar dataKey="tasks" name="Completed" fill="var(--primary)" radius={[6, 6, 0, 0]} maxBarSize={40} animationDuration={600} animationEasing="ease-out" />
-                </BarChart>
-              </ResponsiveContainer>
+              <>
+                <p className="sr-only">{daily.map((row) => `${row.name}: ${row.made} made, ${row.published} published`).join("; ")}</p>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={daily} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+                    <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={axisTick} />
+                    <YAxis axisLine={false} tickLine={false} allowDecimals={false} tick={axisTick} />
+                    <Tooltip {...chartTooltip} />
+                    <Legend wrapperStyle={{ fontSize: 12, color: "var(--muted-foreground)" }} />
+                    <Bar dataKey="made" name="Made" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={32} isAnimationActive={!reduceMotion()} />
+                    <Bar dataKey="published" name="Published" fill="var(--chart-2)" radius={[4, 4, 0, 0]} maxBarSize={32} isAnimationActive={!reduceMotion()} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
-            <CardTitle className="text-base">Agents</CardTitle>
-            {!loading && (
-              <CardDescription>
-                {runningAgents} running · {activeAgents} active
-              </CardDescription>
-            )}
+            <CardTitle className="text-base">Being made now</CardTitle>
+            <CardDescription>Websites the AI is making or will make next.</CardDescription>
+            <CardAction>
+              <Badge variant="secondary" className="tabular-nums">
+                {loading ? "..." : runs.length}
+              </Badge>
+            </CardAction>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col">
-            <p className="mb-2 flex items-center gap-2 text-sm font-medium">
-              <StatusDot tone={runningAgents > 0 ? "success" : "muted"} running={runningAgents > 0} />
-              {loading ? "Checking agents..." : runningAgents > 0 ? `${runningAgents} agent${runningAgents > 1 ? "s" : ""} at work` : "All agents are idle"}
-            </p>
             {loading ? (
-              <LoadingRows rows={3} label="Loading agents" />
-            ) : agents.length === 0 ? (
-              <EmptyState icon={Bot} title="No agents yet" />
+              <LoadingRows rows={3} label="Loading the websites being made" />
+            ) : runs.length === 0 ? (
+              <EmptyState icon={Hammer} title="Nothing in progress" className="flex-1 justify-center">
+                Nobody is making a website right now.
+              </EmptyState>
             ) : (
               <ul className="divide-y">
-                {agents.slice(0, 5).map((agent) => {
-                  const state = agent.isActive ? (agent.status === "Running" ? "Running" : "Idle") : "Off"
-                  return (
-                    <li key={agent.id} className="flex items-center justify-between gap-4 py-2.5 text-sm">
-                      <span className="flex min-w-0 items-center gap-2.5">
-                        <StatusDot tone={state === "Running" ? "success" : state === "Idle" ? "warning" : "muted"} running={state === "Running"} />
-                        <span className="truncate font-medium">{agent.name}</span>
-                      </span>
-                      <span className="shrink-0 text-muted-foreground">{state}</span>
-                    </li>
-                  )
-                })}
+                {runs.slice(0, RUNS_SHOWN).map((run) => (
+                  <li key={run.id} className="space-y-1 py-3 first:pt-0">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="truncate text-sm font-medium">{run.site?.name || "Untitled website"}</p>
+                      <Badge variant={run.status === "running" ? "success" : "warning"}>
+                        <StatusDot tone={run.status === "running" ? "success" : "warning"} running={run.status === "running"} />
+                        {run.status === "running" ? "Making" : "Waiting"}
+                      </Badge>
+                    </div>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {run.user?.name || run.user?.email || "Deleted user"} · {run.kind === "revise" ? "Change" : "New website"}
+                    </p>
+                    {run.steps?.[0]?.summary && <p className="truncate text-xs text-muted-foreground">{run.steps[0].summary}</p>}
+                  </li>
+                ))}
               </ul>
             )}
-            {!loading && agents.length > 5 && (
-              <p className="mt-3 text-sm text-muted-foreground">{agents.length - 5} more on the Agents page</p>
+            {!loading && runs.length > RUNS_SHOWN && (
+              <Button variant="link" size="sm" className="mt-2 self-start px-0" asChild>
+                <Link to="/websites">{runs.length - RUNS_SHOWN} more on the Websites page</Link>
+              </Button>
             )}
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="gap-0 pb-0">
+        <CardHeader className="pb-4">
           <CardTitle className="text-base">Recent activity</CardTitle>
+          <CardDescription>Websites made, published and deleted.</CardDescription>
+          <CardAction>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/logs">
+                All logs
+                <ArrowRight aria-hidden="true" />
+              </Link>
+            </Button>
+          </CardAction>
         </CardHeader>
-        <CardContent>
-          {loading ? (
-            <LoadingRows rows={3} label="Loading recent activity" />
-          ) : recentActivity.length === 0 ? (
-            <EmptyState icon={Activity} title="No recent activity">
-              New sign-ups and finished tasks appear here.
-            </EmptyState>
-          ) : (
-            <ul className="divide-y">
-              {recentActivity.map((item, index) => {
-                const Icon = item.type === "user" ? UserRound : CheckCircle2
-                return (
-                  <li key={`${item.type}-${item.date}-${index}`} className="flex items-center justify-between gap-4 py-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="grid size-9 shrink-0 place-items-center rounded-md border bg-muted text-muted-foreground">
-                        <Icon className="size-4" aria-hidden="true" />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">{item.title}</p>
-                        <p className="truncate text-sm text-muted-foreground">{item.description}</p>
-                      </div>
+        {loading ? (
+          <LoadingRows rows={3} label="Loading recent activity" className="px-6 pb-6" />
+        ) : recent.length === 0 ? (
+          <EmptyState icon={Activity} title="No activity yet" className="mx-6 mb-6">
+            Websites that are made, published or deleted appear here.
+          </EmptyState>
+        ) : (
+          <ul className="divide-y border-t">
+            {recent.map((log) => {
+              const event = EVENTS[log.action] || { label: log.action, variant: "outline" }
+              return (
+                <li key={log.id} className="flex items-center justify-between gap-4 px-6 py-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Badge variant={event.variant} className="w-20 justify-center">
+                      {event.label}
+                    </Badge>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{log.site_name || `Website #${log.site_id}`}</p>
+                      <p className="truncate text-xs text-muted-foreground">{log.actor?.name || log.actor?.email || "Unknown"}</p>
                     </div>
-                    <span className="shrink-0 text-xs text-muted-foreground">{formatRelativeTime(item.date)}</span>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </CardContent>
+                  </div>
+                  <span className="shrink-0 text-xs text-muted-foreground">{relativeTime(log.time)}</span>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </Card>
     </Page>
-  )
-}
-
-const KPI_ICONS = { check: CheckCircle2, agent: Bot, user: UserRound }
-
-// Counts up from 0 to the value once it arrives. Shows the value at once
-// when the viewer prefers reduced motion.
-function CountUp({ value, decimals = 0, suffix = "", duration = 1100 }) {
-  const [shown, setShown] = useState(0)
-
-  useEffect(() => {
-    const target = Number(value) || 0
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    let frame
-    const start = performance.now()
-    const step = (now) => {
-      const progress = reduce ? 1 : Math.min(1, (now - start) / duration)
-      const eased = 1 - Math.pow(1 - progress, 3)
-      setShown(target * eased)
-      if (progress < 1) frame = requestAnimationFrame(step)
-    }
-    frame = requestAnimationFrame(step)
-    return () => cancelAnimationFrame(frame)
-  }, [value, duration])
-
-  return (
-    <>
-      {shown.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
-      {suffix}
-    </>
   )
 }
 
