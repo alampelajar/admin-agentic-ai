@@ -19,7 +19,7 @@ import { BarChart3 } from "lucide-react"
 import { apiFetch } from "../lib/api"
 import { Badge } from "../components/ui/badge.jsx"
 import { Card } from "../components/ui/card.jsx"
-import { EmptyState, ErrorState, LoadingText, Page, PageHeader, StatusDot } from "../components/page.jsx"
+import { EmptyState, ErrorState, LoadingText, Page, PageHeader, StatCard, StatusDot } from "../components/page.jsx"
 
 const CHART_COLORS = [
   "var(--chart-1)",
@@ -516,85 +516,19 @@ function Analytics() {
 
         {/* Total Tasks */}
 
-        <Card className="gap-1 px-5 py-5">
-
-          <p className="text-sm font-medium text-muted-foreground">
-            Total Tasks
-          </p>
-
-          <p className="mt-2 text-3xl font-semibold tabular-nums text-foreground">
-            {loading
-              ? "..."
-              : tasks.length.toLocaleString()}
-          </p>
-
-          <p className="mt-1 text-sm text-muted-foreground">
-            From all users
-          </p>
-
-        </Card>
+        <StatCard label="Total Tasks" value={tasks.length.toLocaleString()} note="From all users" loading={loading} />
 
         {/* Success Rate */}
 
-        <Card className="gap-1 px-5 py-5">
-
-          <p className="text-sm font-medium text-muted-foreground">
-            Success Rate
-          </p>
-
-          <p className="mt-2 text-3xl font-semibold tabular-nums text-foreground">
-            {loading
-              ? "..."
-              : formatPercent(
-                  overallSuccessRate
-                )}
-          </p>
-
-          <p className="mt-1 text-sm text-muted-foreground">
-            Completed vs failed
-          </p>
-
-        </Card>
+        <StatCard label="Success Rate" value={formatPercent( overallSuccessRate )} note="Completed vs failed" loading={loading} />
 
         {/* Failed Tasks */}
 
-        <Card className="gap-1 px-5 py-5">
-
-          <p className="text-sm font-medium text-muted-foreground">
-            Failed Tasks
-          </p>
-
-          <p className="mt-2 text-3xl font-semibold tabular-nums text-destructive">
-            {loading
-              ? "..."
-              : failedTasks.toLocaleString()}
-          </p>
-
-          <p className="mt-1 text-sm text-muted-foreground">
-            Need attention
-          </p>
-
-        </Card>
+        <StatCard label="Failed Tasks" value={failedTasks.toLocaleString()} note="Need attention" loading={loading} valueClassName="text-destructive" />
 
         {/* Active Agents */}
 
-        <Card className="gap-1 px-5 py-5">
-
-          <p className="text-sm font-medium text-muted-foreground">
-            Active Agents
-          </p>
-
-          <p className="mt-2 text-3xl font-semibold tabular-nums text-foreground">
-            {loading
-              ? "..."
-              : activeAgents.toLocaleString()}
-          </p>
-
-          <p className="mt-1 text-sm text-muted-foreground">
-            Currently active
-          </p>
-
-        </Card>
+        <StatCard label="Active Agents" value={activeAgents.toLocaleString()} note="Currently active" loading={loading} />
 
       </div>
 

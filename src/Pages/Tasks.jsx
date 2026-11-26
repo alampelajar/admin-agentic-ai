@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from "react"
 import { ClipboardCheck, Search } from "lucide-react"
 import { Badge } from "../components/ui/badge.jsx"
 import { Button } from "../components/ui/button.jsx"
-import { Card, CardContent } from "../components/ui/card.jsx"
+import { Card } from "../components/ui/card.jsx"
 import { DialogFooter } from "../components/ui/dialog.jsx"
 import { Input } from "../components/ui/input.jsx"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select.jsx"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table.jsx"
-import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatusDot } from "../components/page.jsx"
+import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatCard, StatusDot } from "../components/page.jsx"
 import { FormDialog, RowMenu } from "../components/dialogs.jsx"
 
 import { apiFetch } from "../lib/api"
@@ -285,13 +285,7 @@ function Tasks() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summary.map((item) => (
-          <Card key={item.label} className="gap-1 py-5">
-            <CardContent className="px-5">
-              <p className="text-sm font-medium text-muted-foreground">{item.label}</p>
-              <p className={`mt-2 text-3xl font-semibold tabular-nums ${item.className}`}>{loading ? "..." : item.value}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{item.hint}</p>
-            </CardContent>
-          </Card>
+          <StatCard key={item.label} label={item.label} value={item.value} note={item.hint} valueClassName={item.className} loading={loading} />
         ))}
       </div>
 
@@ -370,15 +364,15 @@ function Tasks() {
             <TableBody>
               {filteredTasks.map((task) => (
                 <TableRow key={task.id}>
-                  <TableCell className="max-w-72 pl-4">
+                  <TableCell className="max-w-56 pl-4">
                     <p className="truncate font-medium" title={task.title}>{task.title}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">TASK #{task.id}</p>
                   </TableCell>
                   <TableCell>
                     {task.user ? (
-                      <div>
-                        <p className="font-medium">{task.user.name}</p>
-                        <p className="text-xs text-muted-foreground">{task.user.email}</p>
+                      <div className="max-w-44">
+                        <p className="truncate font-medium">{task.user.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{task.user.email}</p>
                       </div>
                     ) : (
                       <span className="text-muted-foreground">Unknown User</span>
@@ -386,9 +380,9 @@ function Tasks() {
                   </TableCell>
                   <TableCell>
                     {task.agent ? (
-                      <div>
-                        <p className="font-medium">{task.agent.name}</p>
-                        <p className="text-xs text-muted-foreground">{task.agent.slug}</p>
+                      <div className="max-w-44">
+                        <p className="truncate font-medium">{task.agent.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{task.agent.slug}</p>
                       </div>
                     ) : (
                       <span className="text-muted-foreground">No Agent</span>

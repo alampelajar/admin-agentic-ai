@@ -68,8 +68,10 @@ Reuse before writing anything new.
   Add a new one from shadcn/ui (`components.json` is set up) rather than writing your own.
 - `Select` for a choice that sets state directly (filters); `NativeSelect` inside forms whose
   handler reads `event.target.name`/`value`.
-- Page building blocks in `src/components/page.jsx`: `Page`, `PageHeader`, `EmptyState`,
-  `ErrorState`, `SuccessNotice`, `LoadingRows`, `LoadingText`, `StatusDot`.
+- Page building blocks in `src/components/page.jsx`: `Page`, `PageHeader`, `StatCard`,
+  `EmptyState`, `ErrorState`, `SuccessNotice`, `LoadingRows`, `LoadingText`, `StatusDot`.
+  They copy the main app's Overview page (stat cards, the red error box with Retry, the
+  dashed empty box).
 - Dialogs with a form: `FormDialog` from `src/components/dialogs.jsx`. A row's actions:
   `RowMenu` from the same file.
 - Confirming a destructive action: `useConfirm` from `src/components/ui/confirm-dialog.jsx`
@@ -97,8 +99,12 @@ Buttons that start work are disabled and show progress (`Loader2` and a word suc
 
 - Works from phone width up, with no horizontal page scroll; wide tables scroll inside their card.
   Start with the small layout and add `sm:`, `md:`, `lg:`.
-- The menu is a fixed sidebar from `md:` up (it can shrink to icons) and a `Sheet` on phones.
-- Check every change in both light and dark mode (the moon and sun button in the header).
+- The shell is the main app's: `SidebarProvider`, `AppSidebar` (shadcn `Sidebar`, groups with
+  labels, the account menu at the bottom, shrinks to icons and is a sheet on phones) and
+  `SidebarInset` with `Header` (sidebar button, Search with Ctrl+K, theme menu, profile menu),
+  in `src/components/layout`. Pages sit in `Page`, which is the main app's `Main`: `px-4 py-6`,
+  at most `max-w-7xl` on wide screens.
+- Check every change in both light and dark mode (the theme menu in the header: light, dark or system).
 - Everything works by keyboard, with a visible focus ring. Inputs have labels.
 
 ## Motion

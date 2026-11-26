@@ -352,13 +352,13 @@ function Models() {
               <TableBody>
                 {models.map((model) => (
                   <TableRow key={model.id} className="align-top">
-                    <TableCell className="max-w-64 pl-4 whitespace-normal">
+                    <TableCell className="max-w-52 pl-4 whitespace-normal">
                       <p className="truncate font-medium">{model.name}</p>
                       {model.model_id !== model.name && <p className="truncate text-muted-foreground">{model.model_id}</p>}
                       {model.description && <p className="mt-1 line-clamp-2 text-muted-foreground">{model.description}</p>}
                     </TableCell>
                     <TableCell>{model.provider?.name || "–"}</TableCell>
-                    <TableCell className="max-w-xs min-w-36 whitespace-normal text-muted-foreground">
+                    <TableCell className="max-w-xs min-w-28 whitespace-normal text-muted-foreground">
                       {Array.isArray(model.agents) && model.agents.length > 0
                         ? agents.length > 1 && model.agents.length === agents.length
                           ? `Semua agent (${agents.length})`

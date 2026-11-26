@@ -9,7 +9,7 @@ import { Button } from "../components/ui/button.jsx"
 import { Card, CardContent } from "../components/ui/card.jsx"
 import { Label } from "../components/ui/label.jsx"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select.jsx"
-import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatusDot, SuccessNotice } from "../components/page.jsx"
+import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatCard, StatusDot, SuccessNotice } from "../components/page.jsx"
 import { FormDialog, RowMenu } from "../components/dialogs.jsx"
 import { Input } from "../components/ui/input.jsx"
 import { useConfirm } from "../components/ui/confirm-dialog.jsx"
@@ -382,16 +382,11 @@ function Websites() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
-          { label: "Live", value: liveCount },
+          { label: "Live", value: liveCount, icon: <Globe className="size-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" /> },
           { label: "Live with a newer version", value: outdatedCount },
           { label: "All websites", value: sites.length },
         ].map((stat) => (
-          <Card key={stat.label} className="gap-2 py-5">
-            <CardContent className="px-5">
-              <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-              <p className="mt-2 text-3xl font-semibold tabular-nums">{loading && sites.length === 0 ? "..." : stat.value}</p>
-            </CardContent>
-          </Card>
+          <StatCard key={stat.label} label={stat.label} icon={stat.icon} value={stat.value} loading={loading && sites.length === 0} />
         ))}
       </div>
 
@@ -433,7 +428,7 @@ function Websites() {
                 : "No websites have been made yet."}
           </EmptyState>
         ) : (
-          <Table className="min-w-240">
+          <Table className="min-w-220">
             <TableHeader>
               <TableRow>
                 <TableHead>Website</TableHead>

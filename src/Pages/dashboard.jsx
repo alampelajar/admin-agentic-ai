@@ -14,7 +14,7 @@ import { apiFetch } from "../lib/api"
 import { Badge } from "../components/ui/badge.jsx"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card.jsx"
 import { Skeleton } from "../components/ui/skeleton.jsx"
-import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatusDot } from "../components/page.jsx"
+import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatCard, StatusDot } from "../components/page.jsx"
 
 const normalizeStatus = (status) => {
   const value = String(status || "").toLowerCase()
@@ -420,18 +420,14 @@ function Dashboard() {
         {kpis.map((kpi) => {
           const Icon = KPI_ICONS[kpi.icon] || CheckCircle2
           return (
-            <Card key={kpi.label} className="gap-0 py-5">
-              <CardContent className="px-5">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm text-muted-foreground">{kpi.label}</p>
-                  <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
-                </div>
-                <p className="mt-3 text-3xl font-semibold tabular-nums tracking-tight">
-                  {loading ? <Skeleton as="span" className="inline-block h-8 w-16" /> : <CountUp value={kpi.value} />}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">{loading ? <Skeleton as="span" className="inline-block h-4 w-32" /> : kpi.note}</p>
-              </CardContent>
-            </Card>
+            <StatCard
+              key={kpi.label}
+              label={kpi.label}
+              icon={<Icon className="size-4" aria-hidden="true" />}
+              value={<CountUp value={kpi.value} />}
+              note={loading ? null : kpi.note}
+              loading={loading}
+            />
           )
         })}
       </section>

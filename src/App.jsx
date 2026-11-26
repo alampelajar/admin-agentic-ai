@@ -8,8 +8,9 @@ import {
 import { useEffect, useState } from "react"
 
 // Keep the existing page modules and business logic; only the app shell changes.
-import Sidebar from "./components/sidebar.jsx"
-import Header from "./components/Header.jsx"
+import { AppSidebar } from "./components/layout/app-sidebar.jsx"
+import { Header } from "./components/layout/header.jsx"
+import { SidebarInset, SidebarProvider } from "./components/ui/sidebar.jsx"
 import Dashboard from "./Pages/dashboard.jsx"
 import Users from "./Pages/users.jsx"
 import Feedback from "./Pages/Feedback.jsx"
@@ -24,38 +25,30 @@ import TopUps from "./Pages/TopUps.jsx"
 import Settings from "./Pages/Settings.jsx"
 import Login from "./Pages/Login/Login.jsx"
 import { Loader2 } from "lucide-react"
-import { cn } from "./lib/utils.js"
 import { Toaster } from "./components/ui/sonner.jsx"
 import { getAccessToken, SESSION_ENDED_EVENT } from "./lib/auth.js"
 
-const SIDEBAR_KEY = "admin_sidebar"
+// The main app keeps the sidebar open or shrunk in a cookie; the admin console does too.
+const sidebarOpen = () => !document.cookie.split("; ").includes("admin_sidebar_state=false")
 
 function AdminLayout() {
   const location = useLocation()
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDEBAR_KEY) === "collapsed")
-
-  const toggleCollapsed = () => {
-    setCollapsed((value) => {
-      localStorage.setItem(SIDEBAR_KEY, value ? "expanded" : "collapsed")
-      return !value
-    })
-  }
 
   return (
-    <div className="min-h-svh bg-background">
-      <Sidebar
-        open={mobileNavOpen}
-        collapsed={collapsed}
-        onToggleCollapse={toggleCollapsed}
-        onNavigate={() => setMobileNavOpen(false)}
-      />
+    <SidebarProvider defaultOpen={sidebarOpen()}>
+      <a
+        href="#content"
+        className="fixed start-44 z-999 -translate-y-52 bg-primary px-4 py-2 text-sm font-medium whitespace-nowrap text-primary-foreground opacity-95 shadow-sm transition hover:bg-primary/90 focus:translate-y-3 focus:transform focus-visible:ring-1 focus-visible:ring-ring"
+      >
+        Skip to main
+      </a>
+      <AppSidebar />
 
-      <main className={cn("min-w-0 transition-[padding] duration-200", collapsed ? "md:pl-16" : "md:pl-60")}>
-        <Header onMenuClick={() => setMobileNavOpen(true)} />
+      <SidebarInset className="@container/content min-w-0">
+        <Header />
 
         {/* Keyed by path so each page plays its entrance animation. */}
-        <div key={location.pathname} className="page-enter">
+        <div key={location.pathname} id="content" className="page-enter">
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/users" element={<Users />} />
@@ -74,8 +67,8 @@ function AdminLayout() {
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
 

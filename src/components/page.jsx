@@ -1,15 +1,21 @@
-import { AlertCircle, CheckCircle2, Inbox, Loader2, RotateCw } from "lucide-react"
+import { CheckCircle2, CircleAlert, Inbox, Loader2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 
 // Shared building blocks for the console's pages, so every page has the same frame and
 // the same loading, empty and error states.
 
+// Like the main app's Main: 16px at the sides, at most 80rem wide on large screens.
 export function Page({ className, ...props }) {
-  return <div className={cn("space-y-6 p-4 sm:p-6", className)} {...props} />
+  return (
+    <div
+      className={cn("space-y-6 px-4 py-6 @7xl/content:mx-auto @7xl/content:w-full @7xl/content:max-w-7xl", className)}
+      {...props}
+    />
+  )
 }
 
 export function PageHeader({ title, description, actions, className }) {
@@ -26,30 +32,63 @@ export function PageHeader({ title, description, actions, className }) {
 
 export function EmptyState({ icon: Icon = Inbox, title, children, action, className }) {
   return (
-    <div className={cn("flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-10 text-center", className)}>
+    <div className={cn("flex flex-col items-center gap-3 rounded-lg border border-dashed p-8 text-center", className)}>
       <Icon className="size-6 text-muted-foreground" aria-hidden="true" />
-      {title && <p className="text-sm font-medium">{title}</p>}
-      {children && <p className="max-w-md text-sm text-muted-foreground">{children}</p>}
-      {action && <div className="mt-2">{action}</div>}
+      {(title || children) && (
+        <div className="space-y-1">
+          {title && <p className="text-base font-semibold">{title}</p>}
+          {children && <p className="max-w-md text-sm text-muted-foreground">{children}</p>}
+        </div>
+      )}
+      {action}
     </div>
   )
 }
 
-export function ErrorState({ title = "Something went wrong", message, onRetry, busy = false, className }) {
+// The same error box as the main app: a red outline, the message and a retry button.
+export function ErrorState({ title, message, onRetry, busy = false, className }) {
   return (
-    <Alert variant="destructive" className={className}>
-      <AlertCircle />
-      <AlertTitle>{title}</AlertTitle>
-      <AlertDescription>
-        <p>{message}</p>
-        {onRetry && (
-          <Button variant="outline" size="sm" className="mt-2" onClick={onRetry} disabled={busy}>
-            {busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <RotateCw aria-hidden="true" />}
-            {busy ? "Retrying..." : "Retry"}
-          </Button>
+    <div
+      role="alert"
+      className={cn(
+        "flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive sm:flex-row sm:items-center sm:justify-between",
+        className
+      )}
+    >
+      <p className="flex items-start gap-2">
+        <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+        <span>
+          {title && <span className="font-medium">{title}. </span>}
+          {message}
+        </span>
+      </p>
+      {onRetry && (
+        <Button variant="outline" size="sm" className="shrink-0" onClick={onRetry} disabled={busy}>
+          {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
+          {busy ? "Retrying..." : "Retry"}
+        </Button>
+      )}
+    </div>
+  )
+}
+
+// A number with its label, as on the main app's Overview.
+export function StatCard({ label, value, icon, note, loading = false, valueClassName, className }) {
+  return (
+    <Card className={className}>
+      <CardContent className="space-y-1">
+        <p className="flex items-center gap-2 text-xs text-muted-foreground">
+          {icon}
+          {label}
+        </p>
+        {loading ? (
+          <Skeleton className="h-8 w-12" />
+        ) : (
+          <p className={cn("text-2xl font-semibold tracking-tight tabular-nums", valueClassName)}>{value}</p>
         )}
-      </AlertDescription>
-    </Alert>
+        {note && <p className="text-xs text-muted-foreground">{note}</p>}
+      </CardContent>
+    </Card>
   )
 }
 

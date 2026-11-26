@@ -22,7 +22,7 @@ import { Badge } from "../components/ui/badge.jsx"
 import { Button } from "../components/ui/button.jsx"
 import { Card } from "../components/ui/card.jsx"
 import { Skeleton } from "../components/ui/skeleton.jsx"
-import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatusDot } from "../components/page.jsx"
+import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatCard, StatusDot } from "../components/page.jsx"
 import { apiFetch } from "../lib/api"
 
 const LOCALE = "en-US"
@@ -261,15 +261,7 @@ function Reports() {
         <>
           <section aria-label="Key figures" aria-busy={loading} className="grid gap-4 md:grid-cols-3">
             {summary.map((item) => (
-              <Card key={item.label} className="gap-1 px-5 py-5">
-                <p className="text-sm text-muted-foreground">{item.label}</p>
-                <p className="mt-2 text-3xl font-semibold tabular-nums">
-                  {loading ? <Skeleton as="span" className="inline-block h-8 w-16" /> : item.value.toLocaleString(LOCALE)}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {loading ? <Skeleton as="span" className="inline-block h-3 w-32" /> : item.note}
-                </p>
-              </Card>
+              <StatCard key={item.label} label={item.label} value={item.value.toLocaleString(LOCALE)} note={loading ? null : item.note} loading={loading} />
             ))}
           </section>
 

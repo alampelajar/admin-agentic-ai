@@ -751,8 +751,8 @@ function Users() {
             <TableBody>
               {filteredUsers.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="pl-4">
-                    <div className="flex items-center gap-3">
+                  <TableCell className="max-w-64 pl-4">
+                    <div className="flex min-w-0 items-center gap-3">
                       <Avatar className="size-8">
                         <AvatarFallback className="text-xs font-medium">{user.name.charAt(0).toUpperCase()}</AvatarFallback>
                       </Avatar>
@@ -796,8 +796,8 @@ function Users() {
                       </p>
                     )}
                   </TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center gap-2">
+                  <TableCell className="min-w-28 whitespace-normal">
+                    <span className="inline-flex items-center gap-2 whitespace-nowrap">
                       <StatusDot tone={statusDot(user)} />
                       {user.status}
                     </span>
@@ -810,7 +810,7 @@ function Users() {
                       </p>
                     )}
                   </TableCell>
-                  <TableCell className="max-w-48 text-muted-foreground">
+                  <TableCell className="max-w-36 text-muted-foreground">
                     {user.agents.length === 0 ? (
                       "–"
                     ) : (

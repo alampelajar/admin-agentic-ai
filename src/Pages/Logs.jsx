@@ -7,7 +7,7 @@ import { Globe, Plus, RotateCw, Trash2 } from "lucide-react"
 import { Badge } from "../components/ui/badge.jsx"
 import { Button } from "../components/ui/button.jsx"
 import { Card, CardContent } from "../components/ui/card.jsx"
-import { EmptyState, ErrorState, LoadingRows, Page, PageHeader } from "../components/page.jsx"
+import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatCard } from "../components/page.jsx"
 import { Input } from "../components/ui/input.jsx"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table.jsx"
 
@@ -120,15 +120,7 @@ function Logs() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {Object.entries(EVENTS).map(([action, event]) => (
-          <Card key={action} className="gap-2 py-5">
-            <CardContent className="px-5">
-              <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <EventIcon name={event.icon} />
-                {event.label}
-              </p>
-              <p className="mt-2 text-3xl font-semibold tabular-nums">{loading && logs.length === 0 ? "..." : counts[action]}</p>
-            </CardContent>
-          </Card>
+          <StatCard key={action} label={event.label} icon={<EventIcon name={event.icon} />} value={counts[action]} loading={loading && logs.length === 0} />
         ))}
       </div>
 
@@ -211,7 +203,7 @@ function Logs() {
                         <span className="text-muted-foreground">Unknown</span>
                       )}
                     </TableCell>
-                    <TableCell className="max-w-80">
+                    <TableCell className="max-w-56">
                       <p className="truncate text-sm text-muted-foreground" title={log.message}>
                         {log.message}
                       </p>

@@ -6,7 +6,7 @@ import { AlertCircle, Loader2 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert.jsx"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card.jsx"
 import { Label } from "../../components/ui/label.jsx"
-import { BrandLogo } from "../../components/sidebar.jsx"
+import { BrandName, Logo } from "../../components/layout/logo.jsx"
 import { Button } from "../../components/ui/button.jsx"
 import { Input } from "../../components/ui/input.jsx"
 import { PasswordInput } from "../../components/ui/password-input.jsx"
@@ -57,8 +57,8 @@ function Login({ onAuthenticated = () => {} }) {
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted/40 px-4 py-12 text-foreground">
       <div className="flex items-center gap-2">
-        <BrandLogo />
-        <span className="text-base font-semibold">THIS MY WEBSITE</span>
+        <Logo className="size-7" />
+        <BrandName className="flex-none" />
       </div>
 
       <Card className="w-full max-w-sm">
