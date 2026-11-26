@@ -1,390 +1,154 @@
-
-import { useState } from "react"
 import { NavLink } from "react-router-dom"
-import { getStoredAdmin } from "../lib/auth"
+import {
+  BarChart3,
+  Bot,
+  Boxes,
+  ChevronsLeft,
+  ChevronsRight,
+  ClipboardCheck,
+  FileText,
+  Globe,
+  LayoutDashboard,
+  List,
+  Settings,
+  Ticket,
+  Users,
+  Wallet,
+} from "lucide-react"
+
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 const menuItems = [
-  {
-    name: "Dashboard",
-    path: "/dashboard",
-    icon: "dashboard",
-  },
-  {
-    name: "Users",
-    path: "/users",
-    icon: "users",
-  },
-  {
-    name: "Websites",
-    path: "/websites",
-    icon: "websites",
-  },
-  {
-    name: "Top-ups",
-    path: "/topups",
-    icon: "topups",
-  },
-  {
-    name: "Ticket",
-    path: "/ticket",
-    icon: "ticket",
-  },
-  {
-    name: "Agents",
-    path: "/agents",
-    icon: "agents",
-  },
-  {
-    name: "Models",
-    path: "/models",
-    icon: "models",
-  },
-  {
-    name: "Tasks",
-    path: "/tasks",
-    icon: "tasks",
-  },
-  {
-    name: "Analytics",
-    path: "/analytics",
-    icon: "analytics",
-  },
-  {
-    name: "Reports",
-    path: "/reports",
-    icon: "reports",
-  },
-  {
-    name: "Logs",
-    path: "/logs",
-    icon: "logs",
-  },
-  {
-    name: "Settings",
-    path: "/settings",
-    icon: "settings",
-  },
+  { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+  { name: "Users", path: "/users", icon: Users },
+  { name: "Websites", path: "/websites", icon: Globe },
+  { name: "Top-ups", path: "/topups", icon: Wallet },
+  { name: "Ticket", path: "/ticket", icon: Ticket },
+  { name: "Agents", path: "/agents", icon: Bot },
+  { name: "Models", path: "/models", icon: Boxes },
+  { name: "Tasks", path: "/tasks", icon: ClipboardCheck },
+  { name: "Analytics", path: "/analytics", icon: BarChart3 },
+  { name: "Reports", path: "/reports", icon: FileText },
+  { name: "Logs", path: "/logs", icon: List },
+  { name: "Settings", path: "/settings", icon: Settings },
 ]
 
-function BrandLogo() {
+export function BrandLogo({ className }) {
   return (
-    <div className="sidebar-brand-logo flex h-9 w-9 shrink-0 items-center justify-center">
-      <svg
-        viewBox="0 0 40 40"
-        width="28"
-        height="28"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        role="img"
-        aria-label="THIS MY WEBSITE logo"
-      >
-        <path
-          d="M11 11L20 20L29 11M20 20L11 29M20 20L29 29"
-          stroke="#3157D5"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-        <rect
-          x="15.5"
-          y="15.5"
-          width="9"
-          height="9"
-          rx="2.5"
-          fill="#3157D5"
-        />
-
-        <circle
-          cx="11"
-          cy="11"
-          r="4"
-          fill="#3157D5"
-        />
-
-        <circle
-          cx="29"
-          cy="11"
-          r="4"
-          fill="#06B6D4"
-        />
-
-        <circle
-          cx="11"
-          cy="29"
-          r="4"
-          fill="#06B6D4"
-        />
-
-        <circle
-          cx="29"
-          cy="29"
-          r="4"
-          fill="#3157D5"
-        />
+    <span
+      className={cn("flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground", className)}
+      aria-hidden="true"
+    >
+      <svg viewBox="0 0 40 40" className="size-5" fill="none">
+        <path d="M11 11L20 20L29 11M20 20L11 29M20 20L29 29" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="15.5" y="15.5" width="9" height="9" rx="2.5" fill="currentColor" />
+        <circle cx="11" cy="11" r="4" fill="currentColor" />
+        <circle cx="29" cy="11" r="4" fill="currentColor" />
+        <circle cx="11" cy="29" r="4" fill="currentColor" />
+        <circle cx="29" cy="29" r="4" fill="currentColor" />
       </svg>
+    </span>
+  )
+}
+
+function Brand() {
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      <BrandLogo />
+      <div className="min-w-0 text-left">
+        <p className="truncate text-sm font-semibold">THIS MY WEBSITE</p>
+        <p className="truncate text-xs font-normal text-muted-foreground">Admin console</p>
+      </div>
     </div>
   )
 }
 
-function MenuIcon({ name, active }) {
-  const commonProps = {
-    width: 24,
-    height: 24,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.7,
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    "aria-hidden": true,
-  }
-
-  const iconPaths = {
-    dashboard: (
-      <>
-        <rect x="3" y="3" width="7" height="7" rx="1.5" />
-        <rect x="14" y="3" width="7" height="7" rx="1.5" />
-        <rect x="14" y="14" width="7" height="7" rx="1.5" />
-        <rect x="3" y="14" width="7" height="7" rx="1.5" />
-      </>
-    ),
-    users: (
-      <>
-        <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="10" cy="7" r="4" />
-        <path d="M20 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </>
-    ),
-    ticket: (
-      <>
-        <path d="M3 8a2 2 0 0 0 0 4v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 1 0-4V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z" />
-        <path d="M13 4v2M13 10v2M13 16v2" />
-      </>
-    ),
-    agents: (
-      <>
-        <circle cx="12" cy="12" r="3" />
-        <circle cx="12" cy="4" r="1.5" />
-        <circle cx="5" cy="17" r="1.5" />
-        <circle cx="19" cy="17" r="1.5" />
-        <path d="M12 5.5v3.7M10 14.2l-4 2M14 14.2l4 2" />
-      </>
-    ),
-    models: (
-      <>
-        <rect x="4" y="4" width="16" height="16" rx="3" />
-        <path d="M9 9h6M9 12h6M9 15h4" />
-      </>
-    ),    tasks: (
-      <>
-        <rect x="4" y="4" width="16" height="17" rx="2" />
-        <path d="M9 4V2.5h6V4M8 11l2.5 2.5L16 8.8M8 17h8" />
-      </>
-    ),
-    analytics: (
-      <>
-        <path d="M3 3v18h18" />
-        <path d="m7 14 4-4 3 3 6-7" />
-        <path d="M16 6h4v4" />
-      </>
-    ),
-    reports: (
-      <>
-        <path d="M6 3h9l4 4v14H6z" />
-        <path d="M14 3v5h5M9 17v-3M12.5 17v-5M16 17v-2" />
-      </>
-    ),
-    topups: (
-      <>
-        <rect x="3" y="6" width="18" height="13" rx="2" />
-        <path d="M3 10h18M7 15h3M16 3v4M13 5h6" />
-      </>
-    ),
-    websites: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
-      </>
-    ),
-    logs: (
-      <>
-        <path d="M8 6h13M8 12h13M8 18h13" />
-        <circle cx="4" cy="6" r=".7" fill="currentColor" />
-        <circle cx="4" cy="12" r=".7" fill="currentColor" />
-        <circle cx="4" cy="18" r=".7" fill="currentColor" />
-      </>
-    ),
-    settings: (
-      <>
-        <circle cx="12" cy="12" r="3" />
-        <path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-2 .9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-2-.9l-1.7.7-1.4-2.4 1.4-1.1a8 8 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 2-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 2 .9l1.7-.7 1.4 2.4-1.4 1.1a8 8 0 0 1 0 2Z" transform="translate(-1 -1) scale(1.08)" />
-      </>
-    ),
-  }
-
+function NavItems({ collapsed = false, onNavigate }) {
   return (
-    <svg {...commonProps}>
-      {iconPaths[name]}
-    </svg>
+    <nav aria-label="Main navigation" className="flex-1 overflow-y-auto p-2">
+      <ul className="space-y-1">
+        {menuItems.map((item) => {
+          const Icon = item.icon
+          const link = (
+            <NavLink
+              to={item.path}
+              onClick={onNavigate}
+              aria-label={collapsed ? item.name : undefined}
+              className={({ isActive }) =>
+                cn(
+                  "flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                  collapsed && "justify-center px-0",
+                  isActive
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                )
+              }
+            >
+              <Icon className="size-4 shrink-0" aria-hidden="true" />
+              {!collapsed && <span className="truncate">{item.name}</span>}
+            </NavLink>
+          )
+          return (
+            <li key={item.path}>
+              {collapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>{link}</TooltipTrigger>
+                  <TooltipContent side="right">{item.name}</TooltipContent>
+                </Tooltip>
+              ) : (
+                link
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </nav>
   )
 }
 
+// On a computer the menu stays on the left and can shrink to icons; on a phone it opens
+// as a sheet from the menu button in the header.
 function Sidebar({ open = false, collapsed = false, onToggleCollapse = () => {}, onNavigate = () => {} }) {
-  const [admin] = useState(getStoredAdmin)
-
   return (
-    <>
-      <button
-        type="button"
-        className={`sidebar-backdrop ${open ? "is-visible" : ""}`}
-        aria-label="Close navigation menu"
-        onClick={onNavigate}
-        tabIndex={open ? 0 : -1}
-      />
+    <TooltipProvider delayDuration={200}>
       <aside
-      className={`
-        sidebar ${open ? "sidebar-open" : ""}
-        fixed left-0 top-0 z-40 flex h-screen w-60 flex-col
-        bg-transparent transition-colors duration-200
-      `}
-    >
-      {/* BRAND */}
-
-      <div
-        className="
-          px-5 py-5
-        "
+        className={cn(
+          "fixed inset-y-0 left-0 z-30 hidden flex-col border-r bg-sidebar text-sidebar-foreground transition-[width] duration-200 md:flex",
+          collapsed ? "w-16" : "w-60"
+        )}
       >
-        <div className="flex items-center gap-3">
-          <BrandLogo />
-
-          <div className="sidebar-brand-text min-w-0">
-            <h1
-              className="
-                text-base font-medium text-foreground
-              "
-            >
-              THIS MY WEBSITE
-            </h1>
-
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Admin console
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          className="sidebar-collapse-button"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-expanded={!collapsed}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          onClick={onToggleCollapse}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          className="sidebar-close-button"
-          aria-label="Close navigation menu"
-          onClick={onNavigate}
-        >
-          ×
-        </button>
-      </div>
-
-      {/* NAVIGATION */}
-
-      <nav
-        aria-label="Main navigation"
-        className="flex-1 overflow-y-auto px-3 py-5"
-      >
-        <div className="space-y-1">
-          {menuItems.map((item, index) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={onNavigate}
-              style={{ "--i": index }}
-              title={collapsed ? item.name : undefined}
-              end={item.path === "/"}
-              className={({ isActive }) =>
-                [
-                  "sidebar-link group relative flex h-14 items-center gap-3 rounded-full px-4",
-                  "text-sm font-medium transition-colors duration-200 ease-m3",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  isActive
-                    ? "active bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
-                ].join(" ")
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <span
-                    className={[
-                      "sidebar-link-icon flex shrink-0 items-center justify-center",
-                      "transition-colors duration-200 ease-m3",
-                      isActive ? "text-sidebar-accent-foreground" : "text-muted-foreground group-hover:text-foreground",
-                    ].join(" ")}
-                  >
-                    <MenuIcon
-                      name={item.icon}
-                      active={isActive}
-                    />
-                  </span>
-
-                  <span className="sidebar-label">{item.name}</span>
-                </>
-              )}
-            </NavLink>
-          ))}
-        </div>
-      </nav>
-
-      {/* ADMIN PROFILE */}
-
-      <div className="p-4">
-        <div className="flex items-center gap-3">
-          <div
-            className="
-              flex size-10 shrink-0
-              items-center justify-center
-              rounded-full
-              bg-primary-container text-sm font-medium text-on-primary-container
-            "
-            aria-hidden="true"
+        <div className={cn("flex h-14 items-center gap-2 border-b px-3", collapsed ? "justify-center" : "justify-between")}>
+          {!collapsed && <Brand />}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleCollapse}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!collapsed}
           >
-            {admin.initial}
-          </div>
-
-          <div className="sidebar-profile-text min-w-0 flex-1">
-            <p
-              className="
-                truncate text-sm font-medium text-foreground
-              "
-              title={admin.name}
-            >
-              {admin.name}
-            </p>
-
-            <p
-              className="
-                mt-0.5 truncate text-xs text-muted-foreground
-              "
-              title={admin.email || admin.role}
-            >
-              {admin.email || admin.role}
-            </p>
-          </div>
-
+            {collapsed ? <ChevronsRight /> : <ChevronsLeft />}
+          </Button>
         </div>
-      </div>
-    </aside>
-    </>
+        <NavItems collapsed={collapsed} />
+      </aside>
+
+      <Sheet open={open} onOpenChange={(value) => !value && onNavigate()}>
+        <SheetContent side="left" className="w-72 gap-0 p-0">
+          <SheetHeader className="border-b p-4">
+            <SheetTitle asChild>
+              <div>
+                <Brand />
+              </div>
+            </SheetTitle>
+            <SheetDescription className="sr-only">Main navigation</SheetDescription>
+          </SheetHeader>
+          <NavItems onNavigate={onNavigate} />
+        </SheetContent>
+      </Sheet>
+    </TooltipProvider>
   )
 }
 

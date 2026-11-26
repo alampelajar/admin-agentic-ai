@@ -17,20 +17,24 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table.jsx"
+import { BarChart3, ClipboardCheck, Download, Loader2 } from "lucide-react"
+import { Badge } from "../components/ui/badge.jsx"
 import { Button } from "../components/ui/button.jsx"
+import { Card } from "../components/ui/card.jsx"
+import { Skeleton } from "../components/ui/skeleton.jsx"
+import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatusDot } from "../components/page.jsx"
 import { apiFetch } from "../lib/api"
 
 const LOCALE = "en-US"
 const DAYS_PER_WEEK = 7
 const LATEST_TASK_COUNT = 5
 
-const panel = "rounded-card border border-border bg-card p-5 text-card-foreground"
 
-const STATUS_STYLES = {
-  completed: "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300",
-  failed: "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300",
-  running: "bg-[var(--brand-soft)] text-[var(--brand)]",
-  other: "bg-muted text-muted-foreground",
+const STATUS_VARIANTS = {
+  completed: "success",
+  failed: "destructive",
+  running: "secondary",
+  other: "outline",
 }
 
 const STATUS_ALIASES = {
@@ -147,20 +151,10 @@ function StatusBadge({ status }) {
   const key = statusKey(status)
 
   return (
-    <span className={`inline-flex items-center gap-2 whitespace-nowrap rounded-chip px-3 h-8 text-sm font-medium ${STATUS_STYLES[key]}`}>
-      {key === "running" && <span className="status-dot is-running" aria-hidden="true" />}
+    <Badge variant={STATUS_VARIANTS[key]}>
+      {key === "running" && <StatusDot tone="primary" running />}
       {statusLabel(status)}
-    </span>
-  )
-}
-
-function DownloadIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 4v11" />
-      <path d="m7 11 5 5 5-5" />
-      <path d="M5 20h14" />
-    </svg>
+    </Badge>
   )
 }
 
@@ -249,45 +243,37 @@ function Reports() {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] p-6">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-normal">Monthly report</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Tasks and new users for {period}.
-          </p>
-        </div>
-
-        <Button
-          disabled={loading || Boolean(pageError)}
-          onClick={() => downloadReport({ period, fileMonth, summary, weeks, tasks })}
-        >
-          <DownloadIcon />
-          {loading ? "Loading data..." : "Download report"}
-        </Button>
-      </div>
+    <Page>
+      <PageHeader
+        title="Monthly report"
+        description={`Tasks and new users for ${period}.`}
+        actions={
+          <Button disabled={loading || Boolean(pageError)} onClick={() => downloadReport({ period, fileMonth, summary, weeks, tasks })}>
+            {loading ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Download aria-hidden="true" />}
+            {loading ? "Loading data..." : "Download report"}
+          </Button>
+        }
+      />
 
       {pageError ? (
-        <p role="alert" className="rounded-card bg-error-container px-4 py-3 text-sm font-medium text-on-error-container">
-          {pageError}
-        </p>
+        <ErrorState title="Could not load the report" message={pageError} />
       ) : (
         <>
           <section aria-label="Key figures" aria-busy={loading} className="grid gap-4 md:grid-cols-3">
-            {summary.map((item, index) => (
-              <div key={item.label} className={`${panel} lift kpi-card`} style={{ "--i": index }}>
+            {summary.map((item) => (
+              <Card key={item.label} className="gap-1 px-5 py-5">
                 <p className="text-sm text-muted-foreground">{item.label}</p>
-                <p className="mt-2 text-3xl font-normal tabular-nums">
-                  {loading ? <span className="skeleton inline-block h-8 w-16" /> : item.value.toLocaleString(LOCALE)}
+                <p className="mt-2 text-3xl font-semibold tabular-nums">
+                  {loading ? <Skeleton className="inline-block h-8 w-16" /> : item.value.toLocaleString(LOCALE)}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {loading ? <span className="skeleton inline-block h-3 w-32" /> : item.note}
+                  {loading ? <Skeleton className="inline-block h-3 w-32" /> : item.note}
                 </p>
-              </div>
+              </Card>
             ))}
           </section>
 
-          <section aria-busy={loading} className={`${panel} mt-6`}>
+          <Card aria-busy={loading} className="gap-0 px-5 py-5">
             <h2 className="text-base font-semibold">Tasks per week</h2>
             <p className="mt-1 text-xs text-muted-foreground">By the date each task was created.</p>
 
@@ -295,13 +281,13 @@ function Reports() {
               {loading ? (
                 <div className="flex h-full items-end gap-4 px-2 pb-6">
                   {[45, 70, 35, 85].map((height) => (
-                    <span key={height} className="skeleton flex-1 rounded-t-lg" style={{ height: `${height}%` }} />
+                    <Skeleton key={height} className="flex-1 rounded-b-none" style={{ height: `${height}%` }} />
                   ))}
                 </div>
               ) : tasks.length === 0 ? (
-                <p className="flex h-full items-center justify-center text-center text-sm text-muted-foreground">
+                <EmptyState icon={BarChart3} title="No tasks this month" className="h-full justify-center">
                   Weekly counts will appear here once tasks are created this month.
-                </p>
+                </EmptyState>
               ) : (
                 <>
                   <p className="sr-only">
@@ -310,19 +296,19 @@ function Reports() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={weeks} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                       <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "var(--text-muted)", fontSize: 12 }} />
-                      <YAxis axisLine={false} tickLine={false} allowDecimals={false} tick={{ fill: "var(--text-muted)", fontSize: 12 }} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
+                      <YAxis axisLine={false} tickLine={false} allowDecimals={false} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
                       <Tooltip
-                        cursor={{ fill: "var(--brand-soft)" }}
-                        contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
-                        labelStyle={{ color: "var(--text)" }}
-                        itemStyle={{ color: "var(--text)" }}
+                        cursor={{ fill: "var(--muted)" }}
+                        contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
+                        labelStyle={{ color: "var(--popover-foreground)" }}
+                        itemStyle={{ color: "var(--popover-foreground)" }}
                       />
                       <Bar
                         dataKey="tasks"
                         name="Tasks"
-                        fill="var(--brand)"
-                        radius={[8, 8, 0, 0]}
+                        fill="var(--primary)"
+                        radius={[6, 6, 0, 0]}
                         maxBarSize={56}
                         isAnimationActive={!reduceMotion}
                         animationDuration={600}
@@ -332,21 +318,19 @@ function Reports() {
                 </>
               )}
             </div>
-          </section>
+          </Card>
 
-          <section aria-busy={loading} className={`${panel} mt-6`}>
+          <Card aria-busy={loading} className="gap-0 px-5 py-5">
             <h2 className="text-base font-semibold">Latest tasks</h2>
             <p className="mt-1 text-xs text-muted-foreground">The last {LATEST_TASK_COUNT} tasks created this month.</p>
 
             <div className="mt-4">
               {loading ? (
-                <div className="space-y-4">
-                  {[0, 1, 2, 3, 4].map((row) => <span key={row} className="skeleton block h-5" />)}
-                </div>
+                <LoadingRows rows={5} label="Loading the latest tasks" />
               ) : latestTasks.length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">
-                  This month's latest tasks will appear here.
-                </p>
+                <EmptyState icon={ClipboardCheck} title="No tasks yet">
+                  This month&apos;s latest tasks will appear here.
+                </EmptyState>
               ) : (
                 <Table>
                   <TableHeader>
@@ -370,10 +354,10 @@ function Reports() {
                 </Table>
               )}
             </div>
-          </section>
+          </Card>
         </>
       )}
-    </div>
+    </Page>
   )
 }
 

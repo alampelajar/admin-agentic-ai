@@ -1,28 +1,28 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
-import { createPortal } from "react-dom"
+import { useCallback, useEffect, useId, useMemo, useState } from "react"
+import { Check, Globe, Loader2, Plus, RotateCw } from "lucide-react"
 
 import { apiFetch } from "../lib/api"
 import { formatWib } from "../lib/datetime"
 import { ActiveRuns } from "../components/ActiveRuns.jsx"
+import { Badge } from "../components/ui/badge.jsx"
 import { Button } from "../components/ui/button.jsx"
+import { Card, CardContent } from "../components/ui/card.jsx"
+import { Label } from "../components/ui/label.jsx"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select.jsx"
+import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatusDot, SuccessNotice } from "../components/page.jsx"
+import { FormDialog, RowMenu } from "../components/dialogs.jsx"
 import { Input } from "../components/ui/input.jsx"
 import { useConfirm } from "../components/ui/confirm-dialog.jsx"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table.jsx"
 
-const chip = "inline-flex h-8 items-center gap-2 rounded-chip px-3 text-sm font-medium"
-const success = "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300"
-const warning = "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
-const danger = "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300"
-
 const SITE_STATUS = {
-  draft: { label: "Draft", className: "bg-muted text-muted-foreground" },
-  building: { label: "Building", className: warning },
-  ready: { label: "Ready", className: success },
-  failed: { label: "Failed", className: danger },
+  draft: { label: "Draft", variant: "secondary" },
+  building: { label: "Building", variant: "warning" },
+  ready: { label: "Ready", variant: "success" },
+  failed: { label: "Failed", variant: "destructive" },
 }
 
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{1,38})[a-z0-9]$/
-const fieldLabel = "mb-1 block text-sm font-medium text-foreground"
 
 async function readJson(path, options) {
   const response = await apiFetch(path, options)
@@ -48,142 +48,6 @@ function Owner({ user }) {
       <p className="truncate font-medium text-foreground">{user.name || "-"}</p>
       <p className="truncate text-xs text-muted-foreground">{user.email}</p>
     </div>
-  )
-}
-
-// A Material 3 menu of a row's less frequent actions. Arrow keys move between items,
-// Escape and a click outside close it.
-function RowMenu({ label, disabled, items }) {
-  const [position, setPosition] = useState(null)
-  const open = position !== null
-  const buttonRef = useRef(null)
-  const menuRef = useRef(null)
-  const menuId = useId()
-
-  // The menu is placed in the page, outside the table's scroll box, below the button
-  // (or above it when there is no room below).
-  const toggle = () => {
-    if (open) {
-      setPosition(null)
-      return
-    }
-    const rect = buttonRef.current.getBoundingClientRect()
-    const below = window.innerHeight - rect.bottom > 220
-    setPosition({ right: window.innerWidth - rect.right, ...(below ? { top: rect.bottom + 4 } : { bottom: window.innerHeight - rect.top + 4 }) })
-  }
-  const setOpen = (value) => {
-    if (!value) setPosition(null)
-  }
-
-  useEffect(() => {
-    if (!open) return
-    menuRef.current?.querySelector("[role=menuitem]")?.focus()
-    const onPointer = (event) => {
-      if (!menuRef.current?.contains(event.target) && !buttonRef.current?.contains(event.target)) setPosition(null)
-    }
-    const close = () => setPosition(null)
-    document.addEventListener("mousedown", onPointer)
-    window.addEventListener("resize", close)
-    window.addEventListener("scroll", close, true)
-    return () => {
-      document.removeEventListener("mousedown", onPointer)
-      window.removeEventListener("resize", close)
-      window.removeEventListener("scroll", close, true)
-    }
-  }, [open])
-
-  const onKeyDown = (event) => {
-    const entries = Array.from(menuRef.current?.querySelectorAll("[role=menuitem]") || [])
-    const index = entries.indexOf(document.activeElement)
-    if (event.key === "Escape" || event.key === "Tab") {
-      setOpen(false)
-      if (event.key === "Escape") buttonRef.current?.focus()
-    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      event.preventDefault()
-      const step = event.key === "ArrowDown" ? 1 : -1
-      entries[(index + step + entries.length) % entries.length]?.focus()
-    }
-  }
-
-  return (
-    <div className="relative">
-      <Button
-        ref={buttonRef}
-        variant="ghost"
-        size="sm"
-        onClick={toggle}
-        disabled={disabled}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? menuId : undefined}
-        aria-label={label}
-      >
-        More
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="m6 9 6 6 6-6" />
-        </svg>
-      </Button>
-      {open && createPortal(
-        <div
-          ref={menuRef}
-          id={menuId}
-          role="menu"
-          onKeyDown={onKeyDown}
-          style={position}
-          className="fixed z-50 min-w-48 rounded-field bg-popover py-2 shadow-m3-2"
-        >
-          {items.map((item) => (
-            <button
-              key={item.label}
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setOpen(false)
-                item.onSelect()
-              }}
-              className={`state-layer flex h-12 w-full items-center px-4 text-left text-sm transition-colors duration-200 ease-m3 focus-visible:bg-accent focus-visible:outline-none ${
-                item.destructive ? "text-destructive" : "text-foreground"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>,
-        document.body
-      )}
-    </div>
-  )
-}
-
-// A Material 3 dialog holding a short form.
-function FormDialog({ title, subtitle, onClose, busy, children }) {
-  const titleId = useId()
-
-  useEffect(() => {
-    const onKey = (event) => {
-      if (event.key === "Escape" && !busy) onClose()
-    }
-    document.addEventListener("keydown", onKey)
-    return () => document.removeEventListener("keydown", onKey)
-  }, [onClose, busy])
-
-  return createPortal(
-    <div className="m3-scrim fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => !busy && onClose()}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className="max-h-full w-full max-w-md overflow-y-auto rounded-dialog bg-surface-high p-6 text-foreground shadow-m3-3"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <h2 id={titleId} className="text-2xl font-normal">
-          {title}
-        </h2>
-        {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
-        <div className="mt-6">{children}</div>
-      </div>
-    </div>,
-    document.body
   )
 }
 
@@ -245,8 +109,8 @@ function PublishDialog({ sites, initialSite, moving, onClose, onDone }) {
             Every website that has a finished version is already live. A website appears here once its owner has
             built it.
           </p>
-          <div className="mt-6 flex justify-end">
-            <Button variant="ghost" onClick={onClose}>
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={onClose}>
               Close
             </Button>
           </div>
@@ -254,29 +118,24 @@ function PublishDialog({ sites, initialSite, moving, onClose, onDone }) {
       ) : (
         <form onSubmit={submit} className="space-y-4" noValidate>
           {!moving && (
-            <div>
-              <label htmlFor={siteFieldId} className={fieldLabel}>
-                Website
-              </label>
-              <select
-                id={siteFieldId}
-                value={siteId}
-                onChange={(event) => chooseSite(event.target.value)}
-                disabled={busy}
-                className="h-14 w-full rounded-field border border-input bg-transparent px-4 text-base text-foreground transition-colors duration-200 ease-m3 hover:border-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
-              >
-                {candidates.map((site) => (
-                  <option key={site.id} value={site.id}>
-                    {site.name} · {site.user?.email || "deleted user"} · version {site.current_version}
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-2">
+              <Label htmlFor={siteFieldId}>Website</Label>
+              <Select value={String(siteId)} onValueChange={chooseSite} disabled={busy}>
+                <SelectTrigger id={siteFieldId} className="w-full">
+                  <SelectValue placeholder="Choose a website" />
+                </SelectTrigger>
+                <SelectContent>
+                  {candidates.map((site) => (
+                    <SelectItem key={site.id} value={String(site.id)}>
+                      {site.name} · {site.user?.email || "deleted user"} · version {site.current_version}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
-          <div>
-            <label htmlFor={slugId} className={fieldLabel}>
-              Address
-            </label>
+          <div className="space-y-2">
+            <Label htmlFor={slugId}>Address</Label>
             <Input
               id={slugId}
               value={slug}
@@ -290,12 +149,12 @@ function PublishDialog({ sites, initialSite, moving, onClose, onDone }) {
               aria-invalid={error ? true : undefined}
               aria-describedby={hintId}
             />
-            <p id={hintId} className="mt-1 text-xs text-muted-foreground">
+            <p id={hintId} className="text-xs text-muted-foreground">
               The first part of the web address. Lowercase letters, digits and hyphens.
             </p>
           </div>
           {error && (
-            <p role="alert" className="rounded-field bg-error-container px-4 py-3 text-sm text-on-error-container">
+            <p role="alert" className="text-sm text-destructive">
               {error}
             </p>
           )}
@@ -304,11 +163,12 @@ function PublishDialog({ sites, initialSite, moving, onClose, onDone }) {
               Publishes version {selected.current_version} of {selected.name}.
             </p>
           )}
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={onClose} disabled={busy}>
+          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={onClose} disabled={busy}>
               Cancel
             </Button>
             <Button type="submit" disabled={busy || !selected}>
+              {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
               {busy ? "Publishing..." : moving ? "Move" : "Publish"}
             </Button>
           </div>
@@ -346,10 +206,8 @@ function RenameDialog({ site, onClose, onDone }) {
   return (
     <FormDialog title="Rename website" subtitle={`Owner: ${site.user?.email || "deleted user"}`} onClose={onClose} busy={busy}>
       <form onSubmit={submit} className="space-y-4" noValidate>
-        <div>
-          <label htmlFor={nameId} className={fieldLabel}>
-            Name
-          </label>
+        <div className="space-y-2">
+          <Label htmlFor={nameId}>Name</Label>
           <Input
             id={nameId}
             value={name}
@@ -363,15 +221,16 @@ function RenameDialog({ site, onClose, onDone }) {
           />
         </div>
         {error && (
-          <p role="alert" className="rounded-field bg-error-container px-4 py-3 text-sm text-on-error-container">
+          <p role="alert" className="text-sm text-destructive">
             {error}
           </p>
         )}
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="ghost" onClick={onClose} disabled={busy}>
+        <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+          <Button variant="outline" onClick={onClose} disabled={busy}>
             Cancel
           </Button>
           <Button type="submit" disabled={busy}>
+            {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
             {busy ? "Saving..." : "Save"}
           </Button>
         </div>
@@ -496,65 +355,53 @@ function Websites() {
     )
 
   const viewButton = (value, label, count) => (
-    <button
-      type="button"
-      onClick={() => setView(value)}
-      aria-pressed={view === value}
-      className={`${chip} state-layer border transition-colors duration-200 ease-m3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-        view === value ? "border-transparent bg-secondary text-secondary-foreground" : "border-input text-muted-foreground"
-      }`}
-    >
+    <Button size="sm" variant={view === value ? "secondary" : "ghost"} onClick={() => setView(value)} aria-pressed={view === value}>
       {label}
-      <span className="tabular-nums">{count}</span>
-    </button>
+      <span className="tabular-nums text-muted-foreground">{count}</span>
+    </Button>
   )
 
   return (
-    <div className="min-h-screen bg-background p-6 text-foreground">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-normal text-foreground">Websites</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Websites that are live for visitors. Publish, rename, move, take offline or delete them.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={load} disabled={loading}>
-            {loading ? "Loading..." : "Refresh"}
-          </Button>
-          <Button onClick={() => setDialog({ type: "publish" })} disabled={loading}>
-            Publish a website
-          </Button>
-        </div>
-      </div>
+    <Page>
+      <PageHeader
+        title="Websites"
+        description="Websites that are live for visitors. Publish, rename, move, take offline or delete them."
+        actions={
+          <>
+            <Button variant="outline" onClick={load} disabled={loading}>
+              <RotateCw className={loading ? "animate-spin" : undefined} aria-hidden="true" />
+              {loading ? "Loading..." : "Refresh"}
+            </Button>
+            <Button onClick={() => setDialog({ type: "publish" })} disabled={loading}>
+              <Plus aria-hidden="true" />
+              Publish a website
+            </Button>
+          </>
+        }
+      />
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
           { label: "Live", value: liveCount },
           { label: "Live with a newer version", value: outdatedCount },
           { label: "All websites", value: sites.length },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-card border border-border bg-card p-5">
-            <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-            <p className="mt-2 text-3xl font-normal tabular-nums text-foreground">{loading && sites.length === 0 ? "..." : stat.value}</p>
-          </div>
+          <Card key={stat.label} className="gap-2 py-5">
+            <CardContent className="px-5">
+              <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+              <p className="mt-2 text-3xl font-semibold tabular-nums">{loading && sites.length === 0 ? "..." : stat.value}</p>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      {notice && (
-        <p role="status" className={`mb-4 rounded-field px-4 py-3 text-sm ${success}`}>
-          {notice}
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="mb-4 rounded-field bg-error-container px-4 py-3 text-sm text-on-error-container">
-          {error}
-        </p>
-      )}
+      {notice && <SuccessNotice>{notice}</SuccessNotice>}
+      {error && <ErrorState message={error} onRetry={load} busy={loading} />}
 
-      <section className="mb-6 rounded-card border border-border bg-card p-5" aria-labelledby="websites-title">
+      <Card className="py-5" aria-labelledby="websites-title">
+        <CardContent className="px-5">
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1">
             <h2 id="websites-title" className="sr-only">
               Website list
             </h2>
@@ -576,19 +423,15 @@ function Websites() {
         </div>
 
         {loading && sites.length === 0 ? (
-          <div className="space-y-2" aria-label="Loading websites">
-            <div className="skeleton h-13 rounded-field" />
-            <div className="skeleton h-13 rounded-field" />
-            <div className="skeleton h-13 rounded-field" />
-          </div>
+          <LoadingRows label="Loading websites" />
         ) : filtered.length === 0 ? (
-          <p className="rounded-card border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+          <EmptyState icon={Globe} title={search.trim() ? "No matches" : "No websites here"}>
             {search.trim()
               ? "No website matches your search."
               : view === "live"
                 ? "No website is live yet. Use Publish a website to put one online."
                 : "No websites have been made yet."}
-          </p>
+          </EmptyState>
         ) : (
           <Table className="min-w-240">
             <TableHeader>
@@ -624,23 +467,23 @@ function Websites() {
                     <TableCell className="max-w-52">
                       {site.published ? (
                         <div className="flex flex-col items-start gap-1">
-                          <span className={`${chip} ${success}`}>
-                            <span className="status-dot is-running" aria-hidden="true" />
+                          <Badge variant="success">
+                            <StatusDot tone="success" running />
                             Live
-                          </span>
+                          </Badge>
                           <a
                             href={site.live_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             title={shortUrl(site.live_url)}
-                            className="block max-w-full truncate rounded-field text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="block max-w-full truncate rounded-sm text-sm font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
                           >
                             {shortUrl(site.live_url)}
                           </a>
                         </div>
                       ) : (
                         <div className="flex flex-col items-start gap-1">
-                          <span className={`${chip} ${status.className}`}>{site.has_version ? "Offline" : status.label}</span>
+                          <Badge variant={site.has_version ? "outline" : status.variant}>{site.has_version ? "Offline" : status.label}</Badge>
                           {site.slug && <span className="text-xs text-muted-foreground">Kept: {site.slug}</span>}
                         </div>
                       )}
@@ -652,7 +495,7 @@ function Websites() {
                         <div>
                           <p className="tabular-nums">Version {site.published_version}</p>
                           {outdated ? (
-                            <p className="text-xs text-amber-700 dark:text-amber-300">Newer: version {site.current_version}</p>
+                            <p className="text-xs text-amber-700 dark:text-amber-400">Newer: version {site.current_version}</p>
                           ) : (
                             <p className="text-xs text-muted-foreground">Up to date</p>
                           )}
@@ -671,7 +514,8 @@ function Websites() {
                           aria-pressed={site.showcased}
                           aria-label={site.showcased ? `Remove ${site.name} from the gallery` : `Show ${site.name} in the gallery`}
                         >
-                          {site.showcased ? "✓ Shown" : "Show"}
+                          {site.showcased && <Check aria-hidden="true" />}
+                          {site.showcased ? "Shown" : "Show"}
                         </Button>
                       ) : (
                         <span className="text-xs text-muted-foreground">Publish first</span>
@@ -679,7 +523,12 @@ function Websites() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1 whitespace-nowrap">
-                        {busy && <span className="text-xs text-muted-foreground" role="status">Working...</span>}
+                        {busy && (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground" role="status">
+                            <Loader2 className="size-3 animate-spin" aria-hidden="true" />
+                            Working...
+                          </span>
+                        )}
                         {site.has_version && (
                           <Button variant="ghost" size="sm" onClick={() => openPreview(site)} disabled={busy} aria-label={`Preview ${site.name}`}>
                             Preview
@@ -706,7 +555,7 @@ function Websites() {
                                   { label: "Take offline", onSelect: () => takeOffline(site) },
                                 ]
                               : []),
-                            { label: "Delete", destructive: true, onSelect: () => remove(site) },
+                            { label: "Delete", destructive: true, separatorBefore: true, onSelect: () => remove(site) },
                           ]}
                         />
                       </div>
@@ -717,7 +566,8 @@ function Websites() {
             </TableBody>
           </Table>
         )}
-      </section>
+        </CardContent>
+      </Card>
 
       <ActiveRuns />
 
@@ -729,7 +579,7 @@ function Websites() {
       )}
       {dialog?.type === "rename" && <RenameDialog site={dialog.site} onClose={() => setDialog(null)} onDone={finish} />}
       {confirmDialog}
-    </div>
+    </Page>
   )
 }
 

@@ -3,37 +3,26 @@ import { Link } from "react-router-dom"
 
 import { apiFetch } from "../lib/api"
 import { formatWib } from "../lib/datetime"
+import { Globe, Plus, RotateCw, Trash2 } from "lucide-react"
+import { Badge } from "../components/ui/badge.jsx"
 import { Button } from "../components/ui/button.jsx"
+import { Card, CardContent } from "../components/ui/card.jsx"
+import { EmptyState, ErrorState, LoadingRows, Page, PageHeader } from "../components/page.jsx"
 import { Input } from "../components/ui/input.jsx"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table.jsx"
 
 // The Logs page lists when websites were made, published and deleted. Managing the
 // websites themselves is on the Websites page.
 
-const chip = "inline-flex h-8 items-center gap-2 rounded-chip px-3 text-sm font-medium"
-
 const EVENTS = {
-  "site.create": { label: "Made", className: "bg-secondary text-secondary-foreground", icon: "plus" },
-  "site.publish": { label: "Published", className: "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300", icon: "globe" },
-  "site.delete": { label: "Deleted", className: "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300", icon: "trash" },
+  "site.create": { label: "Made", variant: "secondary", icon: "plus" },
+  "site.publish": { label: "Published", variant: "success", icon: "globe" },
+  "site.delete": { label: "Deleted", variant: "destructive", icon: "trash" },
 }
 
 function EventIcon({ name }) {
-  const paths = {
-    plus: <path d="M12 5v14M5 12h14" />,
-    globe: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
-      </>
-    ),
-    trash: <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />,
-  }
-  return (
-    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {paths[name]}
-    </svg>
-  )
+  const Icon = { plus: Plus, globe: Globe, trash: Trash2 }[name] || Plus
+  return <Icon className="size-4" aria-hidden="true" />
 }
 
 function relativeTime(value) {
@@ -96,65 +85,62 @@ function Logs() {
   }, [logs, search, eventFilter])
 
   const filterButton = (value, label, count) => (
-    <button
+    <Button
       key={value}
-      type="button"
+      size="sm"
+      variant={eventFilter === value ? "secondary" : "ghost"}
       onClick={() => setEventFilter(value)}
       aria-pressed={eventFilter === value}
-      className={`${chip} state-layer border transition-colors duration-200 ease-m3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-        eventFilter === value ? "border-transparent bg-secondary text-secondary-foreground" : "border-input text-muted-foreground"
-      }`}
     >
       {label}
-      <span className="tabular-nums">{count}</span>
-    </button>
+      <span className="tabular-nums text-muted-foreground">{count}</span>
+    </Button>
   )
 
   return (
-    <div className="min-h-screen bg-background p-6 text-foreground">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-normal text-foreground">Logs</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+    <Page>
+      <PageHeader
+        title="Logs"
+        description={
+          <>
             When websites were made, published and deleted, and by whom. Manage websites on the{" "}
-            <Link to="/websites" className="rounded-field font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <Link to="/websites" className="rounded-sm font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50">
               Websites
             </Link>{" "}
             page.
-          </p>
-        </div>
-        <Button variant="outline" onClick={load} disabled={loading}>
-          {loading ? "Refreshing..." : "Refresh"}
-        </Button>
-      </div>
+          </>
+        }
+        actions={
+          <Button variant="outline" onClick={load} disabled={loading}>
+            <RotateCw className={loading ? "animate-spin" : undefined} aria-hidden="true" />
+            {loading ? "Refreshing..." : "Refresh"}
+          </Button>
+        }
+      />
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {Object.entries(EVENTS).map(([action, event]) => (
-          <div key={action} className="rounded-card border border-border bg-card p-5">
-            <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <EventIcon name={event.icon} />
-              {event.label}
-            </p>
-            <p className="mt-2 text-3xl font-normal tabular-nums text-foreground">{loading && logs.length === 0 ? "..." : counts[action]}</p>
-          </div>
+          <Card key={action} className="gap-2 py-5">
+            <CardContent className="px-5">
+              <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <EventIcon name={event.icon} />
+                {event.label}
+              </p>
+              <p className="mt-2 text-3xl font-semibold tabular-nums">{loading && logs.length === 0 ? "..." : counts[action]}</p>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      {error && (
-        <div role="alert" className="mb-6 flex items-center justify-between gap-4 rounded-card bg-error-container px-4 py-3">
-          <p className="text-sm text-on-error-container">{error}</p>
-          <Button variant="destructive" onClick={load} disabled={loading}>
-            Retry
-          </Button>
-        </div>
-      )}
+      {error && <ErrorState title="Could not load the logs" message={error} onRetry={load} busy={loading} />}
 
-      <section className="rounded-card border border-border bg-card p-5" aria-labelledby="site-logs-title">
+      <Card className="py-5" aria-labelledby="site-logs-title">
+        <CardContent className="px-5">
         <h2 id="site-logs-title" className="sr-only">
           Website events
         </h2>
         <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1">
             {filterButton("all", "All", logs.length)}
             {Object.entries(EVENTS).map(([action, event]) => filterButton(action, event.label, counts[action]))}
           </div>
@@ -173,15 +159,11 @@ function Logs() {
         </div>
 
         {loading && logs.length === 0 ? (
-          <div className="space-y-2" aria-label="Loading website logs">
-            <div className="skeleton h-13 rounded-field" />
-            <div className="skeleton h-13 rounded-field" />
-            <div className="skeleton h-13 rounded-field" />
-          </div>
+          <LoadingRows label="Loading website logs" />
         ) : filtered.length === 0 ? (
-          <p className="rounded-card border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+          <EmptyState title={logs.length === 0 ? "No events yet" : "No matches"}>
             {logs.length === 0 ? "Websites that are made, published or deleted will appear here." : "No event matches your search."}
-          </p>
+          </EmptyState>
         ) : (
           <Table className="min-w-200">
             <TableHeader>
@@ -195,7 +177,7 @@ function Logs() {
             </TableHeader>
             <TableBody>
               {filtered.map((log) => {
-                const event = EVENTS[log.action] || { label: log.action, className: "bg-muted text-muted-foreground", icon: "plus" }
+                const event = EVENTS[log.action] || { label: log.action, variant: "outline", icon: "plus" }
                 return (
                   <TableRow key={log.id}>
                     <TableCell className="whitespace-nowrap">
@@ -203,10 +185,10 @@ function Logs() {
                       <p className="text-xs text-muted-foreground">{formatWib(log.time)}</p>
                     </TableCell>
                     <TableCell>
-                      <span className={`${chip} ${event.className}`}>
+                      <Badge variant={event.variant}>
                         <EventIcon name={event.icon} />
                         {event.label}
-                      </span>
+                      </Badge>
                     </TableCell>
                     <TableCell className="max-w-56">
                       <p className="truncate font-medium text-foreground" title={log.site_name}>
@@ -240,8 +222,9 @@ function Logs() {
             </TableBody>
           </Table>
         )}
-      </section>
-    </div>
+        </CardContent>
+      </Card>
+    </Page>
   )
 }
 

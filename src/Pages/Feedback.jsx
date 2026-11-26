@@ -1,6 +1,18 @@
 import { useEffect, useMemo, useState } from "react"
 import { apiFetch } from "../lib/api"
 import { formatWib } from "../lib/datetime"
+import { Loader2, MessageSquare, RotateCw, Search, Send, Ticket as TicketIcon, Trash2, TriangleAlert } from "lucide-react"
+import { cn } from "../lib/utils.js"
+import { Badge } from "../components/ui/badge.jsx"
+import { Button } from "../components/ui/button.jsx"
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card.jsx"
+import { Input } from "../components/ui/input.jsx"
+import { Label } from "../components/ui/label.jsx"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select.jsx"
+import { Separator } from "../components/ui/separator.jsx"
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs.jsx"
+import { Textarea } from "../components/ui/textarea.jsx"
+import { EmptyState, ErrorState, LoadingRows, LoadingText, Page, PageHeader, StatusDot, SuccessNotice } from "../components/page.jsx"
 
 const statusOptions = [
   { value: "new", label: "New" },
@@ -28,11 +40,18 @@ const categoryLabels = {
   accountRestore: "Account restore request",
 }
 
-const statusDot = {
-  new: "bg-foreground",
-  processing: "bg-current text-amber-700 dark:text-amber-300",
-  completed: "bg-current text-green-700 dark:text-green-300",
-  rejected: "bg-muted-foreground",
+const statusTone = {
+  new: "primary",
+  processing: "warning",
+  completed: "success",
+  rejected: "muted",
+}
+
+const statusBadge = {
+  new: "secondary",
+  processing: "warning",
+  completed: "success",
+  rejected: "outline",
 }
 
 // The ticket's screenshot. It is only served to signed-in admins, so it is fetched
@@ -66,20 +85,20 @@ function AttachmentImage({ feedbackId }) {
 
   if (failed) {
     return (
-      <p role="alert" className="mt-2 text-sm text-destructive">
+      <p role="alert" className="mt-2 flex items-center gap-2 text-sm text-destructive">
         The image could not be loaded.
       </p>
     )
   }
-  if (!url) return <p className="mt-2 text-sm text-muted-foreground">Loading image…</p>
+  if (!url) return <LoadingText className="mt-2">Loading image…</LoadingText>
   return (
     <a
       href={url}
       target="_blank"
       rel="noreferrer"
-      className="mt-2 inline-flex flex-col gap-2 text-sm underline-offset-4 hover:underline"
+      className="mt-2 inline-flex flex-col gap-2 rounded-md text-sm text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
     >
-      <img src={url} alt="Feedback attachment" className="max-h-72 max-w-full rounded-card object-contain" />
+      <img src={url} alt="Feedback attachment" className="max-h-72 max-w-full rounded-lg border object-contain" />
       Open image in a new tab
     </a>
   )
@@ -200,66 +219,61 @@ function Ticket() {
     count: tab.value === "all" ? items.length : counts[tab.value] || 0,
   }))
 
-  const controlClass =
-    "h-14 rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent px-4 text-base outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-50"
-
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-normal">Tickets</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {loading
+    <Page>
+      <PageHeader
+        title="Tickets"
+        description={
+          loading
             ? "Loading tickets..."
             : items.length === 0
               ? "No tickets yet."
-              : `${items.length} ${items.length === 1 ? "ticket" : "tickets"}, ${openCount} still open (${counts.new || 0} new, ${counts.processing || 0} in progress).`}
-        </p>
-      </div>
+              : `${items.length} ${items.length === 1 ? "ticket" : "tickets"}, ${openCount} still open (${counts.new || 0} new, ${counts.processing || 0} in progress).`
+        }
+        actions={
+          <Button variant="outline" onClick={loadFeedback} disabled={loading}>
+            <RotateCw className={loading ? "animate-spin" : undefined} aria-hidden="true" />
+            {loading ? "Loading..." : "Refresh"}
+          </Button>
+        }
+      />
 
-      {notice && (
-        <p role="status" className="mb-4 rounded-card bg-muted px-4 py-3 text-sm">
-          {notice}
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="mb-4 rounded-card bg-error-container px-4 py-3 text-sm font-medium text-on-error-container">
-          {error}
-        </p>
-      )}
+      {notice && <SuccessNotice>{notice}</SuccessNotice>}
+      {error && <ErrorState message={error} onRetry={loadFeedback} busy={loading} />}
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(380px,0.8fr)]">
-        <section className="min-w-0 rounded-card bg-card text-card-foreground">
-          <div className="space-y-3 p-4">
-            <input
-              type="search"
-              aria-label="Search tickets"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by subject, name, email or ID"
-              className={`${controlClass} w-full`}
-            />
-            <div role="tablist" aria-label="Filter by status" className="m3-tabs">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.value}
-                  type="button"
-                  role="tab"
-                  aria-selected={filter === tab.value}
-                  onClick={() => setFilter(tab.value)}
-                  className="m3-tab state-layer transition-colors duration-200 ease-m3"
-                >
-                  {tab.label} <span className="tabular-nums text-muted-foreground">{tab.count}</span>
-                </button>
-              ))}
+        <Card className="min-w-0 gap-0 py-0">
+          <div className="space-y-3 border-b p-4">
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <Input
+                type="search"
+                aria-label="Search tickets"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by subject, name, email or ID"
+                className="pl-9"
+              />
             </div>
+            <Tabs value={filter} onValueChange={setFilter}>
+              <TabsList aria-label="Filter by status" className="w-full justify-start">
+                {tabs.map((tab) => (
+                  <TabsTrigger key={tab.value} value={tab.value} className="flex-none">
+                    {tab.label} <span className="tabular-nums text-muted-foreground">{tab.count}</span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
           </div>
 
           {loading ? (
-            <p className="px-4 pb-10 pt-6 text-center text-sm text-muted-foreground">Loading tickets...</p>
+            <LoadingRows rows={4} label="Loading tickets" className="p-4" />
           ) : filtered.length === 0 ? (
-            <p className="px-4 pb-10 pt-6 text-center text-sm text-muted-foreground">No tickets found.</p>
+            <EmptyState icon={TicketIcon} title="No tickets found" className="m-4">
+              {items.length === 0 ? "Tickets that people send appear here." : "Try another search or status."}
+            </EmptyState>
           ) : (
-            <ul className="px-2 pb-2">
+            <ul className="space-y-1 p-2">
               {filtered.map((item) => (
                 <li key={item.id}>
                   <button
@@ -270,24 +284,25 @@ function Ticket() {
                       setNotice("")
                       setConfirmDelete(false)
                     }}
-                    className={`block w-full rounded-card px-3 py-3 text-left transition-colors ${
-                      selected?.id === item.id ? "bg-muted" : "hover:bg-muted/60"
-                    }`}
+                    className={cn(
+                      "block w-full rounded-md px-3 py-3 text-left transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                      selected?.id === item.id ? "bg-accent" : "hover:bg-accent/60"
+                    )}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{item.subject || "(No subject)"}</p>
-                        <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
                           {item.user_name} · {item.user_email}
                         </p>
                       </div>
-                      <span className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap text-sm">
-                        <span aria-hidden="true" className={`size-2 rounded-full ${statusDot[item.status] || statusDot.new}`} />
+                      <Badge variant={statusBadge[item.status] || "outline"} className="shrink-0">
+                        <StatusDot tone={statusTone[item.status] || "muted"} />
                         {statusLabel(item.status)}
-                      </span>
+                      </Badge>
                     </div>
                     <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
-                    <p className="mt-2 text-sm text-muted-foreground">
+                    <p className="mt-2 text-xs text-muted-foreground">
                       {[
                         categoryLabels[item.category] || item.category,
                         formatDate(item.created_at),
@@ -302,192 +317,176 @@ function Ticket() {
               ))}
             </ul>
           )}
-        </section>
+        </Card>
 
-        <aside className="min-w-0 xl:sticky xl:top-6" aria-label="Ticket details">
+        <aside className="min-w-0 xl:sticky xl:top-20" aria-label="Ticket details">
           {!selected ? (
-            <div className="flex min-h-72 items-center justify-center rounded-card bg-card p-8 text-center text-sm text-muted-foreground">
+            <EmptyState icon={MessageSquare} title="No ticket selected" className="min-h-72 justify-center bg-card">
               Select a ticket to read it and reply.
-            </div>
+            </EmptyState>
           ) : (
-            <div className="space-y-6 rounded-card bg-card p-5 text-card-foreground">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm text-muted-foreground">Ticket #{selected.id}</p>
-                  <h2 className="mt-1 text-lg font-semibold">{selected.subject || "(No subject)"}</h2>
-                </div>
-                <select
-                  aria-label="Ticket status"
-                  disabled={saving}
-                  value={selected.status}
-                  onChange={(e) => updateStatus(selected, e.target.value)}
-                  className={controlClass}
-                >
-                  {statusOptions.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </div>
+            <Card>
+              <CardHeader>
+                <CardDescription>Ticket #{selected.id}</CardDescription>
+                <CardTitle className="text-lg">{selected.subject || "(No subject)"}</CardTitle>
+                <CardAction>
+                  <Select value={selected.status} onValueChange={(value) => updateStatus(selected, value)} disabled={saving}>
+                    <SelectTrigger aria-label="Ticket status" className="w-36">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </CardAction>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+                  <dt className="text-muted-foreground">From</dt>
+                  <dd className="min-w-0 truncate text-right">{selected.user_name} · {selected.user_email}</dd>
+                  <dt className="text-muted-foreground">Related page</dt>
+                  <dd className="text-right">{selected.related_page || "–"}</dd>
+                  <dt className="text-muted-foreground">Category</dt>
+                  <dd className="text-right">{categoryLabels[selected.category] || selected.category}</dd>
+                  <dt className="text-muted-foreground">Sent</dt>
+                  <dd className="text-right">{formatDate(selected.created_at)}</dd>
+                </dl>
 
-              <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-                <dt className="text-muted-foreground">From</dt>
-                <dd className="min-w-0 truncate text-right">{selected.user_name} · {selected.user_email}</dd>
-                <dt className="text-muted-foreground">Related page</dt>
-                <dd className="text-right">{selected.related_page || "–"}</dd>
-                <dt className="text-muted-foreground">Category</dt>
-                <dd className="text-right">{categoryLabels[selected.category] || selected.category}</dd>
-                <dt className="text-muted-foreground">Sent</dt>
-                <dd className="text-right">{formatDate(selected.created_at)}</dd>
-              </dl>
+                {selected.user_deletes_at && (
+                  <div className="space-y-3 rounded-lg bg-amber-500/10 p-4">
+                    <p className="flex gap-2 text-sm">
+                      <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden="true" />
+                      <span>
+                        <span className="font-semibold text-amber-700 dark:text-amber-400">This account is being deleted.</span>{" "}
+                        It will be removed for good on {formatDate(selected.user_deletes_at)}. An account can be restored only once.
+                      </span>
+                    </p>
+                    <Button size="sm" disabled={saving} onClick={() => restoreAccount(selected)}>
+                      {saving && <Loader2 className="animate-spin" aria-hidden="true" />}
+                      {saving ? "Restoring..." : "Restore account"}
+                    </Button>
+                  </div>
+                )}
 
-              {selected.user_deletes_at && (
-                <div className="space-y-3 rounded-field bg-amber-100 p-4 dark:bg-amber-950/50">
-                  <p className="text-sm">
-                    <span className="font-semibold text-amber-700 dark:text-amber-300">This account is being deleted.</span>{" "}
-                    It will be removed for good on {formatDate(selected.user_deletes_at)}.
-                    An account can be restored only once.
-                  </p>
-                  <button
-                    type="button"
-                    disabled={saving}
-                    onClick={() => restoreAccount(selected)}
-                    className="state-layer min-h-10 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors disabled:opacity-50"
-                  >
-                    {saving ? "Restoring..." : "Restore account"}
-                  </button>
-                </div>
-              )}
-
-              <div>
-                <h3 className="text-sm font-semibold">Description</h3>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{selected.description}</p>
-              </div>
-
-              {selected.attachment && (
                 <div>
-                  <h3 className="text-sm font-semibold">Attachment</h3>
-                  {selected.attachment.startsWith("/uploads/feedback/") ? (
-                    <AttachmentImage key={selected.id} feedbackId={selected.id} />
+                  <h3 className="text-sm font-semibold">Description</h3>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{selected.description}</p>
+                </div>
+
+                {selected.attachment && (
+                  <div>
+                    <h3 className="text-sm font-semibold">Attachment</h3>
+                    {selected.attachment.startsWith("/uploads/feedback/") ? (
+                      <AttachmentImage key={selected.id} feedbackId={selected.id} />
+                    ) : (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Attachment filename only (legacy report): {selected.attachment}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h3 className="text-sm font-semibold">User rating</h3>
+                    {selected.rating > 0 ? (
+                      <span className="text-sm font-medium tabular-nums" aria-label={`${selected.rating} out of 5`}>
+                        {selected.rating} / 5
+                      </span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Not rated yet</span>
+                    )}
+                  </div>
+                  {selected.rating > 0 ? (
+                    <div className="mt-2 space-y-2 text-sm">
+                      {Array.isArray(selected.rating_reasons) && selected.rating_reasons.length > 0 && (
+                        <p>
+                          <span className="text-muted-foreground">Reasons: </span>
+                          {selected.rating_reasons.map((reason) => ratingReasonLabels[reason] || reason).join(" · ")}
+                        </p>
+                      )}
+                      {selected.rating_comment && <p className="whitespace-pre-wrap">{selected.rating_comment}</p>}
+                      {!selected.rating_reasons?.length && !selected.rating_comment && (
+                        <p className="text-muted-foreground">The user rated without adding a reason.</p>
+                      )}
+                    </div>
                   ) : (
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Attachment filename only (legacy report): {selected.attachment}
+                      The rating and its reasons show up here once the user rates a finished ticket.
                     </p>
                   )}
                 </div>
-              )}
 
-              <div>
-                <div className="flex items-baseline justify-between gap-3">
-                  <h3 className="text-sm font-semibold">User rating</h3>
-                  {selected.rating > 0 ? (
-                    <span className="text-sm font-medium tabular-nums" aria-label={`${selected.rating} out of 5`}>
-                      {selected.rating} / 5
-                    </span>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">Not rated yet</span>
-                  )}
-                </div>
-                {selected.rating > 0 ? (
-                  <div className="mt-2 space-y-2 text-sm">
-                    {Array.isArray(selected.rating_reasons) && selected.rating_reasons.length > 0 && (
-                      <p>
-                        <span className="text-muted-foreground">Reasons: </span>
-                        {selected.rating_reasons.map((reason) => ratingReasonLabels[reason] || reason).join(" · ")}
-                      </p>
-                    )}
-                    {selected.rating_comment && <p className="whitespace-pre-wrap">{selected.rating_comment}</p>}
-                    {!selected.rating_reasons?.length && !selected.rating_comment && (
-                      <p className="text-muted-foreground">The user rated without adding a reason.</p>
+                <div>
+                  <h3 className="text-sm font-semibold">Conversation</h3>
+                  <div className="mt-3 space-y-2">
+                    {(selected.replies || []).length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No replies yet.</p>
+                    ) : (
+                      selected.replies.map((entry) => (
+                        <div key={entry.id} className="rounded-lg bg-muted p-3 text-sm">
+                          <p className="whitespace-pre-wrap">{entry.message}</p>
+                          <p className="mt-2 text-xs text-muted-foreground">{formatDate(entry.created_at)}</p>
+                        </div>
+                      ))
                     )}
                   </div>
-                ) : (
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    The rating and its reasons show up here once the user rates a finished ticket.
-                  </p>
-                )}
-              </div>
+                </div>
 
-              <div>
-                <h3 className="text-sm font-semibold">Conversation</h3>
-                <div className="mt-3 space-y-2">
-                  {(selected.replies || []).length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No replies yet.</p>
-                  ) : (
-                    selected.replies.map((entry) => (
-                      <div key={entry.id} className="rounded-card bg-muted p-3 text-sm">
-                        <p className="whitespace-pre-wrap">{entry.message}</p>
-                        <p className="mt-2 text-sm text-muted-foreground">{formatDate(entry.created_at)}</p>
+                <form onSubmit={sendReply} className="space-y-3">
+                  <Label htmlFor="feedback-reply">Write a reply</Label>
+                  <Textarea
+                    id="feedback-reply"
+                    value={reply}
+                    onChange={(e) => setReply(e.target.value)}
+                    maxLength={5000}
+                    rows={5}
+                    placeholder="Type your response to the user"
+                  />
+                  <Button type="submit" className="w-full" disabled={saving || !reply.trim()}>
+                    {saving ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Send aria-hidden="true" />}
+                    {saving ? "Sending..." : "Send reply"}
+                  </Button>
+                </form>
+
+                <Separator />
+                <div>
+                  {selected.status === "completed" || selected.status === "rejected" ? (
+                    confirmDelete ? (
+                      <div role="alertdialog" aria-label="Confirm delete" className="space-y-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm">
+                        <p>
+                          Delete ticket #{selected.id} permanently? Its replies and attached image are deleted too,
+                          and the user no longer sees it.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <Button variant="destructive" size="sm" disabled={saving} onClick={() => deleteTicket(selected)}>
+                            {saving ? "Deleting..." : "Yes, delete"}
+                          </Button>
+                          <Button variant="outline" size="sm" disabled={saving} onClick={() => setConfirmDelete(false)}>
+                            Cancel
+                          </Button>
+                        </div>
                       </div>
-                    ))
+                    ) : (
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" disabled={saving} onClick={() => setConfirmDelete(true)}>
+                        <Trash2 aria-hidden="true" />
+                        Delete ticket
+                      </Button>
+                    )
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Tickets can be deleted once they are completed or rejected.</p>
                   )}
                 </div>
-              </div>
-
-              <form onSubmit={sendReply} className="space-y-3">
-                <label className="block text-sm font-semibold" htmlFor="feedback-reply">Write a reply</label>
-                <textarea
-                  id="feedback-reply"
-                  value={reply}
-                  onChange={(e) => setReply(e.target.value)}
-                  maxLength={5000}
-                  rows={5}
-                  placeholder="Type your response to the user"
-                  className="w-full rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent p-4 text-base outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
-                />
-                <button
-                  disabled={saving || !reply.trim()}
-                  className="h-10 w-full state-layer rounded-full transition-colors duration-200 ease-m3 bg-primary px-6 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:bg-foreground/12 disabled:text-foreground/38"
-                >
-                  {saving ? "Sending..." : "Send reply"}
-                </button>
-              </form>
-
-              <div>
-                {selected.status === "completed" || selected.status === "rejected" ? (
-                  confirmDelete ? (
-                    <div role="alertdialog" aria-label="Confirm delete" className="space-y-3 rounded-card bg-error-container p-3 text-sm">
-                      <p>
-                        Delete ticket #{selected.id} permanently? Its replies and attached image are deleted too,
-                        and the user no longer sees it.
-                      </p>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          disabled={saving}
-                          onClick={() => deleteTicket(selected)}
-                          className="h-10 state-layer rounded-full transition-colors duration-200 ease-m3 bg-destructive px-6 text-sm font-medium text-destructive-foreground disabled:bg-foreground/12 disabled:text-foreground/38"
-                        >
-                          {saving ? "Deleting..." : "Yes, delete"}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={saving}
-                          onClick={() => setConfirmDelete(false)}
-                          className="h-10 state-layer rounded-full transition-colors duration-200 ease-m3 border border-input bg-transparent px-6 text-sm font-medium disabled:border-foreground/12 disabled:text-foreground/38 text-primary"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={saving}
-                      onClick={() => setConfirmDelete(true)}
-                      className="text-sm font-medium text-destructive underline-offset-4 hover:underline disabled:opacity-50"
-                    >
-                      Delete ticket
-                    </button>
-                  )
-                ) : (
-                  <p className="text-sm text-muted-foreground">Tickets can be deleted once they are completed or rejected.</p>
-                )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           )}
         </aside>
       </div>
-    </div>
+    </Page>
   )
 }
 

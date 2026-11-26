@@ -9,7 +9,12 @@ import {
   ResponsiveContainer,
 } from "recharts"
 
+import { Activity, Bot, CheckCircle2, UserRound, Zap } from "lucide-react"
 import { apiFetch } from "../lib/api"
+import { Badge } from "../components/ui/badge.jsx"
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card.jsx"
+import { Skeleton } from "../components/ui/skeleton.jsx"
+import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatusDot } from "../components/page.jsx"
 
 const normalizeStatus = (status) => {
   const value = String(status || "").toLowerCase()
@@ -371,186 +376,178 @@ function Dashboard() {
     },
   ]
 
-  const panel = "lift rounded-card border border-border bg-card p-5 text-card-foreground"
-
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] p-6">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
-        <div>
-          <h1 className="text-2xl font-normal">Dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {loading ? "Loading the latest numbers..." : pageError ? "The latest numbers could not be loaded." : finding}
-          </p>
-        </div>
-      </div>
+    <Page>
+      <PageHeader
+        title="Dashboard"
+        description={loading ? "Loading the latest numbers..." : pageError ? "The latest numbers could not be loaded." : finding}
+      />
 
-      {pageError && (
-        <p role="alert" className="mb-6 rounded-card bg-error-container px-4 py-3 text-sm font-medium text-on-error-container">
-          {pageError}
-        </p>
-      )}
+      {pageError && <ErrorState title="Could not load the dashboard" message={pageError} />}
 
       <section aria-label="Key figures" className="grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.35fr)_repeat(3,minmax(0,1fr))]">
-        <div className="hero-card kpi-card flex flex-col justify-between gap-5 rounded-card p-5 md:col-span-2 xl:col-span-1" style={{ "--i": 0 }}>
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-sm text-white/80">Success rate</p>
-              <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight">
-                {loading ? <span className="skeleton inline-block h-9 w-24 opacity-40" /> : <CountUp value={Number(successRate)} decimals={1} suffix="%" />}
-              </p>
-            </div>
-            <span className="grid size-10 place-items-center rounded-card bg-white/15 ring-1 ring-white/25">
-              <KpiIcon name="spark" />
-            </span>
-          </div>
-          <div className="space-y-2">
-            <div className="progress-track">
-              {!loading && <div className="progress-fill" style={{ width: `${Math.min(100, Number(successRate))}%` }} />}
-            </div>
-            <p className="text-xs text-white/80">
-              {loading ? "Loading..." : `${completedTasks.toLocaleString()} of ${processedTasks.toLocaleString()} finished tasks succeeded`}
-            </p>
-          </div>
-        </div>
-
-        {kpis.map((kpi, index) => (
-          <div key={kpi.label} className={`${panel} kpi-card`} style={{ "--i": index + 1 }}>
+        <Card className="justify-between gap-5 py-5 md:col-span-2 xl:col-span-1">
+          <CardContent className="space-y-5 px-5">
             <div className="flex items-start justify-between gap-3">
-              <p className="text-sm text-muted-foreground">{kpi.label}</p>
-              <span className="grid size-9 place-items-center rounded-card bg-[var(--brand-soft)] text-[var(--brand)]">
-                <KpiIcon name={kpi.icon} />
+              <div>
+                <p className="text-sm text-muted-foreground">Success rate</p>
+                <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight">
+                  {loading ? <Skeleton className="inline-block h-9 w-24" /> : <CountUp value={Number(successRate)} decimals={1} suffix="%" />}
+                </p>
+              </div>
+              <span className="grid size-9 place-items-center rounded-md bg-primary text-primary-foreground">
+                <Zap className="size-4" aria-hidden="true" />
               </span>
             </div>
-            <p className="mt-3 text-3xl font-normal tabular-nums tracking-tight">
-              {loading ? <span className="skeleton inline-block h-8 w-16" /> : <CountUp value={kpi.value} />}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">{loading ? <span className="skeleton inline-block h-4 w-32" /> : kpi.note}</p>
-          </div>
-        ))}
+            <div className="space-y-2">
+              <div
+                className="h-2 overflow-hidden rounded-full bg-muted"
+                role="progressbar"
+                aria-label="Success rate"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={loading ? undefined : Math.min(100, Number(successRate))}
+              >
+                {!loading && <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${Math.min(100, Number(successRate))}%` }} />}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {loading ? "Loading..." : `${completedTasks.toLocaleString()} of ${processedTasks.toLocaleString()} finished tasks succeeded`}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {kpis.map((kpi) => {
+          const Icon = KPI_ICONS[kpi.icon] || CheckCircle2
+          return (
+            <Card key={kpi.label} className="gap-0 py-5">
+              <CardContent className="px-5">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm text-muted-foreground">{kpi.label}</p>
+                  <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
+                </div>
+                <p className="mt-3 text-3xl font-semibold tabular-nums tracking-tight">
+                  {loading ? <Skeleton className="inline-block h-8 w-16" /> : <CountUp value={kpi.value} />}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">{loading ? <Skeleton className="inline-block h-4 w-32" /> : kpi.note}</p>
+              </CardContent>
+            </Card>
+          )
+        })}
       </section>
 
-      <div className="mt-6 grid items-stretch gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <section className={panel}>
-          <div className="mb-4 flex items-baseline justify-between gap-4">
-            <h2 className="text-base font-semibold">Tasks completed per day</h2>
-            <span className="inline-flex items-center rounded-chip bg-secondary px-3 h-8 text-sm font-medium text-secondary-foreground">Last 7 days</span>
-          </div>
-          <div className="h-64">
+      <div className="grid items-stretch gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Tasks completed per day</CardTitle>
+            <CardAction>
+              <Badge variant="secondary">Last 7 days</Badge>
+            </CardAction>
+          </CardHeader>
+          <CardContent className="h-64">
             {loading ? (
-              <div className="flex h-full items-end gap-3 px-2 pb-6">
+              <div className="flex h-full items-end gap-3 px-2 pb-6" role="status" aria-label="Loading the chart">
                 {[45, 70, 35, 85, 60, 75, 50].map((height, index) => (
-                  <span key={index} className="skeleton flex-1 rounded-t-lg" style={{ height: `${height}%` }} />
+                  <Skeleton key={index} className="flex-1 rounded-b-none" style={{ height: `${height}%` }} />
                 ))}
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={activityData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" style={{ stopColor: "var(--brand)" }} />
-                      <stop offset="100%" style={{ stopColor: "var(--brand-strong)" }} />
-                    </linearGradient>
-                  </defs>
                   <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "var(--text-muted)", fontSize: 12 }} />
-                  <YAxis axisLine={false} tickLine={false} allowDecimals={false} tick={{ fill: "var(--text-muted)", fontSize: 12 }} />
-                  <Tooltip cursor={{ fill: "var(--brand-soft)", radius: 8 }} contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 13 }} />
-                  <Bar
-                    dataKey="tasks"
-                    name="Completed"
-                    fill="url(#barFill)"
-                    radius={[8, 8, 0, 0]}
-                    maxBarSize={40}
-                    background={{ fill: "var(--surface-subtle)", radius: 8 }}
-                    animationDuration={900}
-                    animationEasing="ease-out"
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
+                  <YAxis axisLine={false} tickLine={false} allowDecimals={false} tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
+                  <Tooltip
+                    cursor={{ fill: "var(--muted)", radius: 6 }}
+                    contentStyle={{ background: "var(--popover)", color: "var(--popover-foreground)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }}
                   />
+                  <Bar dataKey="tasks" name="Completed" fill="var(--primary)" radius={[6, 6, 0, 0]} maxBarSize={40} animationDuration={600} animationEasing="ease-out" />
                 </BarChart>
               </ResponsiveContainer>
             )}
-          </div>
-        </section>
+          </CardContent>
+        </Card>
 
-        <section className={`${panel} flex flex-col`}>
-          <div className="mb-2 flex items-center justify-between gap-4">
-            <h2 className="text-base font-semibold">Agents</h2>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Agents</CardTitle>
             {!loading && (
-              <span className="text-xs text-muted-foreground">
+              <CardDescription>
                 {runningAgents} running · {activeAgents} active
-              </span>
+              </CardDescription>
             )}
-          </div>
-          <div className="flex flex-col items-center gap-2 py-4">
-            <div className="orb" aria-hidden="true" />
-            <p className="mt-4 text-sm font-medium text-[var(--brand)]">
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col">
+            <p className="mb-2 flex items-center gap-2 text-sm font-medium">
+              <StatusDot tone={runningAgents > 0 ? "success" : "muted"} running={runningAgents > 0} />
               {loading ? "Checking agents..." : runningAgents > 0 ? `${runningAgents} agent${runningAgents > 1 ? "s" : ""} at work` : "All agents are idle"}
             </p>
-          </div>
+            {loading ? (
+              <LoadingRows rows={3} label="Loading agents" />
+            ) : agents.length === 0 ? (
+              <EmptyState icon={Bot} title="No agents yet" />
+            ) : (
+              <ul className="divide-y">
+                {agents.slice(0, 5).map((agent) => {
+                  const state = agent.isActive ? (agent.status === "Running" ? "Running" : "Idle") : "Off"
+                  return (
+                    <li key={agent.id} className="flex items-center justify-between gap-4 py-2.5 text-sm">
+                      <span className="flex min-w-0 items-center gap-2.5">
+                        <StatusDot tone={state === "Running" ? "success" : state === "Idle" ? "warning" : "muted"} running={state === "Running"} />
+                        <span className="truncate font-medium">{agent.name}</span>
+                      </span>
+                      <span className="shrink-0 text-muted-foreground">{state}</span>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+            {!loading && agents.length > 5 && (
+              <p className="mt-3 text-sm text-muted-foreground">{agents.length - 5} more on the Agents page</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Recent activity</CardTitle>
+        </CardHeader>
+        <CardContent>
           {loading ? (
-            <div className="space-y-3">
-              {[0, 1, 2].map((row) => <span key={row} className="skeleton block h-5" />)}
-            </div>
-          ) : agents.length === 0 ? (
-            <p className="py-4 text-sm text-muted-foreground">No agents yet.</p>
+            <LoadingRows rows={3} label="Loading recent activity" />
+          ) : recentActivity.length === 0 ? (
+            <EmptyState icon={Activity} title="No recent activity">
+              New sign-ups and finished tasks appear here.
+            </EmptyState>
           ) : (
-            <ul className="divide-y divide-border">
-              {agents.slice(0, 5).map((agent, index) => {
-                const state = agent.isActive ? (agent.status === "Running" ? "Running" : "Idle") : "Off"
+            <ul className="divide-y">
+              {recentActivity.map((item, index) => {
+                const Icon = item.type === "user" ? UserRound : CheckCircle2
                 return (
-                  <li key={agent.id} className="activity-item flex items-center justify-between gap-4 py-2.5 text-sm" style={{ "--i": index }}>
-                    <span className="flex min-w-0 items-center gap-2.5">
-                      <span className={`status-dot ${state === "Running" ? "is-running" : state === "Idle" ? "is-idle" : ""}`} aria-hidden="true" />
-                      <span className="truncate font-medium">{agent.name}</span>
-                    </span>
-                    <span className="shrink-0 text-muted-foreground">{state}</span>
+                  <li key={`${item.type}-${item.date}-${index}`} className="flex items-center justify-between gap-4 py-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="grid size-9 shrink-0 place-items-center rounded-md border bg-muted text-muted-foreground">
+                        <Icon className="size-4" aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{item.title}</p>
+                        <p className="truncate text-sm text-muted-foreground">{item.description}</p>
+                      </div>
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">{formatRelativeTime(item.date)}</span>
                   </li>
                 )
               })}
             </ul>
           )}
-          {!loading && agents.length > 5 && (
-            <p className="mt-3 text-sm text-muted-foreground">
-              {agents.length - 5} more on the Agents page
-            </p>
-          )}
-        </section>
-      </div>
-
-      <section className={`${panel} mt-6`}>
-        <h2 className="mb-4 text-base font-semibold">Recent activity</h2>
-        {loading ? (
-          <div className="space-y-4">
-            {[0, 1, 2].map((row) => (
-              <div key={row} className="space-y-2">
-                <span className="skeleton block h-4 w-40" />
-                <span className="skeleton block h-3 w-64" />
-              </div>
-            ))}
-          </div>
-        ) : recentActivity.length === 0 ? (
-          <p className="py-4 text-sm text-muted-foreground">No recent activity.</p>
-        ) : (
-          <ul className="divide-y divide-border">
-            {recentActivity.map((item, index) => (
-              <li key={`${item.type}-${item.date}-${index}`} className="activity-item flex items-center justify-between gap-4 py-3" style={{ "--i": index }}>
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-card bg-[var(--brand-soft)] text-[var(--brand)]">
-                    <KpiIcon name={item.type === "user" ? "user" : "check"} />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">{item.title}</p>
-                    <p className="truncate text-sm text-muted-foreground">{item.description}</p>
-                  </div>
-                </div>
-                <span className="shrink-0 text-sm text-muted-foreground">{formatRelativeTime(item.date)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </div>
+        </CardContent>
+      </Card>
+    </Page>
   )
 }
+
+const KPI_ICONS = { check: CheckCircle2, agent: Bot, user: UserRound }
 
 // Counts up from 0 to the value once it arrives. Shows the value at once
 // when the viewer prefers reduced motion.
@@ -577,20 +574,6 @@ function CountUp({ value, decimals = 0, suffix = "", duration = 1100 }) {
       {shown.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
       {suffix}
     </>
-  )
-}
-
-function KpiIcon({ name }) {
-  const paths = {
-    spark: <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" />,
-    check: <><circle cx="12" cy="12" r="9" /><path d="m8 12 3 3 5-6" /></>,
-    agent: <><circle cx="12" cy="12" r="3" /><circle cx="12" cy="4" r="1.5" /><circle cx="5" cy="17" r="1.5" /><circle cx="19" cy="17" r="1.5" /><path d="M12 5.5v3.7M10 14.2l-4 2M14 14.2l4 2" /></>,
-    user: <><circle cx="12" cy="8" r="4" /><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" /></>,
-  }
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {paths[name]}
-    </svg>
   )
 }
 

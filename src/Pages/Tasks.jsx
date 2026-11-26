@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from "react"
-import { createPortal } from "react-dom"
+import { ClipboardCheck, Search } from "lucide-react"
+import { Badge } from "../components/ui/badge.jsx"
+import { Button } from "../components/ui/button.jsx"
+import { Card, CardContent } from "../components/ui/card.jsx"
+import { DialogFooter } from "../components/ui/dialog.jsx"
+import { Input } from "../components/ui/input.jsx"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select.jsx"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table.jsx"
+import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatusDot } from "../components/page.jsx"
+import { FormDialog, RowMenu } from "../components/dialogs.jsx"
 
 import { apiFetch } from "../lib/api"
 import { formatWib } from "../lib/datetime"
@@ -117,13 +126,6 @@ function Tasks() {
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
   const [priorityFilter, setPriorityFilter] = useState("All")
-
-  const [openMenu, setOpenMenu] = useState(null)
-
-  const [menuPosition, setMenuPosition] = useState({
-    top: 0,
-    left: 0,
-  })
 
   const [selectedTask, setSelectedTask] = useState(null)
 
@@ -248,122 +250,11 @@ function Tasks() {
   // STATUS
   // ============================================================
 
-  const getStatusClass = (status) => {
-    if (status === "Completed") {
-      return "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300"
-    }
+  const statusVariant = (status) =>
+    ({ Completed: "success", Running: "secondary", Pending: "warning", Failed: "destructive" })[status] || "outline"
 
-    if (status === "Running") {
-      return "bg-secondary text-primary"
-    }
-
-    if (status === "Pending") {
-      return "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
-    }
-
-    if (status === "Failed") {
-      return "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300"
-    }
-
-    return "bg-muted text-muted-foreground"
-  }
-
-  const getPriorityClass = (priority) => {
-    if (priority === "High") {
-      return "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300"
-    }
-
-    if (priority === "Medium") {
-      return "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
-    }
-
-    if (priority === "Low") {
-      return "bg-muted text-muted-foreground"
-    }
-
-    return "bg-muted text-muted-foreground"
-  }
-
-  // ============================================================
-  // ACTION MENU
-  // ============================================================
-
-  const toggleActionMenu = (
-    event,
-    taskId
-  ) => {
-    if (openMenu === taskId) {
-      setOpenMenu(null)
-      return
-    }
-
-    const buttonRect =
-      event.currentTarget.getBoundingClientRect()
-
-    const menuWidth = 160
-    const menuHeight = 48
-    const gap = 8
-    const viewportPadding = 12
-
-    let left =
-      buttonRect.right - menuWidth
-
-    if (left < viewportPadding) {
-      left = viewportPadding
-    }
-
-    if (
-      left + menuWidth >
-      window.innerWidth - viewportPadding
-    ) {
-      left =
-        window.innerWidth -
-        menuWidth -
-        viewportPadding
-    }
-
-    const spaceBelow =
-      window.innerHeight -
-      buttonRect.bottom
-
-    const spaceAbove =
-      buttonRect.top
-
-    let top
-
-    if (
-      spaceBelow >=
-      menuHeight + gap
-    ) {
-      top =
-        buttonRect.bottom + gap
-    } else if (
-      spaceAbove >=
-      menuHeight + gap
-    ) {
-      top =
-        buttonRect.top -
-        menuHeight -
-        gap
-    } else {
-      top = Math.max(
-        viewportPadding,
-        Math.min(
-          buttonRect.bottom + gap,
-          window.innerHeight -
-            menuHeight -
-            viewportPadding
-        )
-      )
-    }
-
-    setMenuPosition({
-      top,
-      left,
-    })
-
-    setOpenMenu(taskId)
-  }
+  const priorityVariant = (priority) =>
+    ({ High: "destructive", Medium: "warning" })[priority] || "outline"
 
   // ============================================================
   // CLEAR FILTERS
@@ -379,991 +270,186 @@ function Tasks() {
   // RETURN
   // ============================================================
 
+  const summary = [
+    { label: "Completed", value: completedTasks, hint: "Successfully completed", className: "text-emerald-600 dark:text-emerald-400" },
+    { label: "Running", value: runningTasks, hint: "Currently processing", className: "text-primary" },
+    { label: "Pending", value: pendingTasks, hint: "Waiting to run", className: "text-amber-700 dark:text-amber-400" },
+    { label: "Failed", value: failedTasks, hint: "Need attention", className: "text-destructive" },
+  ]
+
   return (
-    <div className="min-h-screen bg-muted p-6 text-foreground transition-colors duration-200">
+    <Page>
+      <PageHeader title="Tasks" description="Monitor tasks from all users" />
 
-      {/* ====================================================== */}
-      {/* HEADER */}
-      {/* ====================================================== */}
+      {pageError && <ErrorState message={pageError} onRetry={loadTasks} busy={loading} />}
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-normal text-foreground">
-          Tasks
-        </h1>
-
-        <p className="mt-1 text-sm text-muted-foreground">
-          Monitor tasks from all users
-        </p>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {summary.map((item) => (
+          <Card key={item.label} className="gap-1 py-5">
+            <CardContent className="px-5">
+              <p className="text-sm font-medium text-muted-foreground">{item.label}</p>
+              <p className={`mt-2 text-3xl font-semibold tabular-nums ${item.className}`}>{loading ? "..." : item.value}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{item.hint}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* ====================================================== */}
-      {/* ERROR */}
-      {/* ====================================================== */}
-
-      {pageError && (
-        <div className="mb-5 flex items-center justify-between gap-4 rounded-card border border-transparent bg-error-container px-4 py-3">
-
-          <p className="text-sm font-medium text-destructive">
-            {pageError}
-          </p>
-
-          <button
-            onClick={loadTasks}
-            className="
-              shrink-0
-              state-layer rounded-full transition-colors duration-200 ease-m3
-              bg-destructive
-              px-6
-              h-10
-              text-sm
-              font-medium
-              text-destructive-foreground
-             
-             
-            "
-          >
-            Retry
-          </button>
-
-        </div>
-      )}
-
-      {/* ====================================================== */}
-      {/* SUMMARY */}
-      {/* ====================================================== */}
-
-      <div className="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-
-        {/* Completed */}
-
-        <div
-          className="
-            rounded-dialog
-            border
-            border-border
-            bg-surface-high
-            p-5
-           
-            transition-all
-            duration-200
-            hover:-translate-y-0.5
-            hover:shadow-m3-2
-           
-           
-            dark:shadow-none
-           
-          "
-        >
-          <p className="text-sm font-medium text-muted-foreground">
-            Completed
-          </p>
-
-          <p className="mt-2 text-3xl font-normal text-green-700 dark:text-green-300">
-            {completedTasks}
-          </p>
-
-          <p className="mt-1 text-xs text-muted-foreground">
-            Successfully completed
-          </p>
-        </div>
-
-        {/* Running */}
-
-        <div
-          className="
-            rounded-dialog
-            border
-            border-border
-            bg-surface-high
-            p-5
-           
-            transition-all
-            duration-200
-            hover:-translate-y-0.5
-            hover:shadow-m3-2
-           
-           
-            dark:shadow-none
-           
-          "
-        >
-          <p className="text-sm font-medium text-muted-foreground">
-            Running
-          </p>
-
-          <p className="mt-2 text-3xl font-normal text-primary">
-            {runningTasks}
-          </p>
-
-          <p className="mt-1 text-xs text-muted-foreground">
-            Currently processing
-          </p>
-        </div>
-
-        {/* Pending */}
-
-        <div
-          className="
-            rounded-dialog
-            border
-            border-border
-            bg-surface-high
-            p-5
-           
-            transition-all
-            duration-200
-            hover:-translate-y-0.5
-            hover:shadow-m3-2
-           
-           
-            dark:shadow-none
-           
-          "
-        >
-          <p className="text-sm font-medium text-muted-foreground">
-            Pending
-          </p>
-
-          <p className="mt-2 text-3xl font-normal text-amber-700 dark:text-amber-300">
-            {pendingTasks}
-          </p>
-
-          <p className="mt-1 text-xs text-muted-foreground">
-            Waiting to run
-          </p>
-        </div>
-
-        {/* Failed */}
-
-        <div
-          className="
-            rounded-dialog
-            border
-            border-border
-            bg-surface-high
-            p-5
-           
-            transition-all
-            duration-200
-            hover:-translate-y-0.5
-            hover:shadow-m3-2
-           
-           
-            dark:shadow-none
-           
-          "
-        >
-          <p className="text-sm font-medium text-muted-foreground">
-            Failed
-          </p>
-
-          <p className="mt-2 text-3xl font-normal text-destructive">
-            {failedTasks}
-          </p>
-
-          <p className="mt-1 text-xs text-muted-foreground">
-            Need attention
-          </p>
-        </div>
-
-      </div>
-
-      {/* ====================================================== */}
-      {/* MAIN CARD */}
-      {/* ====================================================== */}
-
-      <div className="overflow-hidden rounded-card border border-border bg-card dark:shadow-none">
-
-        {/* ================================================== */}
-        {/* TOOLBAR */}
-        {/* ================================================== */}
-
-        <div className="flex flex-col gap-4 border-b border-border p-5 xl:flex-row xl:items-center xl:justify-between">
-
-          {/* Search */}
-
+      <Card className="gap-0 py-0">
+        <div className="flex flex-col gap-3 border-b p-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="relative w-full xl:max-w-md">
-
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-              ⌕
-            </span>
-
-            <input
-              type="text"
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input
+              type="search"
+              aria-label="Search tasks"
               placeholder="Search tasks, users, agents..."
               value={search}
-              onChange={(event) =>
-                setSearch(
-                  event.target.value
-                )
-              }
-              className="
-                w-full
-                rounded-field hover:border-foreground transition-colors duration-200 ease-m3
-                border
-                border-input
-                bg-transparent
-                h-14
-                pl-9
-                pr-4
-                text-base
-                text-foreground
-                outline-none
-               
-                placeholder:text-muted-foreground
-                focus:border-input
-                focus:bg-card
-                focus:ring-2
-                focus:ring-primary
-               
-               
-               
-               
-               
-               
-               
-              "
+              onChange={(event) => setSearch(event.target.value)}
+              className="pl-9"
             />
-
           </div>
-
-          {/* Filters */}
 
           <div className="flex flex-col gap-3 sm:flex-row">
-
-            <select
-              value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(
-                  event.target.value
-                )
-              }
-              className="
-                rounded-field hover:border-foreground transition-colors duration-200 ease-m3
-                border
-                border-input
-                bg-transparent
-                px-4
-                h-14
-                text-base
-                text-foreground
-                outline-none
-                focus:border-input
-               
-               
-               
-               
-              "
-            >
-              <option value="All">
-                All Status
-              </option>
-
-              <option value="Completed">
-                Completed
-              </option>
-
-              <option value="Running">
-                Running
-              </option>
-
-              <option value="Pending">
-                Pending
-              </option>
-
-              <option value="Failed">
-                Failed
-              </option>
-            </select>
-
-            <select
-              value={priorityFilter}
-              onChange={(event) =>
-                setPriorityFilter(
-                  event.target.value
-                )
-              }
-              className="
-                rounded-field hover:border-foreground transition-colors duration-200 ease-m3
-                border
-                border-input
-                bg-transparent
-                px-4
-                h-14
-                text-base
-                text-foreground
-                outline-none
-                focus:border-input
-               
-               
-               
-               
-              "
-            >
-              <option value="All">
-                All Priority
-              </option>
-
-              <option value="High">
-                High
-              </option>
-
-              <option value="Medium">
-                Medium
-              </option>
-
-              <option value="Low">
-                Low
-              </option>
-            </select>
-
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger aria-label="Filter by status" className="w-full sm:w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Status</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
+                <SelectItem value="Running">Running</SelectItem>
+                <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Failed">Failed</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger aria-label="Filter by priority" className="w-full sm:w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Priority</SelectItem>
+                <SelectItem value="High">High</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="Low">Low</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-
         </div>
 
-        {/* ================================================== */}
-        {/* RESULT INFO */}
-        {/* ================================================== */}
-
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
-
+        <div className="flex items-center justify-between border-b px-4 py-3">
           <p className="text-sm text-muted-foreground">
-            Showing{" "}
-            <span className="font-semibold text-foreground">
-              {filteredTasks.length}
-            </span>{" "}
-            of{" "}
-            <span className="font-semibold text-foreground">
-              {tasks.length}
-            </span>{" "}
-            tasks
+            Showing <span className="font-semibold text-foreground">{filteredTasks.length}</span> of{" "}
+            <span className="font-semibold text-foreground">{tasks.length}</span> tasks
           </p>
-
-          {(search ||
-            statusFilter !== "All" ||
-            priorityFilter !== "All") && (
-            <button
-              onClick={clearFilters}
-              className="
-                text-sm
-                font-medium
-                text-muted-foreground
-                transition
-                hover:text-foreground
-               
-               
-              "
-            >
+          {(search || statusFilter !== "All" || priorityFilter !== "All") && (
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
               Clear filters
-            </button>
+            </Button>
           )}
-
         </div>
-
-        {/* ================================================== */}
-        {/* LOADING */}
-        {/* ================================================== */}
 
         {loading ? (
-          <div className="px-5 py-16 text-center">
-
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary" />
-
-            <p className="mt-4 text-sm text-muted-foreground">
-              Loading tasks...
-            </p>
-
-          </div>
+          <LoadingRows rows={5} label="Loading tasks" className="p-4" />
+        ) : filteredTasks.length === 0 ? (
+          <EmptyState icon={ClipboardCheck} title="No tasks found" className="m-4">
+            {tasks.length === 0 ? "Tasks that agents run appear here." : "Try changing your search or filters."}
+          </EmptyState>
         ) : (
-          <>
-            {/* ================================================== */}
-            {/* TABLE */}
-            {/* ================================================== */}
-
-            <div className="overflow-x-auto">
-
-              <table className="w-full min-w-312">
-
-                <thead>
-
-                  <tr className="border-b border-border bg-muted">
-
-                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Task
-                    </th>
-
-                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      User
-                    </th>
-
-                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Agent
-                    </th>
-
-                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Status
-                    </th>
-
-                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Priority
-                    </th>
-
-                    <th className="px-5 py-0 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Created
-                    </th>
-
-                    <th className="px-5 py-0 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Action
-                    </th>
-
-                  </tr>
-
-                </thead>
-
-                <tbody>
-
-                  {filteredTasks.map(
-                    (task) => (
-                      <tr
-                        key={task.id}
-                        className="
-                          border-b
-                          border-border
-                          transition
-                          hover:bg-accent
-                         
-                         
-                        "
-                      >
-
-                        {/* Task */}
-
-                        <td className="px-5 py-2">
-
-                          <div>
-
-                            <p className="font-medium text-foreground">
-                              {task.title}
-                            </p>
-
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                              TASK #{task.id}
-                            </p>
-
-                          </div>
-
-                        </td>
-
-                        {/* User */}
-
-                        <td className="px-5 py-2">
-
-                          {task.user ? (
-                            <div>
-
-                              <p className="text-sm font-medium text-foreground">
-                                {task.user.name}
-                              </p>
-
-                              <p className="text-xs text-muted-foreground">
-                                {task.user.email}
-                              </p>
-
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">
-                              Unknown User
-                            </span>
-                          )}
-
-                        </td>
-
-                        {/* Agent */}
-
-                        <td className="px-5 py-2">
-
-                          {task.agent ? (
-                            <div>
-
-                              <p className="text-sm font-medium text-foreground">
-                                {task.agent.name}
-                              </p>
-
-                              <p className="text-xs text-muted-foreground">
-                                {task.agent.slug}
-                              </p>
-
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">
-                              No Agent
-                            </span>
-                          )}
-
-                        </td>
-
-                        {/* Status */}
-
-                        <td className="px-5 py-2">
-
-                          <span
-                            className={`
-                              inline-flex
-                              items-center
-                              gap-1.5
-                              rounded-chip
-                              px-3
-                              h-8
-                              text-sm
-                              font-medium
-                              ${getStatusClass(
-                                task.status
-                              )}
-                            `}
-                          >
-
-                            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-
-                            {task.status}
-
-                          </span>
-
-                        </td>
-
-                        {/* Priority */}
-
-                        <td className="px-5 py-2">
-
-                          <span
-                            className={`
-                              inline-flex
-                              inline-flex items-center rounded-chip
-                              px-3
-                              h-8
-                              text-sm
-                              font-medium
-                              ${getPriorityClass(
-                                task.priority
-                              )}
-                            `}
-                          >
-                            {task.priority}
-                          </span>
-
-                        </td>
-
-                        {/* Created */}
-
-                        <td className="px-5 py-2 text-sm text-muted-foreground">
-                          {formatDateTime(
-                            task.createdAt
-                          )}
-                        </td>
-
-                        {/* Action */}
-
-                        <td className="relative px-5 py-2 text-right">
-
-                          <button
-                            onClick={(event) =>
-                              toggleActionMenu(
-                                event,
-                                task.id
-                              )
-                            }
-                            className="
-                              inline-flex
-                              h-10
-                              w-10
-                              items-center
-                              justify-center
-                              state-layer rounded-full transition-colors duration-200 ease-m3
-                              text-lg
-                              text-muted-foreground
-                             
-                             
-                              hover:text-foreground
-                             
-                             
-                             
-                            "
-                            aria-label={`Actions for ${task.title}`}
-                          >
-                            ⋮
-                          </button>
-
-                          {openMenu === task.id &&
-                            createPortal(
-                              <div
-                                className="
-                                  fixed
-                                  z-[100]
-                                  w-40
-                                  overflow-hidden
-                                  rounded-field
-                                 
-                                 
-                                  bg-popover
-                                  py-2
-                                  text-left
-                                  shadow-m3-2
-                                 
-                                 
-                                "
-                                style={{
-                                  top: `${menuPosition.top}px`,
-                                  left: `${menuPosition.left}px`,
-                                }}
-                              >
-
-                                <button
-                                  onClick={() => {
-                                    setSelectedTask(
-                                      task
-                                    )
-                                    setOpenMenu(null)
-                                  }}
-                                  className="
-                                    block
-                                    w-full
-                                    px-4
-                                    py-2.5
-                                    text-left
-                                    text-sm
-                                    text-foreground
-                                    transition
-                                    hover:bg-accent
-                                   
-                                   
-                                  "
-                                >
-                                  View Details
-                                </button>
-
-                              </div>,
-                              document.body
-                            )}
-
-                        </td>
-
-                      </tr>
-                    )
-                  )}
-
-                </tbody>
-
-              </table>
-
-              {/* ================================================= */}
-              {/* EMPTY STATE */}
-              {/* ================================================= */}
-
-              {filteredTasks.length === 0 && (
-                <div className="px-5 py-16 text-center">
-
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted text-xl text-muted-foreground">
-                    ?
-                  </div>
-
-                  <h3 className="font-semibold text-foreground">
-                    No tasks found
-                  </h3>
-
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Try changing your search or filters.
-                  </p>
-
-                </div>
-              )}
-
-            </div>
-          </>
+          <Table className="min-w-312">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-4">Task</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Agent</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Priority</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="pr-4 text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTasks.map((task) => (
+                <TableRow key={task.id}>
+                  <TableCell className="pl-4">
+                    <p className="font-medium">{task.title}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">TASK #{task.id}</p>
+                  </TableCell>
+                  <TableCell>
+                    {task.user ? (
+                      <div>
+                        <p className="font-medium">{task.user.name}</p>
+                        <p className="text-xs text-muted-foreground">{task.user.email}</p>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">Unknown User</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {task.agent ? (
+                      <div>
+                        <p className="font-medium">{task.agent.name}</p>
+                        <p className="text-xs text-muted-foreground">{task.agent.slug}</p>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">No Agent</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={statusVariant(task.status)}>
+                      <StatusDot tone={{ Completed: "success", Running: "primary", Pending: "warning", Failed: "danger" }[task.status] || "muted"} running={task.status === "Running"} />
+                      {task.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={priorityVariant(task.priority)}>{task.priority}</Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{formatDateTime(task.createdAt)}</TableCell>
+                  <TableCell className="pr-4 text-right">
+                    <RowMenu icon label={`Actions for ${task.title}`} items={[{ label: "View Details", onSelect: () => setSelectedTask(task) }]} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
-
-      </div>
-
-      {/* ====================================================== */}
-      {/* TASK DETAILS MODAL */}
-      {/* ====================================================== */}
+      </Card>
 
       {selectedTask && (
-        <div
-          className="
-            fixed
-            inset-0
-            z-50
-            flex
-            items-center
-            justify-center
-            m3-scrim
-            p-4
-           
-          "
-          onClick={() =>
-            setSelectedTask(null)
-          }
-        >
-
-          <div
-            className="
-              w-full
-              max-w-lg
-              rounded-dialog
-              bg-surface-high
-              shadow-m3-3
-              dark:border
-             
-             
-            "
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          >
-
-            {/* Header */}
-
-            <div className="flex items-start justify-between border-b border-border p-6">
-
-              <div>
-
-                <h2 className="text-2xl font-normal text-foreground">
-                  Task Details
-                </h2>
-
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Information from the database
-                </p>
-
-              </div>
-
-              <button
-                onClick={() =>
-                  setSelectedTask(null)
-                }
-                className="
-                  flex
-                  h-10
-                  w-10
-                  items-center
-                  justify-center
-                  state-layer rounded-full transition-colors duration-200 ease-m3
-                  text-muted-foreground
-                 
-                 
-                  hover:text-foreground
-                 
-                 
-                 
-                "
-              >
-                ×
-              </button>
-
-            </div>
-
-            {/* Content */}
-
-            <div className="max-h-full overflow-y-auto p-6">
-
-              <h3 className="font-semibold text-foreground">
-                {selectedTask.title}
-              </h3>
-
-              <p className="mt-1 text-xs text-muted-foreground">
-                TASK #{selectedTask.id}
-              </p>
-
-              {selectedTask.description && (
-                <div className="mt-5 rounded-card bg-muted p-4">
-
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    {selectedTask.description}
-                  </p>
-
-                </div>
-              )}
-
-              <div className="mt-6 rounded-card border border-border">
-
-                {/* User */}
-
-                <div className="flex items-center justify-between border-b border-border px-4 py-3">
-
-                  <span className="text-sm text-muted-foreground">
-                    User
-                  </span>
-
-                  <div className="text-right">
-
-                    <p className="text-sm font-semibold text-foreground">
-                      {selectedTask.user?.name ||
-                        "Unknown User"}
-                    </p>
-
-                    <p className="text-xs text-muted-foreground">
-                      {selectedTask.user?.email ||
-                        "-"}
-                    </p>
-
-                  </div>
-
-                </div>
-
-                {/* Agent */}
-
-                <div className="flex items-center justify-between border-b border-border px-4 py-3">
-
-                  <span className="text-sm text-muted-foreground">
-                    Agent
-                  </span>
-
-                  <div className="text-right">
-
-                    <p className="text-sm font-semibold text-foreground">
-                      {selectedTask.agent?.name ||
-                        "No Agent"}
-                    </p>
-
-                    <p className="text-xs text-muted-foreground">
-                      {selectedTask.agent?.slug ||
-                        "-"}
-                    </p>
-
-                  </div>
-
-                </div>
-
-                {/* Status */}
-
-                <div className="flex items-center justify-between border-b border-border px-4 py-3">
-
-                  <span className="text-sm text-muted-foreground">
-                    Status
-                  </span>
-
-                  <span
-                    className={`
-                      inline-flex items-center rounded-chip
-                      px-3
-                      h-8
-                      text-sm
-                      font-medium
-                      ${getStatusClass(
-                        selectedTask.status
-                      )}
-                    `}
-                  >
-                    {selectedTask.status}
-                  </span>
-
-                </div>
-
-                {/* Priority */}
-
-                <div className="flex items-center justify-between border-b border-border px-4 py-3">
-
-                  <span className="text-sm text-muted-foreground">
-                    Priority
-                  </span>
-
-                  <span
-                    className={`
-                      inline-flex items-center rounded-chip
-                      px-3
-                      h-8
-                      text-sm
-                      font-medium
-                      ${getPriorityClass(
-                        selectedTask.priority
-                      )}
-                    `}
-                  >
-                    {selectedTask.priority}
-                  </span>
-
-                </div>
-
-                {/* Label */}
-
-                <div className="flex items-center justify-between border-b border-border px-4 py-3">
-
-                  <span className="text-sm text-muted-foreground">
-                    Label
-                  </span>
-
-                  <span className="text-sm font-medium text-foreground">
-                    {selectedTask.label}
-                  </span>
-
-                </div>
-
-                {/* Created */}
-
-                <div className="flex items-center justify-between border-b border-border px-4 py-3">
-
-                  <span className="text-sm text-muted-foreground">
-                    Created
-                  </span>
-
-                  <span className="text-sm font-medium text-foreground">
-                    {formatDateTime(
-                      selectedTask.createdAt
-                    )}
-                  </span>
-
-                </div>
-
-                {/* Updated */}
-
-                <div className="flex items-center justify-between px-4 py-3">
-
-                  <span className="text-sm text-muted-foreground">
-                    Updated
-                  </span>
-
-                  <span className="text-sm font-medium text-foreground">
-                    {formatDateTime(
-                      selectedTask.updatedAt
-                    )}
-                  </span>
-
-                </div>
-
-              </div>
-
-              {/* Close */}
-
-              <button
-                onClick={() =>
-                  setSelectedTask(null)
-                }
-                className="
-                  mt-6
-                  w-full
-                  state-layer rounded-full transition-colors duration-200 ease-m3
-                  bg-primary
-                  px-6
-                  h-10
-                  text-sm
-                  font-medium
-                  text-primary-foreground
-                 
-                 
-                 
-                 
-                 
-                "
-              >
-                Close
-              </button>
-
-            </div>
-
+        <FormDialog title="Task Details" subtitle="Information from the database" onClose={() => setSelectedTask(null)} className="sm:max-w-lg">
+          <div>
+            <h3 className="font-semibold">{selectedTask.title}</h3>
+            <p className="mt-1 text-xs text-muted-foreground">TASK #{selectedTask.id}</p>
           </div>
-        </div>
-      )}
 
-    </div>
+          {selectedTask.description && (
+            <p className="rounded-lg bg-muted p-4 text-sm leading-6 text-muted-foreground">{selectedTask.description}</p>
+          )}
+
+          <dl className="divide-y rounded-lg border text-sm">
+            {[
+              ["User", <div key="user" className="text-right"><p className="font-semibold">{selectedTask.user?.name || "Unknown User"}</p><p className="text-xs text-muted-foreground">{selectedTask.user?.email || "-"}</p></div>],
+              ["Agent", <div key="agent" className="text-right"><p className="font-semibold">{selectedTask.agent?.name || "No Agent"}</p><p className="text-xs text-muted-foreground">{selectedTask.agent?.slug || "-"}</p></div>],
+              ["Status", <Badge key="status" variant={statusVariant(selectedTask.status)}>{selectedTask.status}</Badge>],
+              ["Priority", <Badge key="priority" variant={priorityVariant(selectedTask.priority)}>{selectedTask.priority}</Badge>],
+              ["Label", <span key="label" className="font-medium">{selectedTask.label}</span>],
+              ["Created", <span key="created" className="font-medium">{formatDateTime(selectedTask.createdAt)}</span>],
+              ["Updated", <span key="updated" className="font-medium">{formatDateTime(selectedTask.updatedAt)}</span>],
+            ].map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between gap-4 px-4 py-3">
+                <dt className="text-muted-foreground">{label}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedTask(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </FormDialog>
+      )}
+    </Page>
   )
 }
 

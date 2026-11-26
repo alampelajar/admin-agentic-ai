@@ -9,9 +9,9 @@ function rules(source, file = 'src/Pages/Demo.jsx') {
   return problems.map((p) => p.rule)
 }
 
-test('theme classes, variables and white on the brand panel pass', () => {
-  assert.deepEqual(rules(`<p className="text-white/80 ring-1 ring-white/25" />`), [])
-  assert.deepEqual(rules(`<div className="rounded-2xl border border-border bg-card p-5 bg-[var(--app-bg)]">Users</div>`), [])
+test('theme classes and variables pass', () => {
+  assert.deepEqual(rules(`<p className="text-white" />`), [])
+  assert.deepEqual(rules(`<div className="rounded-xl border bg-card p-5 bg-[var(--background)]">Users</div>`), [])
 })
 
 test('hex, palette and arbitrary values fail', () => {
@@ -21,8 +21,9 @@ test('hex, palette and arbitrary values fail', () => {
 })
 
 test('the status color pairs from DESIGN.md are allowed', () => {
-  assert.deepEqual(rules(`<span className="bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300" />`), [])
-  assert.deepEqual(rules(`<span className="bg-red-100 text-red-700" />`), [])
+  assert.deepEqual(rules(`<span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" />`), [])
+  assert.deepEqual(rules(`<span className="bg-amber-500/10 text-amber-700 dark:text-amber-400" />`), [])
+  assert.deepEqual(rules(`<span className="bg-green-100 text-red-700" />`), ['no-palette', 'no-palette'])
 })
 
 test('browser dialogs fail', () => {

@@ -15,7 +15,11 @@ import {
   Legend,
 } from "recharts"
 
+import { BarChart3 } from "lucide-react"
 import { apiFetch } from "../lib/api"
+import { Badge } from "../components/ui/badge.jsx"
+import { Card } from "../components/ui/card.jsx"
+import { EmptyState, ErrorState, LoadingText, Page, PageHeader, StatusDot } from "../components/page.jsx"
 
 const CHART_COLORS = [
   "var(--chart-1)",
@@ -25,7 +29,7 @@ const CHART_COLORS = [
   "var(--chart-3)",
   "var(--destructive)",
   "var(--muted-foreground)",
-  "var(--tertiary)",
+  "var(--primary)",
 ]
 
 const normalizeStatus = (status) => {
@@ -478,122 +482,47 @@ function Analytics() {
   // ============================================================
 
   return (
-    <div
-      className="
-        min-h-screen
-        bg-muted
-        p-6
-        text-foreground
-        transition-colors
-        duration-200
-       
-       
-      "
-    >
+    <Page>
 
       {/* ====================================================== */}
       {/* HEADER */}
       {/* ====================================================== */}
 
-      <div className="mb-6 flex items-start justify-between gap-4">
-
-        <div>
-
-          <h1 className="text-2xl font-normal text-foreground">
-            Analytics
-          </h1>
-
-          <p className="mt-1 text-sm text-muted-foreground">
-            Monitor system performance and task analytics
-          </p>
-
-        </div>
-
-        {!loading && !pageError && (
-          <span
-            className="
-              inline-flex
-              items-center
-              gap-2
-              rounded-chip
-              bg-green-100
-              px-3
-              h-8
-              text-sm
-              font-medium
-              text-green-700
-              dark:bg-green-950/50
-              dark:text-green-300
-            "
-          >
-
-            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-
-            Live data
-
-          </span>
-        )}
-
-      </div>
+      <PageHeader
+        title="Analytics"
+        description="Monitor system performance and task analytics"
+        actions={
+          !loading &&
+          !pageError && (
+            <Badge variant="success">
+              <StatusDot tone="success" running />
+              Live data
+            </Badge>
+          )
+        }
+      />
 
       {/* ====================================================== */}
       {/* ERROR */}
       {/* ====================================================== */}
 
-      {pageError && (
-        <div
-          className="
-            mb-6
-            rounded-card
-            border
-            border-transparent
-            bg-error-container
-            px-4
-            py-3
-           
-           
-          "
-        >
-
-          <p className="text-sm font-medium text-destructive">
-            {pageError}
-          </p>
-
-        </div>
-      )}
+      {pageError && <ErrorState title="Could not load analytics" message={pageError} />}
 
       {/* ====================================================== */}
       {/* SUMMARY CARDS */}
       {/* ====================================================== */}
 
-      <div className="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
         {/* Total Tasks */}
 
-        <div
-          className="
-            rounded-dialog
-            border
-            border-border
-            bg-surface-high
-            p-5
-           
-            transition-all
-            duration-200
-            hover:-translate-y-0.5
-            hover:shadow-m3-2
-           
-           
-            dark:shadow-none
-           
-          "
-        >
+        <Card className="gap-1 px-5 py-5">
 
           <p className="text-sm font-medium text-muted-foreground">
             Total Tasks
           </p>
 
-          <p className="mt-2 text-3xl font-normal text-foreground">
+          <p className="mt-2 text-3xl font-semibold tabular-nums text-foreground">
             {loading
               ? "..."
               : tasks.length.toLocaleString()}
@@ -603,34 +532,17 @@ function Analytics() {
             From all users
           </p>
 
-        </div>
+        </Card>
 
         {/* Success Rate */}
 
-        <div
-          className="
-            rounded-dialog
-            border
-            border-border
-            bg-surface-high
-            p-5
-           
-            transition-all
-            duration-200
-            hover:-translate-y-0.5
-            hover:shadow-m3-2
-           
-           
-            dark:shadow-none
-           
-          "
-        >
+        <Card className="gap-1 px-5 py-5">
 
           <p className="text-sm font-medium text-muted-foreground">
             Success Rate
           </p>
 
-          <p className="mt-2 text-3xl font-normal text-foreground">
+          <p className="mt-2 text-3xl font-semibold tabular-nums text-foreground">
             {loading
               ? "..."
               : formatPercent(
@@ -642,34 +554,17 @@ function Analytics() {
             Completed vs failed
           </p>
 
-        </div>
+        </Card>
 
         {/* Failed Tasks */}
 
-        <div
-          className="
-            rounded-dialog
-            border
-            border-border
-            bg-surface-high
-            p-5
-           
-            transition-all
-            duration-200
-            hover:-translate-y-0.5
-            hover:shadow-m3-2
-           
-           
-            dark:shadow-none
-           
-          "
-        >
+        <Card className="gap-1 px-5 py-5">
 
           <p className="text-sm font-medium text-muted-foreground">
             Failed Tasks
           </p>
 
-          <p className="mt-2 text-3xl font-normal text-destructive">
+          <p className="mt-2 text-3xl font-semibold tabular-nums text-destructive">
             {loading
               ? "..."
               : failedTasks.toLocaleString()}
@@ -679,34 +574,17 @@ function Analytics() {
             Need attention
           </p>
 
-        </div>
+        </Card>
 
         {/* Active Agents */}
 
-        <div
-          className="
-            rounded-dialog
-            border
-            border-border
-            bg-surface-high
-            p-5
-           
-            transition-all
-            duration-200
-            hover:-translate-y-0.5
-            hover:shadow-m3-2
-           
-           
-            dark:shadow-none
-           
-          "
-        >
+        <Card className="gap-1 px-5 py-5">
 
           <p className="text-sm font-medium text-muted-foreground">
             Active Agents
           </p>
 
-          <p className="mt-2 text-3xl font-normal text-foreground">
+          <p className="mt-2 text-3xl font-semibold tabular-nums text-foreground">
             {loading
               ? "..."
               : activeAgents.toLocaleString()}
@@ -716,7 +594,7 @@ function Analytics() {
             Currently active
           </p>
 
-        </div>
+        </Card>
 
       </div>
 
@@ -724,28 +602,15 @@ function Analytics() {
       {/* TASK PERFORMANCE + AGENT USAGE */}
       {/* ====================================================== */}
 
-      <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
 
         {/* Task Performance */}
 
-        <div
-          className="
-            rounded-card
-            border
-            border-border
-            bg-card
-            p-5
-           
-           
-           
-            dark:shadow-none
-            xl:col-span-2
-          "
-        >
+        <Card className="gap-0 px-5 py-5 xl:col-span-2">
 
           <div className="mb-5">
 
-            <h2 className="text-lg font-semibold text-foreground">
+            <h2 className="text-base font-semibold">
               Task Performance
             </h2>
 
@@ -758,9 +623,13 @@ function Analytics() {
           <div className="h-80 w-full">
 
             {taskData.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                No task data available.
-              </div>
+              loading ? (
+                <LoadingText className="h-full justify-center">Loading the chart...</LoadingText>
+              ) : (
+                <EmptyState icon={BarChart3} title="No task data available" className="h-full justify-center">
+                  Numbers appear here once agents have run tasks.
+                </EmptyState>
+              )
             ) : (
               <ResponsiveContainer
                 width="100%"
@@ -846,27 +715,15 @@ function Analytics() {
 
           </div>
 
-        </div>
+        </Card>
 
         {/* Agent Distribution */}
 
-        <div
-          className="
-            rounded-card
-            border
-            border-border
-            bg-card
-            p-5
-           
-           
-           
-            dark:shadow-none
-          "
-        >
+        <Card className="gap-0 px-5 py-5">
 
           <div className="mb-3">
 
-            <h2 className="text-lg font-semibold text-foreground">
+            <h2 className="text-base font-semibold">
               Agent Usage
             </h2>
 
@@ -879,9 +736,13 @@ function Analytics() {
           <div className="h-80 w-full">
 
             {agentData.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                No agent usage data available.
-              </div>
+              loading ? (
+                <LoadingText className="h-full justify-center">Loading the chart...</LoadingText>
+              ) : (
+                <EmptyState icon={BarChart3} title="No agent usage data available" className="h-full justify-center">
+                  Numbers appear here once agents have run tasks.
+                </EmptyState>
+              )
             ) : (
               <ResponsiveContainer
                 width="100%"
@@ -939,7 +800,7 @@ function Analytics() {
 
           </div>
 
-        </div>
+        </Card>
 
       </div>
 
@@ -947,24 +808,11 @@ function Analytics() {
       {/* SUCCESS RATE */}
       {/* ====================================================== */}
 
-      <div
-        className="
-          mb-6
-          rounded-card
-          border
-          border-border
-          bg-card
-          p-5
-         
-         
-         
-          dark:shadow-none
-        "
-      >
+      <Card className="gap-0 px-5 py-5">
 
         <div className="mb-5">
 
-          <h2 className="text-lg font-semibold text-foreground">
+          <h2 className="text-base font-semibold">
             Success Rate
           </h2>
 
@@ -977,9 +825,13 @@ function Analytics() {
         <div className="h-75 w-full">
 
           {performanceData.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-              No performance data available.
-            </div>
+            loading ? (
+                <LoadingText className="h-full justify-center">Loading the chart...</LoadingText>
+              ) : (
+                <EmptyState icon={BarChart3} title="No performance data available" className="h-full justify-center">
+                  Numbers appear here once agents have run tasks.
+                </EmptyState>
+              )
           ) : (
             <ResponsiveContainer
               width="100%"
@@ -1053,68 +905,44 @@ function Analytics() {
 
         </div>
 
-      </div>
+      </Card>
 
       {/* ====================================================== */}
       {/* PERFORMANCE OVERVIEW */}
       {/* ====================================================== */}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 
         {/* Top Success Agent */}
 
-        <div
-          className="
-            rounded-card
-            border
-            border-border
-            bg-card
-            p-5
-           
-           
-           
-            dark:shadow-none
-          "
-        >
+        <Card className="gap-0 px-5 py-5">
 
           <p className="text-sm font-medium text-muted-foreground">
             Top Success Rate
           </p>
 
-          <h3 className="mt-2 text-xl font-medium text-foreground">
+          <h3 className="mt-2 text-xl font-semibold">
             {topSuccessAgent?.name ||
               "No data"}
           </h3>
 
-          <p className="mt-2 text-sm text-green-700 dark:text-green-300">
+          <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">
             {topSuccessAgent
               ? `${topSuccessAgent.successRate}% success rate`
               : "No completed or failed tasks yet"}
           </p>
 
-        </div>
+        </Card>
 
         {/* Most Active Agent */}
 
-        <div
-          className="
-            rounded-card
-            border
-            border-border
-            bg-card
-            p-5
-           
-           
-           
-            dark:shadow-none
-          "
-        >
+        <Card className="gap-0 px-5 py-5">
 
           <p className="text-sm font-medium text-muted-foreground">
             Most Active Agent
           </p>
 
-          <h3 className="mt-2 text-xl font-medium text-foreground">
+          <h3 className="mt-2 text-xl font-semibold">
             {mostActiveAgent?.name ||
               "No data"}
           </h3>
@@ -1125,29 +953,17 @@ function Analytics() {
               : "No task usage yet"}
           </p>
 
-        </div>
+        </Card>
 
         {/* Agent Coverage */}
 
-        <div
-          className="
-            rounded-card
-            border
-            border-border
-            bg-card
-            p-5
-           
-           
-           
-            dark:shadow-none
-          "
-        >
+        <Card className="gap-0 px-5 py-5">
 
           <p className="text-sm font-medium text-muted-foreground">
             Agent Coverage
           </p>
 
-          <h3 className="mt-2 text-xl font-medium text-foreground">
+          <h3 className="mt-2 text-xl font-semibold">
             {agents.length > 0
               ? `${agentData.length}/${agents.length}`
               : "0"}
@@ -1157,7 +973,7 @@ function Analytics() {
             Agents used by at least one task
           </p>
 
-        </div>
+        </Card>
 
       </div>
 
@@ -1165,20 +981,7 @@ function Analytics() {
       {/* DATA LIMITATION NOTE */}
       {/* ====================================================== */}
 
-      <div
-        className="
-          mt-6
-          rounded-card
-          border
-          border-border
-          bg-card
-          p-5
-         
-         
-         
-          dark:shadow-none
-        "
-      >
+      <Card className="gap-0 px-5 py-5">
 
         <p className="text-xs leading-5 text-muted-foreground">
           Analytics are calculated from the task and agent data available
@@ -1187,9 +990,9 @@ function Analytics() {
           dedicated completion-duration or response-time field.
         </p>
 
-      </div>
+      </Card>
 
-    </div>
+    </Page>
   )
 }
 

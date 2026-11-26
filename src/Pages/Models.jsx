@@ -2,6 +2,18 @@ import { useCallback, useEffect, useState } from "react"
 import { apiFetch } from "../lib/api"
 import { formatWib } from "../lib/datetime"
 import { useConfirm } from "../components/ui/confirm-dialog.jsx"
+import { Boxes, Loader2, Plus, RotateCw } from "lucide-react"
+import { Card, CardAction, CardHeader, CardTitle } from "../components/ui/card.jsx"
+import { DialogFooter } from "../components/ui/dialog.jsx"
+import { Switch } from "../components/ui/switch.jsx"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table.jsx"
+import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, SuccessNotice } from "../components/page.jsx"
+import { FormDialog } from "../components/dialogs.jsx"
+import { Button } from "../components/ui/button.jsx"
+import { Input } from "../components/ui/input.jsx"
+import { Label } from "../components/ui/label.jsx"
+import { NativeSelect, NativeSelectOption } from "../components/ui/native-select.jsx"
+import { Textarea } from "../components/ui/textarea.jsx"
 
 const initialForm = {
   provider_name: "",
@@ -268,238 +280,187 @@ function Models() {
 
   const activeModels = models.filter((model) => model.is_active).length
 
-  const fieldClass =
-    "h-14 w-full rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent px-4 text-base outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-50"
-  const areaClass =
-    "w-full resize-y rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent px-4 py-2.5 text-base outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
-  const labelClass = "mb-2 block text-sm font-medium"
-  const hintClass = "mt-1.5 text-sm text-muted-foreground"
-  const primaryButton =
-    "h-10 state-layer rounded-full transition-colors duration-200 ease-m3 bg-primary px-6 text-sm font-medium text-primary-foreground disabled:bg-foreground/12 disabled:text-foreground/38"
-  const secondaryButton =
-    "h-10 state-layer rounded-full transition-colors duration-200 ease-m3 border border-input bg-transparent px-6 text-sm font-medium disabled:border-foreground/12 disabled:text-foreground/38 text-primary"
-
   const agentOptions = (
     <>
-      <option value="">{agentsLoading ? "Memuat agent..." : "Pilih agent"}</option>
-      {agents.length > 1 && <option value={ALL_AGENTS}>Semua agent</option>}
+      <NativeSelectOption value="">{agentsLoading ? "Memuat agent..." : "Pilih agent"}</NativeSelectOption>
+      {agents.length > 1 && <NativeSelectOption value={ALL_AGENTS}>Semua agent</NativeSelectOption>}
       {agents.map((agent) => (
-        <option key={agent.id} value={String(agent.id)}>
+        <NativeSelectOption key={agent.id} value={String(agent.id)}>
           {agent.name}
-        </option>
+        </NativeSelectOption>
       ))}
     </>
   )
 
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] p-6">
+    <Page>
       {confirmDialog}
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div>
-          <h1 className="text-2xl font-normal">Model AI</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {loading
-              ? "Memuat model..."
-              : `${models.length} model di katalog sistem, ${activeModels} aktif. Semua akun dapat memakainya.`}
-          </p>
-        </div>
-        <button
-          type="button"
-          className={primaryButton}
-          onClick={() => {
-            setError("")
-            setSuccess("")
-            setShowAdd(true)
-          }}
-        >
-          Tambah model
-        </button>
-      </div>
+      <PageHeader
+        title="Model AI"
+        description={
+          loading
+            ? "Memuat model..."
+            : `${models.length} model di katalog sistem, ${activeModels} aktif. Semua akun dapat memakainya.`
+        }
+        actions={
+          <Button
+            onClick={() => {
+              setError("")
+              setSuccess("")
+              setShowAdd(true)
+            }}
+          >
+            <Plus aria-hidden="true" />
+            Tambah model
+          </Button>
+        }
+      />
 
-      {error && (
-        <p role="alert" className="mb-4 rounded-card bg-error-container px-4 py-3 text-sm font-medium text-on-error-container">
-          {error}
-        </p>
-      )}
-      {success && (
-        <p role="status" className="mb-4 rounded-card bg-muted px-4 py-3 text-sm">
-          {success}
-        </p>
-      )}
+      {error && <ErrorState title="Terjadi kesalahan" message={error} />}
+      {success && <SuccessNotice>{success}</SuccessNotice>}
 
-      <section className="rounded-card bg-card text-card-foreground">
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4">
-          <h2 className="text-base font-semibold">Katalog model sistem</h2>
-          <button type="button" className={secondaryButton} onClick={() => void loadModels()} disabled={loading}>
-            Muat ulang
-          </button>
-        </div>
+      <Card className="gap-0 py-0">
+        <CardHeader className="border-b py-4">
+          <CardTitle className="text-base">Katalog model sistem</CardTitle>
+          <CardAction>
+            <Button variant="outline" size="sm" onClick={() => void loadModels()} disabled={loading}>
+              <RotateCw className={loading ? "animate-spin" : undefined} aria-hidden="true" />
+              Muat ulang
+            </Button>
+          </CardAction>
+        </CardHeader>
 
         {loading ? (
-          <p className="px-4 py-12 text-center text-sm text-muted-foreground">Memuat model...</p>
+          <LoadingRows rows={4} label="Memuat model" className="p-4" />
         ) : models.length === 0 ? (
-          <p className="px-4 py-12 text-center text-sm text-muted-foreground">Belum ada model global.</p>
+          <EmptyState icon={Boxes} title="Belum ada model global" className="m-4" action={<Button size="sm" onClick={() => setShowAdd(true)}>Tambah model</Button>}>
+            Model yang ditambahkan di sini dipakai oleh semua akun.
+          </EmptyState>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-225 text-left text-sm">
-              <thead>
-                <tr className="text-muted-foreground">
-                  <th className="px-4 py-0">Model</th>
-                  <th className="px-4 py-0">Provider</th>
-                  <th className="px-4 py-0">Agent</th>
-                  <th className="px-4 py-0">Status</th>
-                  <th className="px-4 py-0">Builder default</th>
-                  <th className="px-4 py-0">Dibuat</th>
-                  <th className="px-4 py-0 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table className="min-w-225">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="pl-4">Model</TableHead>
+                  <TableHead>Provider</TableHead>
+                  <TableHead>Agent</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Builder default</TableHead>
+                  <TableHead>Dibuat</TableHead>
+                  <TableHead className="pr-4 text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {models.map((model) => (
-                  <tr key={model.id} className="align-top transition-colors hover:bg-muted/60">
-                    <td className="max-w-sm px-4 py-2">
+                  <TableRow key={model.id} className="align-top">
+                    <TableCell className="max-w-sm pl-4 whitespace-normal">
                       <p className="truncate font-medium">{model.name}</p>
                       {model.model_id !== model.name && <p className="truncate text-muted-foreground">{model.model_id}</p>}
                       {model.description && <p className="mt-1 line-clamp-2 text-muted-foreground">{model.description}</p>}
-                    </td>
-                    <td className="px-4 py-2">{model.provider?.name || "–"}</td>
-                    <td className="max-w-xs px-4 py-2 text-muted-foreground">
+                    </TableCell>
+                    <TableCell>{model.provider?.name || "–"}</TableCell>
+                    <TableCell className="max-w-xs whitespace-normal text-muted-foreground">
                       {Array.isArray(model.agents) && model.agents.length > 0
                         ? agents.length > 1 && model.agents.length === agents.length
                           ? `Semua agent (${agents.length})`
                           : model.agents.map((agent) => agent.name).join(", ")
                         : "Belum ditetapkan"}
-                    </td>
-                    <td className="px-4 py-2">
-                      <label className="inline-flex cursor-pointer items-center gap-3 whitespace-nowrap">
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={Boolean(model.is_active)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="inline-flex items-center gap-2 whitespace-nowrap">
+                        <Switch
+                          checked={Boolean(model.is_active)}
                           aria-label={`${model.is_active ? "Nonaktifkan" : "Aktifkan"} ${model.name}`}
-                          onClick={() => void toggleActive(model)}
+                          onCheckedChange={() => void toggleActive(model)}
                           disabled={updatingId === model.id}
-                          className="m3-switch"
                         />
                         <span className={model.is_active ? "" : "text-muted-foreground"}>
                           {updatingId === model.id ? "Menyimpan..." : model.is_active ? "Aktif" : "Nonaktif"}
                         </span>
-                      </label>
-                    </td>
-                    <td className="px-4 py-2">
-                      <label className="inline-flex cursor-pointer items-center gap-3 whitespace-nowrap">
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={Boolean(model.is_builder_default)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="inline-flex items-center gap-2 whitespace-nowrap">
+                        <Switch
+                          checked={Boolean(model.is_builder_default)}
                           aria-label={`${model.is_builder_default ? "Stop using" : "Use"} ${model.name} as the website builder default`}
-                          onClick={() => void toggleBuilderDefault(model)}
+                          onCheckedChange={() => void toggleBuilderDefault(model)}
                           disabled={updatingId === model.id}
-                          className="m3-switch"
                         />
                         <span className={model.is_builder_default ? "" : "text-muted-foreground"}>
                           {model.is_builder_default ? "Default" : "Premium only"}
                         </span>
-                      </label>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-muted-foreground">{formatDate(model.created_at)}</td>
-                    <td className="w-40 px-4 py-2">
+                      </div>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(model.created_at)}</TableCell>
+                    <TableCell className="w-40 pr-4">
                       <div className="flex items-center justify-end gap-2 whitespace-nowrap">
-                        <button
-                          type="button"
-                          className="h-10 state-layer rounded-full transition-colors duration-200 ease-m3 border border-input bg-transparent px-6 text-sm font-medium disabled:border-foreground/12 disabled:text-foreground/38 text-primary"
+                        <Button variant="outline" size="sm"
                           onClick={() => startEditing(model)}
                           disabled={updatingId === model.id}
                         >
                           Edit
-                        </button>
-                        <button
-                          type="button"
-                          className="h-10 state-layer rounded-full transition-colors duration-200 ease-m3 px-3 text-sm font-medium text-destructive disabled:text-foreground/38"
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"
                           onClick={() => void deleteModel(model)}
                           disabled={updatingId === model.id}
                         >
                           Hapus
-                        </button>
+                        </Button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
         )}
-      </section>
+      </Card>
 
       {showAdd && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center m3-scrim p-4"
-          onClick={() => {
-            if (!saving) setShowAdd(false)
-          }}
+        <FormDialog
+          title="Tambah model bawaan"
+          subtitle="API key disimpan terenkripsi di backend. Gunakan endpoint yang kompatibel dengan OpenAI Chat Completions."
+          onClose={() => setShowAdd(false)}
+          busy={saving}
+          className="sm:max-w-2xl"
         >
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="add-model-title"
-            className="max-h-full w-full max-w-2xl overflow-y-auto rounded-dialog bg-surface-high p-6 text-card-foreground shadow-m3-3"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 id="add-model-title" className="text-2xl font-normal">Tambah model bawaan</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  API key disimpan terenkripsi di backend. Gunakan endpoint yang kompatibel dengan OpenAI Chat Completions.
-                </p>
+            <form onSubmit={handleCreate} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="provider_name">Nama provider</Label>
+                <Input id="provider_name" name="provider_name" value={form.provider_name} onChange={handleChange} required placeholder="Contoh: OpenRouter" />
               </div>
-              <button
-                type="button"
-                aria-label="Tutup"
-                onClick={() => setShowAdd(false)}
-                disabled={saving}
-                className="size-10 shrink-0 state-layer rounded-full transition-colors duration-200 ease-m3 text-xl leading-none text-muted-foreground"
-              >
-                ×
-              </button>
-            </div>
-
-            <form onSubmit={handleCreate} className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label htmlFor="provider_name" className={labelClass}>Nama provider</label>
-                <input id="provider_name" name="provider_name" value={form.provider_name} onChange={handleChange} required placeholder="Contoh: OpenRouter" className={fieldClass} />
+              <div className="space-y-2">
+                <Label htmlFor="provider_type">Tipe provider</Label>
+                <NativeSelect id="provider_type" name="provider_type" value={form.provider_type} onChange={handleChange}>
+                  <NativeSelectOption value="openrouter">OpenRouter</NativeSelectOption>
+                  <NativeSelectOption value="openai">OpenAI-compatible / OpenAI</NativeSelectOption>
+                  <NativeSelectOption value="nararouter">NaraRouter</NativeSelectOption>
+                  <NativeSelectOption value="deepseek">DeepSeek</NativeSelectOption>
+                  <NativeSelectOption value="google">Google-compatible</NativeSelectOption>
+                  <NativeSelectOption value="custom">Custom</NativeSelectOption>
+                </NativeSelect>
               </div>
-              <div>
-                <label htmlFor="provider_type" className={labelClass}>Tipe provider</label>
-                <select id="provider_type" name="provider_type" value={form.provider_type} onChange={handleChange} className={fieldClass}>
-                  <option value="openrouter">OpenRouter</option>
-                  <option value="openai">OpenAI-compatible / OpenAI</option>
-                  <option value="nararouter">NaraRouter</option>
-                  <option value="deepseek">DeepSeek</option>
-                  <option value="google">Google-compatible</option>
-                  <option value="custom">Custom</option>
-                </select>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="base_url">Base URL</Label>
+                <Input id="base_url" name="base_url" type="url" value={form.base_url} onChange={handleChange} required placeholder="https://provider.example/v1" />
               </div>
-              <div className="md:col-span-2">
-                <label htmlFor="base_url" className={labelClass}>Base URL</label>
-                <input id="base_url" name="base_url" type="url" value={form.base_url} onChange={handleChange} required placeholder="https://provider.example/v1" className={fieldClass} />
-              </div>
-              <div className="md:col-span-2">
-                <label htmlFor="api_key" className={labelClass}>API key sistem</label>
-                <input id="api_key" name="api_key" type="password" autoComplete="new-password" value={form.api_key} onChange={handleChange} required placeholder="Masukkan API key milik sistem" aria-describedby="api-key-hint" className={fieldClass} />
-                <p id="api-key-hint" className={hintClass}>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="api_key">API key sistem</Label>
+                <Input id="api_key" name="api_key" type="password" autoComplete="new-password" value={form.api_key} onChange={handleChange} required placeholder="Masukkan API key milik sistem" aria-describedby="api-key-hint" />
+                <p id="api-key-hint" className="text-xs text-muted-foreground">
                   User memakai layanan melalui API key ini. Biaya dan batas penggunaan berada pada akun provider milik sistem.
                 </p>
               </div>
-              <div>
-                <label htmlFor="name" className={labelClass}>Nama model untuk user</label>
-                <input id="name" name="name" value={form.name} onChange={handleChange} required placeholder="Contoh: GPT Model" className={fieldClass} />
+              <div className="space-y-2">
+                <Label htmlFor="name">Nama model untuk user</Label>
+                <Input id="name" name="name" value={form.name} onChange={handleChange} required placeholder="Contoh: GPT Model" />
               </div>
-              <div>
-                <label htmlFor="model_id" className={labelClass}>Model ID dari provider</label>
-                <input id="model_id" name="model_id" value={form.model_id} onChange={handleChange} required placeholder="Contoh: provider/model-id" className={fieldClass} />
+              <div className="space-y-2">
+                <Label htmlFor="model_id">Model ID dari provider</Label>
+                <Input id="model_id" name="model_id" value={form.model_id} onChange={handleChange} required placeholder="Contoh: provider/model-id" />
               </div>
-              <div className="md:col-span-2">
-                <label htmlFor="agent_id" className={labelClass}>Agent tujuan</label>
-                <select
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="agent_id">Agent tujuan</Label>
+                <NativeSelect
                   id="agent_id"
                   name="agent_id"
                   value={form.agent_id}
@@ -507,87 +468,81 @@ function Models() {
                   required
                   disabled={agentsLoading || saving}
                   aria-describedby="agent-hint"
-                  className={fieldClass}
                 >
                   {agentOptions}
-                </select>
-                {agentLoadError && <p role="alert" className="mt-1.5 text-sm text-destructive">{agentLoadError}</p>}
-                <p id="agent-hint" className={hintClass}>
+                </NativeSelect>
+                {agentLoadError && <p role="alert" className="text-sm text-destructive">{agentLoadError}</p>}
+                <p id="agent-hint" className="text-xs text-muted-foreground">
                   Pilih satu agent, atau "Semua agent" untuk menghubungkan model ke setiap agent aktif.
                 </p>
               </div>
-              <div className="md:col-span-2">
-                <label htmlFor="description" className={labelClass}>Deskripsi (opsional)</label>
-                <textarea id="description" name="description" value={form.description} onChange={handleChange} rows={2} placeholder="Kegunaan atau catatan model" className={areaClass} />
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="description">Deskripsi (opsional)</Label>
+                <Textarea id="description" name="description" value={form.description} onChange={handleChange} rows={2} placeholder="Kegunaan atau catatan model" />
               </div>
-              <div className="flex justify-end gap-3 md:col-span-2">
-                <button type="button" className={secondaryButton} onClick={() => setShowAdd(false)} disabled={saving}>Batal</button>
-                <button type="submit" className={primaryButton} disabled={saving}>
+              <DialogFooter className="md:col-span-2">
+                <Button variant="outline" onClick={() => setShowAdd(false)} disabled={saving}>Batal</Button>
+                <Button type="submit" disabled={saving}>
+                  {saving && <Loader2 className="animate-spin" aria-hidden="true" />}
                   {saving ? "Menyimpan..." : "Tambah model ke agent"}
-                </button>
-              </div>
+                </Button>
+              </DialogFooter>
             </form>
-          </section>
-        </div>
+        </FormDialog>
       )}
 
       {editingModel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center m3-scrim p-4" role="presentation">
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="edit-model-title"
-            className="max-h-full w-full max-w-xl overflow-y-auto rounded-dialog bg-surface-high p-6 text-card-foreground shadow-m3-3"
-          >
-            <h2 id="edit-model-title" className="text-2xl font-normal">Edit model AI</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Perubahan berlaku bagi semua pengguna yang memakai model global ini.
-            </p>
-            <form onSubmit={handleUpdate} className="mt-6 space-y-4">
-              <div>
-                <label htmlFor="edit-model-name" className={labelClass}>Nama model</label>
-                <input id="edit-model-name" name="name" value={editForm.name} onChange={handleEditChange} required maxLength={150} className={fieldClass} />
+        <FormDialog
+          title="Edit model AI"
+          subtitle="Perubahan berlaku bagi semua pengguna yang memakai model global ini."
+          onClose={() => setEditingModel(null)}
+          busy={updatingId === editingModel.id}
+          className="sm:max-w-xl"
+        >
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-model-name">Nama model</Label>
+                <Input id="edit-model-name" name="name" value={editForm.name} onChange={handleEditChange} required maxLength={150} />
               </div>
-              <div>
-                <label htmlFor="edit-model-id" className={labelClass}>Model ID provider</label>
-                <input id="edit-model-id" name="model_id" value={editForm.model_id} onChange={handleEditChange} required maxLength={200} className={fieldClass} />
+              <div className="space-y-2">
+                <Label htmlFor="edit-model-id">Model ID provider</Label>
+                <Input id="edit-model-id" name="model_id" value={editForm.model_id} onChange={handleEditChange} required maxLength={200} />
               </div>
-              <div>
-                <label htmlFor="edit-model-agent" className={labelClass}>Agent tujuan</label>
-                <select
+              <div className="space-y-2">
+                <Label htmlFor="edit-model-agent">Agent tujuan</Label>
+                <NativeSelect
                   id="edit-model-agent"
                   name="agent_id"
                   value={editForm.agent_id}
                   onChange={handleEditChange}
                   required
                   disabled={updatingId === editingModel.id || agentsLoading}
-                  className={fieldClass}
                 >
                   {agentOptions}
-                </select>
+                </NativeSelect>
                 {editForm.agent_id === "" && Array.isArray(editingModel.agents) && editingModel.agents.length > 1 && (
-                  <p className={hintClass}>
+                  <p className="text-xs text-muted-foreground">
                     Model ini terhubung ke {editingModel.agents.length} agent. Pilih satu agent atau "Semua agent" untuk menyimpan relasinya.
                   </p>
                 )}
               </div>
-              <div>
-                <label htmlFor="edit-model-description" className={labelClass}>Deskripsi</label>
-                <textarea id="edit-model-description" name="description" value={editForm.description} onChange={handleEditChange} rows={3} className={areaClass} />
+              <div className="space-y-2">
+                <Label htmlFor="edit-model-description">Deskripsi</Label>
+                <Textarea id="edit-model-description" name="description" value={editForm.description} onChange={handleEditChange} rows={3} />
               </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setEditingModel(null)} disabled={updatingId === editingModel.id} className={secondaryButton}>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditingModel(null)} disabled={updatingId === editingModel.id}>
                   Batal
-                </button>
-                <button type="submit" disabled={updatingId === editingModel.id} className={primaryButton}>
+                </Button>
+                <Button type="submit" disabled={updatingId === editingModel.id}>
+                  {updatingId === editingModel.id && <Loader2 className="animate-spin" aria-hidden="true" />}
                   {updatingId === editingModel.id ? "Menyimpan..." : "Simpan perubahan"}
-                </button>
-              </div>
+                </Button>
+              </DialogFooter>
             </form>
-          </section>
-        </div>
+        </FormDialog>
       )}
-    </div>
+    </Page>
   )
 }
 

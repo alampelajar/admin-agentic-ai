@@ -23,6 +23,9 @@ import Websites from "./Pages/Websites.jsx"
 import TopUps from "./Pages/TopUps.jsx"
 import Settings from "./Pages/Settings.jsx"
 import Login from "./Pages/Login/Login.jsx"
+import { Loader2 } from "lucide-react"
+import { cn } from "./lib/utils.js"
+import { Toaster } from "./components/ui/sonner.jsx"
 import { getAccessToken, SESSION_ENDED_EVENT } from "./lib/auth.js"
 
 const SIDEBAR_KEY = "admin_sidebar"
@@ -40,7 +43,7 @@ function AdminLayout() {
   }
 
   return (
-    <div className={`app ${collapsed ? "sidebar-collapsed" : ""}`}>
+    <div className="min-h-svh bg-background">
       <Sidebar
         open={mobileNavOpen}
         collapsed={collapsed}
@@ -48,11 +51,11 @@ function AdminLayout() {
         onNavigate={() => setMobileNavOpen(false)}
       />
 
-      <main className="main-content">
+      <main className={cn("min-w-0 transition-[padding] duration-200", collapsed ? "md:pl-16" : "md:pl-60")}>
         <Header onMenuClick={() => setMobileNavOpen(true)} />
 
         {/* Keyed by path so each page plays its entrance animation. */}
-        <div key={location.pathname} className="page-content page-enter">
+        <div key={location.pathname} className="page-enter">
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/users" element={<Users />} />
@@ -78,8 +81,8 @@ function AdminLayout() {
 
 function SessionScreen() {
   return (
-    <div className="session-screen">
-      <span className="session-spinner" aria-hidden="true" />
+    <div className="flex min-h-svh items-center justify-center gap-2 bg-background text-sm text-muted-foreground" role="status">
+      <Loader2 className="size-4 animate-spin" aria-hidden="true" />
       <p>Checking session...</p>
     </div>
   )
@@ -137,6 +140,7 @@ function App() {
   return (
     <BrowserRouter>
       <AppContent />
+      <Toaster richColors closeButton />
     </BrowserRouter>
   )
 }

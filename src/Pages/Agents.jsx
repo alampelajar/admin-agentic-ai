@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useState } from "react"
-import { createPortal } from "react-dom"
+import { Bot, Search } from "lucide-react"
 
 import { apiFetch } from "../lib/api"
+import { Badge } from "../components/ui/badge.jsx"
+import { Button } from "../components/ui/button.jsx"
+import { Card } from "../components/ui/card.jsx"
+import { DialogFooter } from "../components/ui/dialog.jsx"
+import { Input } from "../components/ui/input.jsx"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select.jsx"
+import { Separator } from "../components/ui/separator.jsx"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table.jsx"
+import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatusDot } from "../components/page.jsx"
+import { FormDialog, RowMenu } from "../components/dialogs.jsx"
 
 const normalizeStatus = (status) => {
   if (!status) {
@@ -58,13 +68,6 @@ function Agents() {
 
   const [loading, setLoading] = useState(true)
   const [pageError, setPageError] = useState("")
-
-  const [openMenu, setOpenMenu] = useState(null)
-
-  const [menuPosition, setMenuPosition] = useState({
-    top: 0,
-    left: 0,
-  })
 
   const [selectedAgent, setSelectedAgent] = useState(null)
 
@@ -168,88 +171,6 @@ function Agents() {
   )
 
   // ============================================================
-  // ACTION MENU
-  // ============================================================
-
-  const toggleActionMenu = (
-    event,
-    agentId
-  ) => {
-    if (openMenu === agentId) {
-      setOpenMenu(null)
-      return
-    }
-
-    const buttonRect =
-      event.currentTarget.getBoundingClientRect()
-
-    const menuWidth = 160
-    const menuHeight = 48
-
-    const gap = 8
-    const viewportPadding = 12
-
-    let left =
-      buttonRect.right - menuWidth
-
-    if (left < viewportPadding) {
-      left = viewportPadding
-    }
-
-    if (
-      left + menuWidth >
-      window.innerWidth - viewportPadding
-    ) {
-      left =
-        window.innerWidth -
-        menuWidth -
-        viewportPadding
-    }
-
-    const spaceBelow =
-      window.innerHeight -
-      buttonRect.bottom
-
-    const spaceAbove =
-      buttonRect.top
-
-    let top
-
-    if (
-      spaceBelow >=
-      menuHeight + gap
-    ) {
-      top =
-        buttonRect.bottom + gap
-    } else if (
-      spaceAbove >=
-      menuHeight + gap
-    ) {
-      top =
-        buttonRect.top -
-        menuHeight -
-        gap
-    } else {
-      top = Math.max(
-        viewportPadding,
-        Math.min(
-          buttonRect.bottom + gap,
-          window.innerHeight -
-            menuHeight -
-            viewportPadding
-        )
-      )
-    }
-
-    setMenuPosition({
-      top,
-      left,
-    })
-
-    setOpenMenu(agentId)
-  }
-
-  // ============================================================
   // CLEAR FILTERS
   // ============================================================
 
@@ -262,235 +183,162 @@ function Agents() {
   // RETURN
   // ============================================================
 
-  const statusDot = (status) =>
-    status === "Running" || status === "Active"
-      ? "bg-current text-green-700 dark:text-green-300"
-      : status === "Idle"
-        ? "bg-current text-amber-700 dark:text-amber-300"
-        : "bg-muted-foreground"
-
-  const controlClass =
-    "h-14 rounded-field hover:border-foreground transition-colors duration-200 ease-m3 border border-input bg-transparent px-4 text-base outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary"
+  const statusTone = (status) =>
+    status === "Running" || status === "Active" ? "success" : status === "Idle" ? "warning" : "muted"
 
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-normal">Agents</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {loading
+    <Page>
+      <PageHeader
+        title="Agents"
+        description={
+          loading
             ? "Loading agents..."
-            : `${agents.length} ${agents.length === 1 ? "agent" : "agents"}, ${activeAgents} active, ${runningAgents} running now, ${totalModels} ${totalModels === 1 ? "model" : "models"} connected.`}
-        </p>
-      </div>
+            : `${agents.length} ${agents.length === 1 ? "agent" : "agents"}, ${activeAgents} active, ${runningAgents} running now, ${totalModels} ${totalModels === 1 ? "model" : "models"} connected.`
+        }
+      />
 
-      {pageError && (
-        <div role="alert" className="mb-6 flex items-center justify-between gap-4 rounded-card bg-error-container px-4 py-3">
-          <p className="text-sm font-medium text-destructive">{pageError}</p>
-          <button type="button" onClick={loadAgents} className="text-sm font-medium underline-offset-4 hover:underline">
-            Retry
-          </button>
-        </div>
-      )}
+      {pageError && <ErrorState message={pageError} onRetry={loadAgents} busy={loading} />}
 
-      <section className="rounded-card bg-card text-card-foreground">
-        <div className="flex flex-wrap items-center gap-3 p-4">
-          <input
-            type="search"
-            aria-label="Search agents"
-            placeholder="Search by name, slug, ID or description"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            className={`${controlClass} min-w-0 flex-1 basis-64`}
-          />
-          <select
-            aria-label="Filter by status"
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className={controlClass}
-          >
-            <option value="All">All statuses</option>
-            <option value="Running">Running</option>
-            <option value="Idle">Idle</option>
-            <option value="Stopped">Stopped</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
-          <p className="ml-auto text-sm text-muted-foreground">
+      <Card className="gap-0 py-0">
+        <div className="flex flex-wrap items-center gap-3 border-b p-4">
+          <div className="relative min-w-0 flex-1 basis-64">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input
+              type="search"
+              aria-label="Search agents"
+              placeholder="Search by name, slug, ID or description"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger aria-label="Filter by status" className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All statuses</SelectItem>
+              <SelectItem value="Running">Running</SelectItem>
+              <SelectItem value="Idle">Idle</SelectItem>
+              <SelectItem value="Stopped">Stopped</SelectItem>
+              <SelectItem value="Active">Active</SelectItem>
+              <SelectItem value="Inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
             {filteredAgents.length} of {agents.length}
             {(search || statusFilter !== "All") && (
-              <button type="button" onClick={clearFilters} className="ml-3 font-medium text-foreground underline-offset-4 hover:underline">
+              <Button variant="link" size="sm" className="h-auto px-0" onClick={clearFilters}>
                 Clear filters
-              </button>
+              </Button>
             )}
           </p>
         </div>
 
         {loading ? (
-          <p className="px-4 py-12 text-center text-sm text-muted-foreground">Loading agents...</p>
+          <LoadingRows rows={4} label="Loading agents" className="p-4" />
+        ) : filteredAgents.length === 0 ? (
+          <EmptyState icon={Bot} title="No agents found" className="m-4">
+            {agents.length === 0 ? "Agents appear here once they are set up in the backend." : "Try changing your search or filter."}
+          </EmptyState>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-190 text-left text-sm">
-              <thead>
-                <tr className="text-muted-foreground">
-                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Agent</th>
-                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Status</th>
-                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Active</th>
-                  <th className="px-4 py-0 text-sm font-normal normal-case tracking-normal">Models</th>
-                  <th className="w-12 px-4 py-0"><span className="sr-only">Actions</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAgents.map((agent) => (
-                  <tr key={agent.id} className="transition-colors hover:bg-muted/60">
-                    <td className="max-w-md px-4 py-2">
-                      <p className="truncate font-medium">{agent.name}</p>
-                      <p className="truncate text-muted-foreground">
-                        {agent.slug} · #{agent.id}
-                      </p>
-                    </td>
-                    <td className="px-4 py-2">
-                      <span className="inline-flex items-center gap-2 whitespace-nowrap">
-                        <span aria-hidden="true" className={`size-2 rounded-full ${statusDot(agent.status)}`} />
-                        {agent.status}
+          <Table className="min-w-190">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-4">Agent</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Active</TableHead>
+                <TableHead>Models</TableHead>
+                <TableHead className="w-12 pr-4">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredAgents.map((agent) => (
+                <TableRow key={agent.id}>
+                  <TableCell className="max-w-md pl-4">
+                    <p className="truncate font-medium">{agent.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {agent.slug} · #{agent.id}
+                    </p>
+                  </TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center gap-2">
+                      <StatusDot tone={statusTone(agent.status)} running={agent.status === "Running"} />
+                      {agent.status}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={agent.isActive ? "success" : "outline"}>{agent.isActive ? "Yes" : "No"}</Badge>
+                  </TableCell>
+                  <TableCell className="max-w-64 text-muted-foreground">
+                    {agent.models.length === 0 ? (
+                      "–"
+                    ) : (
+                      <span className="block truncate" title={agent.models.map((model) => model.name).join("\n")}>
+                        {agent.models.slice(0, 2).map((model) => model.name).join(", ")}
+                        {agent.models.length > 2 && ` +${agent.models.length - 2}`}
                       </span>
-                    </td>
-                    <td className={`px-4 py-2 ${agent.isActive ? "" : "text-muted-foreground"}`}>
-                      {agent.isActive ? "Yes" : "No"}
-                    </td>
-                    <td className="px-4 py-2 text-muted-foreground">
-                      {agent.models.length === 0 ? (
-                        "–"
-                      ) : (
-                        <span title={agent.models.map((model) => model.name).join("\n")}>
-                          {agent.models.slice(0, 2).map((model) => model.name).join(", ")}
-                          {agent.models.length > 2 && ` +${agent.models.length - 2}`}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <button
-                        type="button"
-                        onClick={(event) => toggleActionMenu(event, agent.id)}
-                        aria-label={`Actions for ${agent.name}`}
-                        aria-expanded={openMenu === agent.id}
-                        className="size-10 state-layer rounded-full transition-colors duration-200 ease-m3 text-lg leading-none text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        ⋮
-                      </button>
-                      {openMenu === agent.id &&
-                        createPortal(
-                          <div
-                            role="menu"
-                            style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
-                            className="fixed z-50 w-40 rounded-field bg-popover py-2 text-sm text-popover-foreground shadow-m3-2"
-                          >
-                            <button
-                              type="button"
-                              role="menuitem"
-                              className="block w-full px-3 min-h-12 text-left hover:bg-accent"
-                              onClick={() => {
-                                setSelectedAgent(agent)
-                                setOpenMenu(null)
-                              }}
-                            >
-                              View details
-                            </button>
-                          </div>,
-                          document.body
-                        )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filteredAgents.length === 0 && (
-              <div className="px-4 py-12 text-center">
-                <h2 className="text-base font-semibold">No agents found</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Try changing your search or filter.</p>
-              </div>
-            )}
-          </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="pr-4 text-right">
+                    <RowMenu icon label={`Actions for ${agent.name}`} items={[{ label: "View details", onSelect: () => setSelectedAgent(agent) }]} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
-      </section>
+      </Card>
 
       {selectedAgent && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center m3-scrim p-4"
-          onClick={() => setSelectedAgent(null)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="agent-details-title"
-            className="max-h-full w-full max-w-lg overflow-y-auto rounded-dialog bg-surface-high p-6 text-card-foreground shadow-m3-3"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <h2 id="agent-details-title" className="truncate text-2xl font-normal">{selectedAgent.name}</h2>
-                <p className="truncate text-sm text-muted-foreground">{selectedAgent.slug}</p>
-              </div>
-              <button
-                type="button"
-                aria-label="Close"
-                onClick={() => setSelectedAgent(null)}
-                className="size-10 shrink-0 state-layer rounded-full transition-colors duration-200 ease-m3 text-xl leading-none text-muted-foreground"
-              >
-                ×
-              </button>
-            </div>
+        <FormDialog title={selectedAgent.name} subtitle={selectedAgent.slug} onClose={() => setSelectedAgent(null)} className="sm:max-w-lg">
+          {selectedAgent.description && <p className="text-sm leading-6">{selectedAgent.description}</p>}
 
-            <p className="mt-4 text-sm leading-6">{selectedAgent.description}</p>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
+            <dt className="text-muted-foreground">Agent ID</dt>
+            <dd className="text-right tabular-nums">#{selectedAgent.id}</dd>
+            <dt className="text-muted-foreground">Status</dt>
+            <dd className="text-right">
+              <span className="inline-flex items-center gap-2">
+                <StatusDot tone={statusTone(selectedAgent.status)} />
+                {selectedAgent.status}
+              </span>
+            </dd>
+            <dt className="text-muted-foreground">Active</dt>
+            <dd className="text-right">{selectedAgent.isActive ? "Yes" : "No"}</dd>
+          </dl>
 
-            <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
-              <dt className="text-muted-foreground">Agent ID</dt>
-              <dd className="text-right tabular-nums">#{selectedAgent.id}</dd>
-              <dt className="text-muted-foreground">Status</dt>
-              <dd className="text-right">
-                <span className="inline-flex items-center gap-2">
-                  <span aria-hidden="true" className={`size-2 rounded-full ${statusDot(selectedAgent.status)}`} />
-                  {selectedAgent.status}
-                </span>
-              </dd>
-              <dt className="text-muted-foreground">Active</dt>
-              <dd className="text-right">{selectedAgent.isActive ? "Yes" : "No"}</dd>
-            </dl>
-
-            <h3 className="mt-6 text-sm font-semibold">Models ({selectedAgent.models.length})</h3>
-            {selectedAgent.models.length === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">No models connected.</p>
-            ) : (
-              <ul className="mt-2 divide-y divide-border">
-                {selectedAgent.models.map((model) => (
-                  <li key={model.id} className="py-3 text-sm">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="truncate font-medium">{model.name}</p>
-                        {model.model_id !== model.name && (
-                          <p className="truncate text-muted-foreground">{model.model_id}</p>
-                        )}
-                      </div>
-                      <span className="shrink-0 text-muted-foreground">{model.provider?.name || "Unknown provider"}</span>
+          <Separator />
+          <h3 className="text-sm font-semibold">Models ({selectedAgent.models.length})</h3>
+          {selectedAgent.models.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No models connected.</p>
+          ) : (
+            <ul className="divide-y">
+              {selectedAgent.models.map((model) => (
+                <li key={model.id} className="py-3 text-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{model.name}</p>
+                      {model.model_id !== model.name && <p className="truncate text-muted-foreground">{model.model_id}</p>}
                     </div>
-                    {model.description && <p className="mt-2 text-muted-foreground">{model.description}</p>}
-                  </li>
-                ))}
-              </ul>
-            )}
+                    <span className="shrink-0 text-muted-foreground">{model.provider?.name || "Unknown provider"}</span>
+                  </div>
+                  {model.description && <p className="mt-2 text-muted-foreground">{model.description}</p>}
+                </li>
+              ))}
+            </ul>
+          )}
 
-            <div className="mt-6 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSelectedAgent(null)}
-                className="h-10 state-layer rounded-full transition-colors duration-200 ease-m3 border border-input bg-transparent px-6 text-sm font-medium text-primary"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedAgent(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </FormDialog>
       )}
-    </div>
+    </Page>
   )
 }
 
