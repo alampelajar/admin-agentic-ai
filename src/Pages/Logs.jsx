@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 
 import { apiFetch } from "../lib/api"
 import { formatWib } from "../lib/datetime"
-import { Globe, Plus, RotateCw, Trash2 } from "lucide-react"
+import { Globe, Plus, RotateCw, ShieldAlert, Trash2 } from "lucide-react"
 import { Badge } from "../components/ui/badge.jsx"
 import { Button } from "../components/ui/button.jsx"
 import { Card, CardContent } from "../components/ui/card.jsx"
@@ -11,17 +11,19 @@ import { EmptyState, ErrorState, LoadingRows, Page, PageHeader, StatCard } from 
 import { Input } from "../components/ui/input.jsx"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table.jsx"
 
-// The Logs page lists when websites were made, published and deleted. Managing the
-// websites themselves is on the Websites page.
+// The Logs page lists when websites were made, published and deleted, and every
+// website the builder refused because it is forbidden (gambling, pornography).
+// Managing the websites themselves is on the Websites page.
 
 const EVENTS = {
   "site.create": { label: "Made", variant: "secondary", icon: "plus" },
   "site.publish": { label: "Published", variant: "success", icon: "globe" },
   "site.delete": { label: "Deleted", variant: "destructive", icon: "trash" },
+  "site.refused": { label: "Refused", variant: "destructive", icon: "shield" },
 }
 
 function EventIcon({ name }) {
-  const Icon = { plus: Plus, globe: Globe, trash: Trash2 }[name] || Plus
+  const Icon = { plus: Plus, globe: Globe, trash: Trash2, shield: ShieldAlert }[name] || Plus
   return <Icon className="size-4" aria-hidden="true" />
 }
 
@@ -67,7 +69,7 @@ function Logs() {
   }, [load])
 
   const counts = useMemo(() => {
-    const result = { "site.create": 0, "site.publish": 0, "site.delete": 0 }
+    const result = { "site.create": 0, "site.publish": 0, "site.delete": 0, "site.refused": 0 }
     logs.forEach((log) => {
       if (log.action in result) result[log.action] += 1
     })
@@ -103,7 +105,7 @@ function Logs() {
         title="Logs"
         description={
           <>
-            When websites were made, published and deleted, and by whom. Manage websites on the{" "}
+            When websites were made, published and deleted, and which forbidden websites (gambling, pornography) were refused. Manage websites on the{" "}
             <Link to="/websites" className="rounded-sm font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50">
               Websites
             </Link>{" "}
@@ -118,7 +120,7 @@ function Logs() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Object.entries(EVENTS).map(([action, event]) => (
           <StatCard key={action} label={event.label} icon={<EventIcon name={event.icon} />} value={counts[action]} loading={loading && logs.length === 0} />
         ))}
@@ -186,7 +188,7 @@ function Logs() {
                       <p className="truncate font-medium text-foreground" title={log.site_name}>
                         {log.site_name || "-"}
                       </p>
-                      <p className="text-xs text-muted-foreground tabular-nums">#{log.site_id}</p>
+                      {log.site_id && <p className="text-xs text-muted-foreground tabular-nums">#{log.site_id}</p>}
                     </TableCell>
                     <TableCell className="max-w-56">
                       {log.actor ? (
@@ -197,6 +199,14 @@ function Logs() {
                           </p>
                           {log.actor.name && log.actor.name !== log.actor.email && (
                             <p className="truncate text-xs text-muted-foreground">{log.actor.email}</p>
+                          )}
+                          {log.action === "site.refused" && log.actor.email && (
+                            <Link
+                              to={`/users?search=${encodeURIComponent(log.actor.email)}`}
+                              className="text-xs font-medium text-destructive underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            >
+                              Open account to suspend
+                            </Link>
                           )}
                         </div>
                       ) : (

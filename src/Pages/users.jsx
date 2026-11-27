@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import { Loader2, Search, UserPlus, Users as UsersIcon } from "lucide-react"
 import { apiFetch } from "../lib/api"
 import { formatWib } from "../lib/datetime"
@@ -45,6 +46,10 @@ const normalizeUser = (user) => {
     // Set once an admin restored the account; it cannot be restored a second time.
     restoredAt: user.restored_at || null,
     status: user.deletes_at ? "Being deleted" : user.status || "Active",
+    // Set while an admin has suspended the account (it cannot sign in), with the reason
+    // the person is shown.
+    suspendedAt: user.suspended_at || null,
+    suspendReason: user.suspend_reason || "",
     agents: Array.isArray(user.agents)
       ? user.agents.map((agent) => ({
           id: agent.id,
@@ -107,7 +112,10 @@ function Users() {
   const [askToConfirm, confirmDialog] = useConfirm()
   const [users, setUsers] = useState([])
 
-  const [search, setSearch] = useState("")
+  // The Logs page links here with ?search=<email> to find the person who tried
+  // to make a forbidden website.
+  const [searchParams] = useSearchParams()
+  const [search, setSearch] = useState(() => searchParams.get("search") || "")
   const [roleFilter, setRoleFilter] = useState("All")
 
   const [selectedUser, setSelectedUser] = useState(null)
@@ -130,6 +138,11 @@ function Users() {
   const [creditForm, setCreditForm] = useState({ amount: "", note: "" })
   const [creditError, setCreditError] = useState("")
   const [savingCredits, setSavingCredits] = useState(false)
+  // Suspending an account: it cannot sign in, its websites go offline.
+  const [suspendUser, setSuspendUser] = useState(null)
+  const [suspendReason, setSuspendReason] = useState("")
+  const [suspendError, setSuspendError] = useState("")
+  const [suspending, setSuspending] = useState(false)
 
   const [pageError, setPageError] = useState("")
 
@@ -604,6 +617,65 @@ function Users() {
   }
 
   // ============================================================
+  // SUSPEND OR GIVE BACK AN ACCOUNT
+  // ============================================================
+
+  const openSuspend = (user) => {
+    setSuspendUser(user)
+    setSuspendReason("")
+    setSuspendError("")
+  }
+
+  const saveSuspension = async (user, suspended, reason = "") => {
+    const response = await apiFetch(`/api/admin/users/${user.id}/suspend`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ suspended, reason }),
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok || data?.ok === false) {
+      throw new Error(data?.error || data?.message || "The account could not be changed.")
+    }
+    return data
+  }
+
+  const handleSuspend = async (event) => {
+    event.preventDefault()
+    const reason = suspendReason.trim()
+    if (!reason) {
+      setSuspendError("Write the reason. The person sees it when they try to sign in.")
+      return
+    }
+    setSuspending(true)
+    setSuspendError("")
+    try {
+      await saveSuspension(suspendUser, true, reason)
+      setSuspendUser(null)
+      await loadUsers()
+    } catch (error) {
+      setSuspendError(error.message || "The account could not be suspended.")
+    } finally {
+      setSuspending(false)
+    }
+  }
+
+  const liftSuspension = async (user) => {
+    const confirmed = await askToConfirm({
+      title: `Give ${user.name} their account back?`,
+      description: "They can sign in and use the builder again. Their websites stay offline until they publish them again.",
+      confirmLabel: "Give back",
+    })
+    if (!confirmed) return
+    setPageError("")
+    try {
+      await saveSuspension(user, false)
+      await loadUsers()
+    } catch (error) {
+      setPageError(error.message || "The account could not be given back.")
+    }
+  }
+
+  // ============================================================
   // NEW-ACCOUNT PROMO
   // ============================================================
 
@@ -804,6 +876,11 @@ function Users() {
                     {user.deletesAt && (
                       <p className="mt-1 text-xs text-muted-foreground">Removed on {formatWib(user.deletesAt)}</p>
                     )}
+                    {user.suspendedAt && (
+                      <p className="mt-1 max-w-48 truncate text-xs text-muted-foreground" title={user.suspendReason}>
+                        {user.suspendReason || "Suspended"}
+                      </p>
+                    )}
                     {!user.deletesAt && user.restoredAt && (
                       <p className="mt-1 text-xs text-muted-foreground" title="If this person deletes the account again, it is removed at once.">
                         Restored once
@@ -835,6 +912,11 @@ function Users() {
                               { label: user.premium ? "Change premium" : "Make premium", onSelect: () => openEditUser(user) },
                               { label: "Add credits", onSelect: () => openCredits(user) },
                               { label: user.promoEligible ? "Take promo" : "Give promo", onSelect: () => togglePromo(user) },
+                              ...(user.role === "Admin"
+                                ? []
+                                : user.suspendedAt
+                                  ? [{ label: "Give account back", separatorBefore: true, onSelect: () => liftSuspension(user) }]
+                                  : [{ label: "Suspend account", destructive: true, separatorBefore: true, onSelect: () => openSuspend(user) }]),
                             ]),
                         {
                           label: deletingId === user.id ? "Deleting..." : user.deletesAt ? "Delete now" : "Delete user",
@@ -896,6 +978,45 @@ function Users() {
               <Button type="submit" disabled={savingCredits}>
                 {savingCredits && <Loader2 className="animate-spin" aria-hidden="true" />}
                 {savingCredits ? "Saving..." : "Save"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </FormDialog>
+      )}
+
+      {suspendUser && (
+        <FormDialog
+          title={`Suspend ${suspendUser.name}`}
+          subtitle={`${suspendUser.email} cannot sign in until you give the account back. Every session ends now, their published websites go offline and their website work stops. Nothing is deleted.`}
+          onClose={() => !suspending && setSuspendUser(null)}
+          busy={suspending}
+        >
+          <form onSubmit={handleSuspend} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="suspend-reason">Reason</Label>
+              <Input
+                id="suspend-reason"
+                type="text"
+                maxLength={300}
+                autoFocus
+                value={suspendReason}
+                onChange={(event) => setSuspendReason(event.target.value)}
+                placeholder="Mencoba membuat website judi online."
+                aria-describedby="suspend-reason-hint"
+                aria-invalid={suspendError ? true : undefined}
+              />
+              <p id="suspend-reason-hint" className="text-xs text-muted-foreground">
+                The person sees this when they try to sign in. Write it in their language.
+              </p>
+            </div>
+            {suspendError && <p role="alert" className="text-sm text-destructive">{suspendError}</p>}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSuspendUser(null)} disabled={suspending}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="destructive" disabled={suspending}>
+                {suspending && <Loader2 className="animate-spin" aria-hidden="true" />}
+                {suspending ? "Suspending..." : "Suspend account"}
               </Button>
             </DialogFooter>
           </form>
